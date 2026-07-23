@@ -15,7 +15,7 @@ Para el desarrollo de PackFlow se implementaran las siguientes tecnologias:
 ## Problem Statement
 
 El administrador de una microempresa o pequeña empresa dedicada a la venta y distribución de empaques necesita consultar rápidamente el stock disponible y elaborar cotizaciones para sus clientes.
-Actualmente, debe acudir al almacén para verificar las existencias y utilizar cálculos manuales para obtener el subtotal, IGV y total de una cotización. Esta situación genera pérdida de tiempo, desplazamientos innecesarios, errores en las cantidades disponibles y posibles errores de cálculo. Por ello necesitan un sistema centralizadado, escalable, robusto y seguro que simplifique el proceso de consulta de stock y que optimice el proceso de cotizaciones.
+Actualmente, debe acudir al almacén para verificar las existencias y utilizar cálculos manuales para obtener el subtotal, IGV y total de una cotización. Esta situación genera pérdida de tiempo, desplazamientos innecesarios, errores en las cantidades disponibles y posibles errores de cálculo. Por ello, el administrador necesita un sistema centralizado, escalable, robusto y seguro que simplifique la consulta de stock y optimice el proceso de cotización.
 
 
 ## Hypothesis
@@ -51,8 +51,7 @@ Permite buscar productos por nombre, medida, categoría o material, consultar el
 
 ### Cotizador
 
-Permite seleccionar un producto, ingresar la cantidad, aplicar serigrafía opcional y calcular el subtotal, IGV y total.
-
+Permite buscar y seleccionar un producto por nombre, medida, categoría o material, ingresar la cantidad, aplicar serigrafía opcional y calcular el subtotal, IGV y total.
 Las cotizaciones son simulaciones temporales. No se guardan ni modifican el stock.
 
 ### Ventas
@@ -69,21 +68,33 @@ Permite configurar los datos del negocio, la tasa del IGV, el valor de serigraf�
 
 1. Cada negocio tendrá una cuenta administradora independiente.
 2. El administrador tendrá acceso completo a la aplicación.
-3. El MVP no contempla múltiples usuarios ni roles avanzados.
-4. El administrador será responsable de registrar y mantener sus propios productos.
-5. Los productos podrán desactivarse mediante borrado lógico.
-6. El stock nunca podrá ser negativo.
-7. El ingreso de mercadería aumentará el stock.
-8. Una venta confirmada disminuirá el stock.
-9. Una cotización no modificará el stock.
-10. Las cotizaciones no se guardarán.
-11. Una venta confirmada sí se guardará.
-12. La serigrafía será opcional.
-13. El valor inicial de la serigrafía será de S/45 por color.
-14. El valor de serigrafía se aplicará una sola vez al monto de la operación, no por cada unidad.
-15. El IGV tendrá un valor inicial de 18 % y podrá configurarse.
-16. Los productos tendrán precio minorista y precio mayorista.
-17. La forma de aplicar el precio mayorista será definida durante el análisis detallado.
+3. El administrador será responsable de registrar y mantener sus propios productos.
+4. Los productos podrán desactivarse mediante borrado lógico.
+5. El stock nunca podrá ser negativo.
+6. El ingreso de mercadería aumentará el stock.
+7. Una venta confirmada disminuirá el stock.
+8. Una cotización no modificará el stock.
+9. Las cotizaciones no se guardarán.
+10. Una venta confirmada sí se guardará.
+11. La serigrafía será opcional.
+12. El valor inicial de la serigrafía será de S/45 por color.
+13. El valor de serigrafía se aplicará una sola vez al monto de la operación, no por cada unidad.
+14. El IGV tendrá un valor inicial de 18 % y podrá configurarse.
+15. Los productos tendrán precio minorista y precio mayorista.
+
+## Fuera de Alcance
+- Facturación electrónica.
+- Integración con SUNAT.
+- Pagos en línea.
+- Notificaciones por correo o WhatsApp.
+- Predicción de demanda.
+- Integración con tiendas virtuales.
+- Gestión de múltiples usuarios.
+- Gestión de roles avanzados.
+- Historial de cotizaciones.
+- Gestión contable.
+- Reportes financieros avanzados.
+- Control de insumos de serigrafía.
 
 
 
