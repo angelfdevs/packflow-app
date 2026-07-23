@@ -69,7 +69,7 @@ Dado que el administrador ingresa precios o stock negativos.
 Cuando intenta guardar el producto.
 Entonces el sistema debe mostrar un mensaje de validación y rechazar el registro.
 <br>**Reglas de negocio**</br>
-- El producto debe tener categoría, nombre, medidas, material, precios al por mayor y menor, y stock inicial.
+- El producto debe tener categoría, nombre, medidas, material, precio minorista, precio mayorista y stock inicial.
 - El stock inicial no puede ser negativo.
 - Los precios no pueden ser negativos.
 - El producto debe pertenecer a la cuenta del negocio.
@@ -94,7 +94,7 @@ Entonces el sistema debe mostrar los errores y conservar los datos anteriores.
 - La edición de un producto debe requerir confirmación.
 - Modificar el precio no debe alterar las ventas anteriores.
 - El stock no debe modificarse directamente desde la edición del producto.
-- Los cambios de stock se realizarán mediante ingresos o ventas.
+- Los cambios de stock se realizarán mediante ingresos, ventas o ajustes manuales.
 
 <br>**US-006 — Activar o desactivar producto**</br>
 Descripción:
@@ -161,8 +161,9 @@ Cuando el administrador consulta su historial.
 Entonces el sistema debe mostrar un mensaje informativo.
 <br>**Reglas de negocio**</br>
 - Los movimientos deben conservarse como historial.
-- Los movimientos principales serán ingresos de stock y salidas por ventas.
+- Los movimientos principales serán ingresos de stock, salidas por ventas y ajustes manuales.
 - Un movimiento no debe modificarse después de ser registrado.
+- Los ajustes deben conservar el motivo registrado.
 
 <br>**US-010 — Buscar y seleccionar producto para cotizar**</br>
 Descripción:
@@ -171,7 +172,7 @@ Criterios de aceptación
 <br>**Escenario 1: Selección exitosa**</br>
 Dado que existen productos activos.
 Cuando el administrador busca y selecciona un producto.
-Entonces el sistema debe mostrar su nombre, medida, material y precio.
+Entonces el sistema debe mostrar su nombre, medida, material, precio minorista y precio mayorista.
 <br>**Escenario 2: Búsqueda sin resultados**</br>
 Dado que no existe un producto coincidente.
 Cuando el administrador realiza una búsqueda.
@@ -225,6 +226,10 @@ Entonces debe agregar el valor configurado para la cantidad de colores seleccion
 Dado que el administrador activó la serigrafía.
 Cuando ingresa una cantidad de colores igual o menor que cero.
 Entonces el sistema debe mostrar un mensaje de validación y no agregar el recargo.
+<br>**Escenario 4: Cantidad no válida para serigrafía**</br>
+Dado que el administrador ingresó una cantidad que no es múltiplo de 100.
+Cuando intenta activar la serigrafía.
+Entonces el sistema debe impedir la operación y mostrar un mensaje indicando que la serigrafía solo aplica a cantidades múltiplos de 100.
 <br>**Reglas de negocio**</br>
 - La serigrafía solo está disponible para cantidades múltiplos de 100.
 - Cada bloque de 100 unidades genera un recargo de S/45 por color.
@@ -249,9 +254,10 @@ Dado que no se seleccionó un producto o cantidad.
 Cuando el administrador intenta calcular.
 Entonces el sistema debe solicitar la información faltante.
 <br>**Reglas de negocio**</br>
+- Si no se aplica serigrafía, el costo de serigrafía es S/0.
 - Precio de productos = precio unitario aplicable × cantidad
-- Bloques de serigrafía = cantidad ÷ 100
-- Costo de serigrafía = bloques de serigrafía × cantidad de colores × valor configurado
+- Si se aplica serigrafía, bloques de serigrafía = cantidad ÷ 100.
+- Costo de serigrafía = bloques de serigrafía × colores × valor por color.
 - Subtotal = precio de productos + costo de serigrafía
 - IGV = subtotal × tasa configurada
 - Total = subtotal + IGV
@@ -335,7 +341,7 @@ Cuando intenta guardar la configuración.
 Entonces el sistema debe mostrar un error y conservar la configuración anterior.
 <br>**Reglas de negocio**</br>
 - El IGV tendrá un valor inicial de 18 %.
-- La serigrafía tendrá un valor inicial de S/45 por color.
+- La serigrafía tendrá un valor inicial de S/45 por cada bloque de 100 unidades y por color.
 - Los valores configurados se utilizarán en nuevas cotizaciones y ventas.
 - Las ventas anteriores deben conservar sus valores originales.
 
