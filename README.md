@@ -7,9 +7,10 @@ Para el desarrollo de PackFlow se implementaran las siguientes tecnologias:
 
 - Vue.js
 - JavaScript
-- ASP.NET
+- ASP.NET Core
 - C#
 - PostgreSQL
+- Docker
 
 ## Problem Statement
 
@@ -24,38 +25,65 @@ Sabremos que esta hipótesis es válida cuando, durante el periodo de prueba, el
 
 Creemos que permitir al administrador simular cotizaciones mediante un formulario que calcule automáticamente el subtotal, IGV y total reducirá el tiempo empleado en la elaboración de cotizaciones y disminuirá los errores de cálculo. Sabremos que esta hipótesis es válida cuando, durante el periodo de prueba, el tiempo de elaboración de una cotización se reduzca en un 80 % y no se presenten errores en los cálculos generados por el sistema.
 
+## Secciones de la Aplicacion Web
 
-## MVP
+### Dashboard
 
-### Objetivo
+Resumen del negocio, productos registrados, stock bajo, ventas recientes y movimientos recientes.
 
-El MVP de PackFlow tiene como objetivo validar si una aplicación web puede reducir el tiempo empleado en la consulta de stock y en la elaboración de cotizaciones para negocios dedicados a la venta y distribución de empaques.
+### Productos
 
-### Publico Objetivo 
+Permite registrar, editar, activar y desactivar productos.
 
-El MVP estará dirigido a propietarios y trabajadores autorizados de microempresas y pequeñas empresas dedicadas a la venta de cajas, bolsas y otros productos de empaque.
+Cada producto puede incluir:
 
-### Requisitos Funcionales
+- Categoría.
+- Nombre.
+- Medidas.
+- Material.
+- Precio minorista.
+- Precio mayorista.
+- Stock inicial.
 
-- Autenticacion de usuarios
-- Registro de productos
-- Incremento de Stock
-- Disminucion de Sotck
-- Eliminacion de productos
-- Creacion de cotizaciones
-- Seleccion de productos y cantidades
-- Opcion a seleccionar serigrafia o impresion offset
-- Calculo automatico de subtotal, IGV y total
-- Consulta de cotizaciones generadas
+### Inventario
 
-### Fuera de Alcance 
+Permite buscar productos por nombre, medida, categoría o material, consultar el stock disponible, registrar ingresos de mercadería y consultar movimientos de inventario.
 
-- Facturacion electronica
-- Integracion con SUNAT
-- Pagos online
-- Notificaciones por correo o WhatsApp
-- Prediccion de demanda
-- Integracion con tiendas virtuales
+### Cotizador
+
+Permite seleccionar un producto, ingresar la cantidad, aplicar serigrafía opcional y calcular el subtotal, IGV y total.
+
+Las cotizaciones son simulaciones temporales. No se guardan ni modifican el stock.
+
+### Ventas
+
+Permite registrar una venta utilizando un flujo similar al cotizador.
+
+Al confirmar una venta, la operación se guarda y el stock disminuye automáticamente.
+
+### Configuración
+
+Permite configurar los datos del negocio, la tasa del IGV, el valor de serigrafía, el tema visual, el tamaño de fuente y la contraseña de la cuenta.
+
+## Reglas de negocio principales
+
+1. Cada negocio tendrá una cuenta administradora independiente.
+2. El administrador tendrá acceso completo a la aplicación.
+3. El MVP no contempla múltiples usuarios ni roles avanzados.
+4. El administrador será responsable de registrar y mantener sus propios productos.
+5. Los productos podrán desactivarse mediante borrado lógico.
+6. El stock nunca podrá ser negativo.
+7. El ingreso de mercadería aumentará el stock.
+8. Una venta confirmada disminuirá el stock.
+9. Una cotización no modificará el stock.
+10. Las cotizaciones no se guardarán.
+11. Una venta confirmada sí se guardará.
+12. La serigrafía será opcional.
+13. El valor inicial de la serigrafía será de S/45 por color.
+14. El valor de serigrafía se aplicará una sola vez al monto de la operación, no por cada unidad.
+15. El IGV tendrá un valor inicial de 18 % y podrá configurarse.
+16. Los productos tendrán precio minorista y precio mayorista.
+17. La forma de aplicar el precio mayorista será definida durante el análisis detallado.
 
 
 
