@@ -1,6 +1,7 @@
 # Aplicacion Web PackFlow
 
-PackFlow es una aplicacion web orientada a servir de apoyo a microempresas y pequeñas empresas dedicadas al rubro de la venta y distribucion de empaques (cajas y bolsas de diferentes medidades y materiales de fabricacion) personalizables usando serigrafia e impresion offset. La aplicacion le dara la capacidad al usuario de poder consultar, disminuir e incrementar las cantidades de stock que posee en su negocio acerca de un producto en especifico. Ademas, el usuario podra simular cotizaciones de productos para obtener el subtotal, IGV y total de cada cotizacion. 
+PackFlow es una aplicación web orientada a microempresas y pequeñas empresas dedicadas a la venta y distribución de empaques, como cajas y bolsas de diferentes medidas y materiales.
+La aplicación permitirá administrar productos, consultar el stock disponible, simular cotizaciones y registrar ventas que actualicen automáticamente el inventario.
 
 Para el desarrollo de PackFlow se implementaran las siguientes tecnologias:
 
@@ -12,14 +13,16 @@ Para el desarrollo de PackFlow se implementaran las siguientes tecnologias:
 
 ## Problem Statement
 
-Los trabajadores y propietarios de microempresas y pequeñas empresas tienen dificultades al momento de consultar su inventario, debido a que deben acudir a su almacen y verificar si realmente tienen o no el producto en stock solicitado por sus clientes. Ademas, cuando el propietario o trabajador desean realizar cotizaciones acerca de los productos solicitados por el cliente, estos deben recurrir a utilizar una hoja de papel y calcular manualmente el subtotal, IGV y total de la cotizacion. Esto genera errores en las cantidades disponibles de productos, perdida de informacion, vulnerabilidad ante malos calculos, desgaste fisico innecesario y perdida de tiempo para el propietario y el cliente. Por ello necesitan un sistema centralizadado, escalable, robusto y seguro que simplifique el proceso de consulta de stock y que optimice el proceso de cotizaciones.
+El administrador de una microempresa o pequeña empresa dedicada a la venta y distribución de empaques necesita consultar rápidamente el stock disponible y elaborar cotizaciones para sus clientes.
+Actualmente, debe acudir al almacén para verificar las existencias y utilizar cálculos manuales para obtener el subtotal, IGV y total de una cotización. Esta situación genera pérdida de tiempo, desplazamientos innecesarios, errores en las cantidades disponibles y posibles errores de cálculo. Por ello necesitan un sistema centralizadado, escalable, robusto y seguro que simplifique el proceso de consulta de stock y que optimice el proceso de cotizaciones.
 
 
 ## Hypothesis
 
-Creo que permitir a los propietarios o trabajadores consultar su inventario en tiempo real reducira el tiempo y desplazamientos innecesarios al almacén por consulta. Sabre que la hipotesis es valida cuando los usuarios de la aplicacion manifiesten haber reducido el tiempo de consultas de stock en un 80% y el desgaste fisico producido por acudir al almacen se haya reducido en un 95%.
+Creemos que permitir al administrador consultar el inventario en tiempo real reducirá el tiempo empleado en las consultas de stock y los desplazamientos innecesarios al almacén.
+Sabremos que esta hipótesis es válida cuando, durante el periodo de prueba, el tiempo de consulta de stock se reduzca en un 80 % y los desplazamientos innecesarios al almacén disminuyan en un 95 %.
 
-Creo que permitir a los propietarios o trabajadores realizar cotizaciones de productos sin tener que recurrir a la revision del costo de productos o calculos realizados manualmente reducira el tiempo de cada cotizacion. Sabre que la hipotesis es valida cuando los usuarios de la aplicacion manifiesten haber reducido el tiempo de cotizacion en un 80%.
+Creemos que permitir al administrador simular cotizaciones mediante un formulario que calcule automáticamente el subtotal, IGV y total reducirá el tiempo empleado en la elaboración de cotizaciones y disminuirá los errores de cálculo. Sabremos que esta hipótesis es válida cuando, durante el periodo de prueba, el tiempo de elaboración de una cotización se reduzca en un 80 % y no se presenten errores en los cálculos generados por el sistema.
 
 
 ## MVP
