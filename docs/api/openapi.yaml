@@ -1,0 +1,708 @@
+openapi: 3.1.0
+info:
+  title: PackFlow API
+  version: 1.0.0
+  description: Contrato HTTP de PackFlow.
+  license:
+    name: Uso privado de PackFlow
+    url: https://github.com/angelfdevs/packflow-app
+servers:
+  - url: https://api.packflow.example/api/v1
+security:
+  - bearerAuth: []
+tags:
+  - name: Authentication
+    description: AutenticaciÃƒÆ’Ã‚Â³n, sesiones y recuperaciÃƒÆ’Ã‚Â³n de contraseÃƒÆ’Ã‚Â±a.
+  - name: Account
+    description: Cuenta y configuraciÃƒÆ’Ã‚Â³n del negocio.
+  - name: Catalog
+    description: CategorÃƒÆ’Ã‚Â­as, materiales y productos.
+  - name: Inventory
+    description: Stock, ingresos, ajustes y movimientos.
+  - name: Quotes
+    description: Simulaciones temporales de cotizaciones.
+  - name: Sales
+    description: Ventas confirmadas.
+  - name: Dashboard
+    description: Resumen operativo del negocio.
+  - name: Health
+    description: Estado del servicio y dependencias.
+paths:
+  /auth/login:
+    post:
+      summary: POST /auth/login
+      operationId: postauthLogin1
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200': { description: SesiÃƒÆ’Ã‚Â³n iniciada, content: { application/json: { schema: { $ref: '#/components/schemas/LoginResponse' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /auth/refresh:
+    post:
+      summary: POST /auth/refresh
+      operationId: postauthRefresh2
+      tags: [Authentication]
+      security:
+        - refreshCookie: []
+          csrfToken: []
+      description: No existe expiraciÃƒÆ’Ã‚Â³n por inactividad. El refresh token rota y tiene expiraciÃƒÆ’Ã‚Â³n absoluta.
+      responses:
+        '200': { description: Access token renovado, content: { application/json: { schema: { $ref: '#/components/schemas/AccessTokenResponse' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /auth/me:
+    get:
+      summary: GET /auth/me
+      operationId: getauthMe3
+      tags: [Authentication]
+      responses:
+        '200': { description: Cuenta autenticada, content: { application/json: { schema: { $ref: '#/components/schemas/AccountIdentity' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/logout:
+    post:
+      summary: POST /auth/logout
+      operationId: postauthLogout4
+      tags: [Authentication]
+      security:
+        - bearerAuth: []
+          refreshCookie: []
+          csrfToken: []
+      responses:
+        '204': { description: SesiÃƒÆ’Ã‚Â³n revocada }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /auth/password/change:
+    post:
+      summary: POST /auth/password/change
+      operationId: postauthPasswordChange5
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChangePasswordRequest' }
+      responses:
+        '204': { description: ContraseÃƒÆ’Ã‚Â±a actualizada y sesiones revocadas }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/password/forgot:
+    post:
+      summary: POST /auth/password/forgot
+      operationId: postauthPasswordForgot6
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PasswordForgotRequest' }
+      responses:
+        '202': { description: Respuesta genÃƒÆ’Ã‚Â©rica para evitar enumeraciÃƒÆ’Ã‚Â³n de cuentas }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /auth/password/reset:
+    post:
+      summary: POST /auth/password/reset
+      operationId: postauthPasswordReset7
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PasswordResetRequest' }
+      responses:
+        '204': { description: ContraseÃƒÆ’Ã‚Â±a restablecida y sesiones revocadas }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /account:
+    get:
+      summary: GET /account
+      operationId: getaccount8
+      tags: [Account]
+      responses:
+        '200': { description: Datos del negocio, content: { application/json: { schema: { $ref: '#/components/schemas/Account' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    patch:
+      summary: PATCH /account
+      operationId: patchaccount9
+      tags: [Account]
+      parameters: [{ $ref: '#/components/parameters/IfMatch' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AccountPatchRequest' }
+      responses:
+        '200': { description: Cuenta actualizada, content: { application/json: { schema: { $ref: '#/components/schemas/Account' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /settings:
+    get:
+      summary: GET /settings
+      operationId: getsettings10
+      tags: [Account]
+      responses:
+        '200': { description: ConfiguraciÃƒÆ’Ã‚Â³n, content: { application/json: { schema: { $ref: '#/components/schemas/Settings' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    patch:
+      summary: PATCH /settings
+      operationId: patchsettings11
+      tags: [Account]
+      parameters: [{ $ref: '#/components/parameters/IfMatch' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SettingsPatchRequest' }
+      responses:
+        '200': { description: ConfiguraciÃƒÆ’Ã‚Â³n actualizada, content: { application/json: { schema: { $ref: '#/components/schemas/Settings' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /categories:
+    get:
+      summary: GET /categories
+      operationId: getcategories12
+      tags: [Catalog]
+      responses:
+        '200': { description: CategorÃƒÆ’Ã‚Â­as, content: { application/json: { schema: { $ref: '#/components/schemas/NamedPage' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      summary: POST /categories
+      operationId: postcategories13
+      tags: [Catalog]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NameRequest' }
+      responses:
+        '201': { description: CategorÃƒÆ’Ã‚Â­a creada, content: { application/json: { schema: { $ref: '#/components/schemas/NamedResource' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /materials:
+    get:
+      summary: GET /materials
+      operationId: getmaterials14
+      tags: [Catalog]
+      responses:
+        '200': { description: Materiales, content: { application/json: { schema: { $ref: '#/components/schemas/NamedPage' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      summary: POST /materials
+      operationId: postmaterials15
+      tags: [Catalog]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NameRequest' }
+      responses:
+        '201': { description: Material creado, content: { application/json: { schema: { $ref: '#/components/schemas/NamedResource' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /products:
+    get:
+      summary: GET /products
+      operationId: getproducts16
+      tags: [Catalog]
+      parameters:
+        - { $ref: '#/components/parameters/Search' }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/PageSize' }
+      responses:
+        '200': { description: Productos, content: { application/json: { schema: { $ref: '#/components/schemas/ProductPage' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      summary: POST /products
+      operationId: postproducts17
+      tags: [Catalog]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductCreateRequest' }
+      responses:
+        '201': { description: Producto creado, content: { application/json: { schema: { $ref: '#/components/schemas/Product' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /products/{productId}:
+    parameters: [{ $ref: '#/components/parameters/ProductId' }]
+    get:
+      summary: GET /products/{productId}
+      operationId: getproductsProductId18
+      tags: [Catalog]
+      responses:
+        '200': { description: Producto, content: { application/json: { schema: { $ref: '#/components/schemas/Product' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      summary: PUT /products/{productId}
+      operationId: putproductsProductId19
+      tags: [Catalog]
+      parameters: [{ $ref: '#/components/parameters/IfMatch' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductUpdateRequest' }
+      responses:
+        '200': { description: Producto actualizado, content: { application/json: { schema: { $ref: '#/components/schemas/Product' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /products/{productId}/status:
+    parameters: [{ $ref: '#/components/parameters/ProductId' }]
+    patch:
+      summary: PATCH /products/{productId}/status
+      operationId: patchproductsProductIdStatus20
+      tags: [Catalog]
+      parameters: [{ $ref: '#/components/parameters/IfMatch' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [active]
+              properties:
+                active: { type: boolean }
+      responses:
+        '200': { description: Estado actualizado, content: { application/json: { schema: { $ref: '#/components/schemas/Product' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /inventory/stock:
+    get:
+      summary: GET /inventory/stock
+      operationId: getinventoryStock21
+      tags: [Inventory]
+      parameters:
+        - { $ref: '#/components/parameters/Search' }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/PageSize' }
+      responses:
+        '200': { description: Stock, content: { application/json: { schema: { $ref: '#/components/schemas/StockPage' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /inventory/receipts:
+    post:
+      summary: POST /inventory/receipts
+      operationId: postinventoryReceipts22
+      tags: [Inventory]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StockReceiptRequest' }
+      responses:
+        '201': { description: Ingreso registrado, content: { application/json: { schema: { $ref: '#/components/schemas/StockMovementResult' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /inventory/adjustments:
+    post:
+      summary: POST /inventory/adjustments
+      operationId: postinventoryAdjustments23
+      tags: [Inventory]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StockAdjustmentRequest' }
+      responses:
+        '201': { description: Ajuste registrado, content: { application/json: { schema: { $ref: '#/components/schemas/StockMovementResult' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /inventory/movements:
+    get:
+      summary: GET /inventory/movements
+      operationId: getinventoryMovements24
+      tags: [Inventory]
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/PageSize' }
+      responses:
+        '200': { description: Movimientos, content: { application/json: { schema: { $ref: '#/components/schemas/StockPage' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /quotes/preview:
+    post:
+      summary: POST /quotes/preview
+      operationId: postquotesPreview25
+      tags: [Quotes]
+      description: No guarda la cotizaciÃƒÆ’Ã‚Â³n ni modifica el stock. El backend calcula todos los valores.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OperationRequest' }
+      responses:
+        '200': { description: Resultado calculado, content: { application/json: { schema: { $ref: '#/components/schemas/OperationResult' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /sales:
+    get:
+      summary: GET /sales
+      operationId: getsales26
+      tags: [Sales]
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/PageSize' }
+      responses:
+        '200': { description: Ventas, content: { application/json: { schema: { $ref: '#/components/schemas/SalePage' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      summary: POST /sales
+      operationId: postsales27
+      tags: [Sales]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OperationRequest' }
+      responses:
+        '201': { description: Venta confirmada, content: { application/json: { schema: { $ref: '#/components/schemas/Sale' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /sales/{saleId}:
+    parameters:
+      - name: saleId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      summary: GET /sales/{saleId}
+      operationId: getsalesSaleId28
+      tags: [Sales]
+      responses:
+        '200': { description: Venta confirmada, content: { application/json: { schema: { $ref: '#/components/schemas/Sale' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /dashboard/summary:
+    get:
+      summary: GET /dashboard/summary
+      operationId: getdashboardSummary29
+      tags: [Dashboard]
+      responses:
+        '200': { description: Indicadores del negocio, content: { application/json: { schema: { $ref: '#/components/schemas/DashboardSummary' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /health/live:
+    get:
+      summary: GET /health/live
+      operationId: gethealthLive30
+      tags: [Health]
+      security: []
+      responses:
+        '200': { description: Proceso disponible }
+  /health/ready:
+    get:
+      summary: GET /health/ready
+      operationId: gethealthReady31
+      tags: [Health]
+      security: []
+      responses:
+        '200': { description: Backend y PostgreSQL disponibles }
+        '503': { description: Dependencia no disponible }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+    refreshCookie: { type: apiKey, in: cookie, name: pf_refresh }
+    csrfToken: { type: apiKey, in: header, name: X-CSRF-TOKEN }
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, minLength: 16, maxLength: 100 }
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      schema: { type: string }
+    ProductId:
+      name: productId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Search: { name: search, in: query, schema: { type: string, maxLength: 100 } }
+    Page: { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+    PageSize: { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+  responses:
+    BadRequest: { description: Solicitud invÃƒÆ’Ã‚Â¡lida }
+    Unauthorized: { description: AutenticaciÃƒÆ’Ã‚Â³n ausente o invÃƒÆ’Ã‚Â¡lida }
+    Forbidden: { description: OperaciÃƒÆ’Ã‚Â³n no autorizada o CSRF invÃƒÆ’Ã‚Â¡lido }
+    NotFound: { description: Recurso no encontrado }
+    Conflict: { description: 'Conflicto, duplicado, concurrencia o stock insuficiente' }
+    UnprocessableEntity: { description: Regla de negocio invÃƒÆ’Ã‚Â¡lida }
+    TooManyRequests: { description: LÃƒÆ’Ã‚Â­mite de solicitudes excedido }
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        password: { type: string, format: password, minLength: 12, maxLength: 128 }
+    LoginResponse:
+      type: object
+      required: [accessToken, expiresIn, account]
+      properties:
+        accessToken: { type: string }
+        expiresIn: { type: integer, example: 900 }
+        account: { $ref: '#/components/schemas/AccountIdentity' }
+    AccessTokenResponse:
+      type: object
+      required: [accessToken, expiresIn]
+      properties:
+        accessToken: { type: string }
+        expiresIn: { type: integer, example: 900 }
+    AccountIdentity:
+      type: object
+      required: [businessAccountId, businessName, email]
+      properties:
+        businessAccountId: { type: string, format: uuid }
+        businessName: { type: string, maxLength: 150 }
+        email: { type: string, format: email, maxLength: 254 }
+    Account:
+      allOf:
+        - $ref: '#/components/schemas/AccountIdentity'
+        - type: object
+          required: [accountStatus, updatedAt]
+          properties:
+            accountStatus: { type: string, enum: [ACTIVE, SUSPENDED, DISABLED] }
+            updatedAt: { type: string, format: date-time }
+    AccountPatchRequest:
+      type: object
+      minProperties: 1
+      properties:
+        businessName: { type: string, minLength: 1, maxLength: 150 }
+        email: { type: string, format: email, maxLength: 254 }
+    ChangePasswordRequest:
+      type: object
+      required: [currentPassword, newPassword, confirmPassword]
+      properties:
+        currentPassword: { type: string, format: password, minLength: 12, maxLength: 128 }
+        newPassword: { type: string, format: password, minLength: 12, maxLength: 128 }
+        confirmPassword: { type: string, format: password, minLength: 12, maxLength: 128 }
+    PasswordForgotRequest:
+      type: object
+      required: [email]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+    PasswordResetRequest:
+      type: object
+      required: [token, newPassword, confirmPassword]
+      properties:
+        token: { type: string, minLength: 32, maxLength: 512 }
+        newPassword: { type: string, format: password, minLength: 12, maxLength: 128 }
+        confirmPassword: { type: string, format: password, minLength: 12, maxLength: 128 }
+    NameRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+    NamedResource:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+    NamedPage:
+      type: object
+      required: [items, page, pageSize, totalItems]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/NamedResource' } }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+        totalItems: { type: integer, minimum: 0 }
+    Dimensions:
+      type: object
+      required: [lengthCm, widthCm, heightCm]
+      properties:
+        lengthCm: { type: number, exclusiveMinimum: 0 }
+        widthCm: { type: number, exclusiveMinimum: 0 }
+        heightCm: { type: number, exclusiveMinimum: 0 }
+    DecimalAmount:
+      type: string
+      pattern: '^\\d{1,10}(\\.\\d{1,2})?$'
+    ProductCreateRequest:
+      type: object
+      required: [categoryId, materialId, name, dimensions, retailPrice, wholesalePrice]
+      properties:
+        categoryId: { type: string, format: uuid }
+        materialId: { type: string, format: uuid }
+        name: { type: string, minLength: 1, maxLength: 150 }
+        dimensions: { $ref: '#/components/schemas/Dimensions' }
+        retailPrice: { $ref: '#/components/schemas/DecimalAmount' }
+        wholesalePrice: { $ref: '#/components/schemas/DecimalAmount' }
+        initialStock: { type: integer, minimum: 0, default: 0 }
+    ProductUpdateRequest:
+      type: object
+      required: [categoryId, materialId, name, dimensions, retailPrice, wholesalePrice]
+      properties:
+        categoryId: { type: string, format: uuid }
+        materialId: { type: string, format: uuid }
+        name: { type: string, minLength: 1, maxLength: 150 }
+        dimensions: { $ref: '#/components/schemas/Dimensions' }
+        retailPrice: { $ref: '#/components/schemas/DecimalAmount' }
+        wholesalePrice: { $ref: '#/components/schemas/DecimalAmount' }
+    Product:
+      allOf:
+        - $ref: '#/components/schemas/ProductUpdateRequest'
+        - type: object
+          required: [productId, currentStock, active, updatedAt]
+          properties:
+            productId: { type: string, format: uuid }
+            currentStock: { type: integer, minimum: 0 }
+            active: { type: boolean }
+            updatedAt: { type: string, format: date-time }
+    Settings:
+      type: object
+      required: [igvRate, minimumScreenPrintingQuantity, screenPrintingTiers, theme, fontSize]
+      properties:
+        igvRate: { type: number, minimum: 0, maximum: 1, example: 0.18 }
+        minimumScreenPrintingQuantity: { type: integer, minimum: 20, default: 20 }
+        screenPrintingTiers:
+          type: array
+          minItems: 3
+          items:
+            type: object
+            required: [from, ratePerColor]
+            properties:
+              from: { type: integer, minimum: 20 }
+              to: { type: [integer, 'null'] }
+              ratePerColor: { $ref: '#/components/schemas/DecimalAmount' }
+        theme: { type: string, enum: [LIGHT, DARK] }
+        fontSize: { type: string, enum: [SMALL, MEDIUM, LARGE] }
+    SettingsPatchRequest:
+      type: object
+      minProperties: 1
+      properties:
+        igvRate: { type: number, minimum: 0, maximum: 1 }
+        minimumScreenPrintingQuantity: { type: integer, minimum: 20 }
+        screenPrintingTiers: { type: array, minItems: 3, items: { type: object } }
+        theme: { type: string, enum: [LIGHT, DARK] }
+        fontSize: { type: string, enum: [SMALL, MEDIUM, LARGE] }
+    StockReceiptRequest:
+      type: object
+      required: [productId, quantity, reason]
+      properties:
+        productId: { type: string, format: uuid }
+        quantity: { type: integer, minimum: 1 }
+        reason: { type: string, minLength: 1, maxLength: 255 }
+    StockAdjustmentRequest:
+      type: object
+      required: [productId, adjustmentType, direction, quantity, reason]
+      properties:
+        productId: { type: string, format: uuid }
+        adjustmentType: { type: string, enum: [LOSS, DAMAGE, CORRECTION] }
+        direction: { type: string, enum: [INCREASE, DECREASE] }
+        quantity: { type: integer, minimum: 1 }
+        reason: { type: string, minLength: 1, maxLength: 255 }
+    OperationRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: object
+            required: [productId, quantity]
+            properties:
+              productId: { type: string, format: uuid }
+              quantity: { type: integer, minimum: 1 }
+              screenPrinting:
+                type: object
+                required: [enabled]
+                properties:
+                  enabled: { type: boolean }
+                  colors: { type: integer, minimum: 1, default: 1 }
+        discount:
+          type: object
+          required: [type, value]
+          properties:
+            type: { type: string, enum: [PERCENTAGE, FIXED] }
+            value: { $ref: '#/components/schemas/DecimalAmount' }
+    OperationResult:
+      type: object
+      required: [items, subtotalBeforeDiscount, subtotal, igv, total, currency]
+      properties:
+        items: { type: array, items: { type: object } }
+        subtotalBeforeDiscount: { $ref: '#/components/schemas/DecimalAmount' }
+        subtotal: { $ref: '#/components/schemas/DecimalAmount' }
+        discountAmount: { $ref: '#/components/schemas/DecimalAmount' }
+        igvRate: { type: number, minimum: 0, maximum: 1 }
+        igv: { $ref: '#/components/schemas/DecimalAmount' }
+        total: { $ref: '#/components/schemas/DecimalAmount' }
+        currency: { type: string, enum: [PEN] }
+    Sale:
+      allOf:
+        - $ref: '#/components/schemas/OperationResult'
+        - type: object
+          required: [saleId, status, createdAt]
+          properties:
+            saleId: { type: string, format: uuid }
+            status: { type: string, enum: [CONFIRMED] }
+            createdAt: { type: string, format: date-time }
+    StockMovementResult:
+      type: object
+      required: [movementId, productId, previousStock, resultingStock]
+      properties:
+        movementId: { type: string, format: uuid }
+        productId: { type: string, format: uuid }
+        previousStock: { type: integer, minimum: 0 }
+        resultingStock: { type: integer, minimum: 0 }
+    StockPage:
+      type: object
+      required: [items, page, pageSize, totalItems]
+      properties:
+        items: { type: array, items: { type: object } }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+        totalItems: { type: integer, minimum: 0 }
+    ProductPage:
+      type: object
+      required: [items, page, pageSize, totalItems]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Product' } }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+        totalItems: { type: integer, minimum: 0 }
+    SalePage:
+      type: object
+      required: [items, page, pageSize, totalItems]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Sale' } }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+        totalItems: { type: integer, minimum: 0 }
+    DashboardSummary:
+      type: object
+      required: [activeProducts, lowStockProducts]
+      properties:
+        activeProducts: { type: integer, minimum: 0 }
+        lowStockProducts: { type: integer, minimum: 0 }
+    ProblemDetails:
+      type: object
+      required: [type, title, status, errorCode, traceId]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        errorCode: { type: string }
+        traceId: { type: string }
+
+
+
