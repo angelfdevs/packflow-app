@@ -171,7 +171,7 @@ paths:
       operationId: getcategories12
       tags: [Catalog]
       responses:
-        '200': { description: CategorÃƒÆ’Ã‚Â­as, content: { application/json: { schema: { $ref: '#/components/schemas/NamedPage' } } } }
+        '200': { description: Categorías, content: { application/json: { schema: { $ref: '#/components/schemas/CategoryPage' } } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
     post:
       summary: POST /categories
@@ -184,7 +184,7 @@ paths:
           application/json:
             schema: { $ref: '#/components/schemas/NameRequest' }
       responses:
-        '201': { description: CategorÃƒÆ’Ã‚Â­a creada, content: { application/json: { schema: { $ref: '#/components/schemas/NamedResource' } } } }
+        '201': { description: Categoría creada, content: { application/json: { schema: { $ref: '#/components/schemas/Category' } } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '409': { $ref: '#/components/responses/Conflict' }
   /materials:
@@ -193,7 +193,7 @@ paths:
       operationId: getmaterials14
       tags: [Catalog]
       responses:
-        '200': { description: Materiales, content: { application/json: { schema: { $ref: '#/components/schemas/NamedPage' } } } }
+        '200': { description: Materiales, content: { application/json: { schema: { $ref: '#/components/schemas/MaterialPage' } } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
     post:
       summary: POST /materials
@@ -206,7 +206,7 @@ paths:
           application/json:
             schema: { $ref: '#/components/schemas/NameRequest' }
       responses:
-        '201': { description: Material creado, content: { application/json: { schema: { $ref: '#/components/schemas/NamedResource' } } } }
+        '201': { description: Material creado, content: { application/json: { schema: { $ref: '#/components/schemas/Material' } } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '409': { $ref: '#/components/responses/Conflict' }
   /products:
@@ -216,6 +216,9 @@ paths:
       tags: [Catalog]
       parameters:
         - { $ref: '#/components/parameters/Search' }
+        - { $ref: '#/components/parameters/CategoryId' }
+        - { $ref: '#/components/parameters/MaterialId' }
+        - { $ref: '#/components/parameters/Active' }
         - { $ref: '#/components/parameters/Page' }
         - { $ref: '#/components/parameters/PageSize' }
       responses:
@@ -287,6 +290,9 @@ paths:
       tags: [Inventory]
       parameters:
         - { $ref: '#/components/parameters/Search' }
+        - { $ref: '#/components/parameters/CategoryId' }
+        - { $ref: '#/components/parameters/MaterialId' }
+        - { $ref: '#/components/parameters/Active' }
         - { $ref: '#/components/parameters/Page' }
         - { $ref: '#/components/parameters/PageSize' }
       responses:
@@ -331,7 +337,7 @@ paths:
         - { $ref: '#/components/parameters/Page' }
         - { $ref: '#/components/parameters/PageSize' }
       responses:
-        '200': { description: Movimientos, content: { application/json: { schema: { $ref: '#/components/schemas/StockPage' } } } }
+        '200': { description: Movimientos, content: { application/json: { schema: { $ref: '#/components/schemas/MovementPage' } } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
   /quotes/preview:
     post:
@@ -412,7 +418,11 @@ paths:
       security: []
       responses:
         '200': { description: Backend y PostgreSQL disponibles }
-        '503': { description: Dependencia no disponible }
+        '503':
+          description: Dependencia no disponible
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetails' }
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
@@ -435,16 +445,47 @@ components:
       required: true
       schema: { type: string, format: uuid }
     Search: { name: search, in: query, schema: { type: string, maxLength: 100 } }
+    CategoryId: { name: categoryId, in: query, schema: { type: string, format: uuid } }
+    MaterialId: { name: materialId, in: query, schema: { type: string, format: uuid } }
+    Active: { name: active, in: query, schema: { type: boolean } }
     Page: { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
     PageSize: { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
   responses:
-    BadRequest: { description: Solicitud invÃƒÆ’Ã‚Â¡lida }
-    Unauthorized: { description: AutenticaciÃƒÆ’Ã‚Â³n ausente o invÃƒÆ’Ã‚Â¡lida }
-    Forbidden: { description: OperaciÃƒÆ’Ã‚Â³n no autorizada o CSRF invÃƒÆ’Ã‚Â¡lido }
-    NotFound: { description: Recurso no encontrado }
-    Conflict: { description: 'Conflicto, duplicado, concurrencia o stock insuficiente' }
-    UnprocessableEntity: { description: Regla de negocio invÃƒÆ’Ã‚Â¡lida }
-    TooManyRequests: { description: LÃƒÆ’Ã‚Â­mite de solicitudes excedido }
+    BadRequest:
+      description: Solicitud inválida
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    Unauthorized:
+      description: Autenticación ausente o inválida
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    Forbidden:
+      description: Operación no autorizada o CSRF inválido
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    Conflict:
+      description: Conflicto, duplicado, concurrencia o stock insuficiente
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    UnprocessableEntity:
+      description: Regla de negocio inválida
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    TooManyRequests:
+      description: Límite de solicitudes excedido
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
   schemas:
     LoginRequest:
       type: object
@@ -510,17 +551,31 @@ components:
       required: [name]
       properties:
         name: { type: string, minLength: 1, maxLength: 100 }
-    NamedResource:
+    Category:
       type: object
-      required: [id, name]
+      required: [categoryId, name]
       properties:
-        id: { type: string, format: uuid }
-        name: { type: string }
-    NamedPage:
+        categoryId: { type: string, format: uuid }
+        name: { type: string, minLength: 1, maxLength: 100 }
+    CategoryPage:
       type: object
       required: [items, page, pageSize, totalItems]
       properties:
-        items: { type: array, items: { $ref: '#/components/schemas/NamedResource' } }
+        items: { type: array, items: { $ref: '#/components/schemas/Category' } }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+        totalItems: { type: integer, minimum: 0 }
+    Material:
+      type: object
+      required: [materialId, name]
+      properties:
+        materialId: { type: string, format: uuid }
+        name: { type: string, minLength: 1, maxLength: 100 }
+    MaterialPage:
+      type: object
+      required: [items, page, pageSize, totalItems]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Material' } }
         page: { type: integer, minimum: 1 }
         pageSize: { type: integer, minimum: 1, maximum: 100 }
         totalItems: { type: integer, minimum: 0 }
@@ -565,6 +620,14 @@ components:
             currentStock: { type: integer, minimum: 0 }
             active: { type: boolean }
             updatedAt: { type: string, format: date-time }
+    SerigraphyTier:
+      type: object
+      required: [from, ratePerColor]
+      properties:
+        from: { type: integer, minimum: 20 }
+        to: { type: [integer, 'null'], minimum: 20 }
+        ratePerColor: { $ref: '#/components/schemas/DecimalAmount' }
+      description: Rango de cantidad y tarifa por color y lote de 100 unidades.
     Settings:
       type: object
       required: [igvRate, minimumScreenPrintingQuantity, screenPrintingTiers, theme, fontSize]
@@ -575,12 +638,7 @@ components:
           type: array
           minItems: 3
           items:
-            type: object
-            required: [from, ratePerColor]
-            properties:
-              from: { type: integer, minimum: 20 }
-              to: { type: [integer, 'null'] }
-              ratePerColor: { $ref: '#/components/schemas/DecimalAmount' }
+              $ref: '#/components/schemas/SerigraphyTier'
         theme: { type: string, enum: [LIGHT, DARK] }
         fontSize: { type: string, enum: [SMALL, MEDIUM, LARGE] }
     SettingsPatchRequest:
@@ -589,7 +647,7 @@ components:
       properties:
         igvRate: { type: number, minimum: 0, maximum: 1 }
         minimumScreenPrintingQuantity: { type: integer, minimum: 20 }
-        screenPrintingTiers: { type: array, minItems: 3, items: { type: object } }
+        screenPrintingTiers: { type: array, minItems: 3, items: { $ref: '#/components/schemas/SerigraphyTier' } }
         theme: { type: string, enum: [LIGHT, DARK] }
         fontSize: { type: string, enum: [SMALL, MEDIUM, LARGE] }
     StockReceiptRequest:
@@ -608,6 +666,29 @@ components:
         direction: { type: string, enum: [INCREASE, DECREASE] }
         quantity: { type: integer, minimum: 1 }
         reason: { type: string, minLength: 1, maxLength: 255 }
+    DiscountRequest:
+      type: object
+      required: [type, value]
+      properties:
+        type: { type: string, enum: [PERCENTAGE, FIXED] }
+        value: { $ref: '#/components/schemas/DecimalAmount' }
+    OperationLineRequest:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId: { type: string, format: uuid }
+        quantity: { type: integer, minimum: 1 }
+        screenPrinting:
+          type: object
+          required: [enabled]
+          properties:
+            enabled: { type: boolean }
+            colors:
+              type: integer
+              minimum: 0
+              default: 0
+              description: Debe ser cero cuando la serigrafía está deshabilitada y positivo cuando está habilitada.
+      description: Cada producto debe aparecer una sola vez dentro de la operación.
     OperationRequest:
       type: object
       required: [items]
@@ -616,32 +697,46 @@ components:
           type: array
           minItems: 1
           maxItems: 100
-          items:
-            type: object
-            required: [productId, quantity]
-            properties:
-              productId: { type: string, format: uuid }
-              quantity: { type: integer, minimum: 1 }
-              screenPrinting:
-                type: object
-                required: [enabled]
-                properties:
-                  enabled: { type: boolean }
-                  colors: { type: integer, minimum: 1, default: 1 }
-        discount:
+          items: { $ref: '#/components/schemas/OperationLineRequest' }
+        discount: { $ref: '#/components/schemas/DiscountRequest' }
+      description: El backend debe rechazar productId repetidos y recalcular todos los importes.
+    OperationLineResult:
+      type: object
+      required: [productId, quantity, unitPrice, priceType, productsSubtotal, lineSubtotal]
+      properties:
+        productId: { type: string, format: uuid }
+        quantity: { type: integer, minimum: 1 }
+        unitPrice: { $ref: '#/components/schemas/DecimalAmount' }
+        priceType: { type: string, enum: [RETAIL, WHOLESALE] }
+        productsSubtotal: { $ref: '#/components/schemas/DecimalAmount' }
+        screenPrinting:
           type: object
-          required: [type, value]
+          required: [enabled, colors, lots, ratePerColor, amount]
           properties:
-            type: { type: string, enum: [PERCENTAGE, FIXED] }
-            value: { $ref: '#/components/schemas/DecimalAmount' }
+            enabled: { type: boolean }
+            colors: { type: integer, minimum: 0 }
+            lots: { type: integer, minimum: 0 }
+            ratePerColor: { $ref: '#/components/schemas/DecimalAmount' }
+            amount: { $ref: '#/components/schemas/DecimalAmount' }
+        lineSubtotal: { $ref: '#/components/schemas/DecimalAmount' }
+    DiscountResult:
+      type: object
+      required: [type, value, amount]
+      properties:
+        type: { type: string, enum: [PERCENTAGE, FIXED] }
+        value: { $ref: '#/components/schemas/DecimalAmount' }
+        amount: { $ref: '#/components/schemas/DecimalAmount' }
     OperationResult:
       type: object
-      required: [items, subtotalBeforeDiscount, subtotal, igv, total, currency]
+      required: [items, productsSubtotal, screenPrintingSubtotal, subtotalBeforeDiscount, subtotal, igvRate, igv, total, currency]
       properties:
-        items: { type: array, items: { type: object } }
+        items: { type: array, minItems: 1, items: { $ref: '#/components/schemas/OperationLineResult' } }
+        productsSubtotal: { $ref: '#/components/schemas/DecimalAmount' }
+        screenPrintingSubtotal: { $ref: '#/components/schemas/DecimalAmount' }
         subtotalBeforeDiscount: { $ref: '#/components/schemas/DecimalAmount' }
-        subtotal: { $ref: '#/components/schemas/DecimalAmount' }
+        discount: { $ref: '#/components/schemas/DiscountResult' }
         discountAmount: { $ref: '#/components/schemas/DecimalAmount' }
+        subtotal: { $ref: '#/components/schemas/DecimalAmount' }
         igvRate: { type: number, minimum: 0, maximum: 1 }
         igv: { $ref: '#/components/schemas/DecimalAmount' }
         total: { $ref: '#/components/schemas/DecimalAmount' }
@@ -657,17 +752,48 @@ components:
             createdAt: { type: string, format: date-time }
     StockMovementResult:
       type: object
-      required: [movementId, productId, previousStock, resultingStock]
+      required: [movementId, productId, movementType, quantityDelta, previousStock, resultingStock, createdAt]
       properties:
         movementId: { type: string, format: uuid }
         productId: { type: string, format: uuid }
+        movementType: { type: string, enum: [INITIAL_RECEIPT, RECEIPT, SALE_OUT, LOSS, DAMAGE, CORRECTION] }
+        quantityDelta: { type: integer, description: Diferencia aplicada al stock; las salidas utilizan valores negativos. }
         previousStock: { type: integer, minimum: 0 }
         resultingStock: { type: integer, minimum: 0 }
+        reason: { type: string, maxLength: 255 }
+        createdAt: { type: string, format: date-time }
+    StockItem:
+      type: object
+      required: [productId, name, dimensions, currentStock, active]
+      properties:
+        productId: { type: string, format: uuid }
+        name: { type: string, maxLength: 150 }
+        categoryId: { type: string, format: uuid }
+        materialId: { type: string, format: uuid }
+        categoryName: { type: string, maxLength: 100 }
+        materialName: { type: string, maxLength: 100 }
+        dimensions: { $ref: '#/components/schemas/Dimensions' }
+        currentStock: { type: integer, minimum: 0 }
+        active: { type: boolean }
     StockPage:
       type: object
       required: [items, page, pageSize, totalItems]
       properties:
-        items: { type: array, items: { type: object } }
+        items: { type: array, items: { $ref: '#/components/schemas/StockItem' } }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+        totalItems: { type: integer, minimum: 0 }
+    InventoryMovement:
+      allOf:
+        - $ref: '#/components/schemas/StockMovementResult'
+        - type: object
+          properties:
+            saleId: { type: string, format: uuid }
+    MovementPage:
+      type: object
+      required: [items, page, pageSize, totalItems]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/InventoryMovement' } }
         page: { type: integer, minimum: 1 }
         pageSize: { type: integer, minimum: 1, maximum: 100 }
         totalItems: { type: integer, minimum: 0 }
@@ -703,6 +829,3 @@ components:
         detail: { type: string }
         errorCode: { type: string }
         traceId: { type: string }
-
-
-
