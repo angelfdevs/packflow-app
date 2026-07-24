@@ -184,58 +184,69 @@ Entonces el sistema debe mostrar un mensaje indicando que no se encontraron prod
 
 <br>**US-011 — Ingresar cantidad para cotizar**</br>
 Descripción:
-Como administrador, quiero ingresar directamente la cantidad de productos, para cotizar pedidos grandes de manera rápida.
-Criterios de aceptación
-<br>**Escenario 1: Ingreso directo de cantidad**</br>
-Dado que el administrador seleccionó un producto.
-Cuando ingresa una cantidad válida.
-Entonces el sistema debe actualizar el cálculo de la cotización.
-<br>**Escenario 2: Uso de botones auxiliares**</br>
-Dado que el administrador ingresó una cantidad.
-Cuando utiliza los botones de aumento o disminución.
-Entonces el sistema debe actualizar la cantidad y recalcular los importes.
+Como administrador, quiero ingresar la cantidad de productos solicitada para que el sistema aplique automáticamente el precio minorista o mayorista correspondiente.
+Criterios de aceptación:
+<br>**Escenario 1: Aplicar precio minorista**</br>
+Dado que seleccioné un producto.
+Cuando ingreso una cantidad entre 1 y 100 unidades. 
+Entonces el sistema debe aplicar el precio minorista.
+<br>**Escenario 2: Aplicar precio mayorista**</br>
+Dado que seleccioné un producto. 
+Cuando ingreso una cantidad igual o superior a 101 unidades. 
+Entonces el sistema debe aplicar el precio mayorista.
 <br>**Escenario 3: Cantidad inválida**</br>
-Dado que el administrador ingresa una cantidad igual o menor que cero.
-Cuando intenta continuar.
-Entonces el sistema debe mostrar un mensaje de validación.
+Dado que seleccioné un producto.
+Cuando ingreso una cantidad menor o igual a cero.
+Entonces el sistema debe mostrar un mensaje de validación y no permitir continuar.
 <br>**Reglas de negocio**</br>
-- La cantidad debe ser un número entero mayor que cero.
-- El administrador debe poder escribir directamente la cantidad.
-- La cotización no debe modificar el stock.
-- La cotización es una simulación y no modifica el stock.
-- La disponibilidad del producto se consulta desde el módulo Inventario.
-- La cotización no debe bloquearse por falta de stock.
-- Si la cantidad es 1, se aplica el precio minorista.
-- Si la cantidad es igual o mayor que 2, se aplica el precio mayorista.
-- El precio se aplica automáticamente según la cantidad ingresada.
+- De 1 a 100 unidades se aplicará el precio minorista.
+- Desde 101 unidades se aplicará el precio mayorista.
+- La cantidad debe ser un número entero positivo.
+- El precio aplicado debe obtenerse del producto seleccionado.
+- La cotización no modifica el stock.
 
 
 <br>**US-012 — Aplicar serigrafía**</br>
 Descripción:
-Como administrador, quiero aplicar serigrafía de forma opcional y seleccionar la cantidad de colores, para calcular correctamente el precio solicitado por el cliente.
-Criterios de aceptación
+Como administrador, quiero aplicar serigrafía opcional a los productos para calcular correctamente el costo adicional según la cantidad de unidades y colores seleccionados.
+Criterios de aceptación:
 <br>**Escenario 1: Cotización sin serigrafía**</br>
-Dado que el administrador no activa la serigrafía.
-Cuando realiza la cotización.
-Entonces el sistema no debe agregar ningún recargo.
-<br>**Escenario 2: Serigrafía de un color**</br>
-Dado que el administrador activa la serigrafía y selecciona la cantidad de colores.
-Cuando el sistema recalcula la operación.
-Entonces debe agregar el valor configurado para la cantidad de colores seleccionados.
-<br>**Escenario 3: Cantidad de colores inválida**</br>
-Dado que el administrador activó la serigrafía.
-Cuando ingresa una cantidad de colores igual o menor que cero.
-Entonces el sistema debe mostrar un mensaje de validación y no agregar el recargo.
-<br>**Escenario 4: Cantidad no válida para serigrafía**</br>
-Dado que el administrador ingresó una cantidad que no es múltiplo de 100.
-Cuando intenta activar la serigrafía.
-Entonces el sistema debe impedir la operación y mostrar un mensaje indicando que la serigrafía solo aplica a cantidades múltiplos de 100.
+Dado que la serigrafía está desactivada.
+Cuando realizo una cotización
+Entonces el sistema no debe agregar ningún costo por serigrafía.
+<br>**Escenario 2: Cantidad insuficiente**</br>
+Dado que ingreso una cantidad menor a 20 unidades
+Cuando intento activar la serigrafía.
+Entonces el sistema debe impedirlo y mostrar un mensaje informativo.
+<br>**Escenario 3: Serigrafía entre 20 y 300 unidades**</br>
+Dado que ingreso entre 20 y 300 unidades. 
+Cuando selecciono uno o más colores. 
+Entonces el sistema debe aplicar S/45 por lote de 100 unidades y por color.
+<br>**Escenario 4: Serigrafía entre 301 y 500 unidades**</br>
+Dado que ingreso entre 301 y 500 unidades.
+Cuando selecciono uno o más colores.
+Entonces el sistema debe aplicar S/40 por lote de 100 unidades y por color.
+<br>**Escenario 5: Serigrafía desde 501 unidades**</br>
+Dado que ingreso 501 unidades o más.
+Cuando selecciono uno o más colores.
+Entonces el sistema debe aplicar S/30 por lote de 100 unidades y por color.
+<br>**Escenario 6: Cantidad con remanente**</br>
+Dado que ingreso 150 unidades y selecciono un color. 
+Entonces el sistema debe considerar dos lotes: 100 y 50 unidades, aplicando el costo de serigrafía a ambos lotes.
+<br>**Escenario 7: Cantidad de colores inválida**</br>
+Dado que activo la serigrafía.
+Cuando ingreso una cantidad de colores menor o igual a cero.
+Entonces el sistema debe mostrar un mensaje de validación.
 <br>**Reglas de negocio**</br>
-- La serigrafía solo está disponible para cantidades múltiplos de 100.
-- Cada bloque de 100 unidades genera un recargo de S/45 por color.
-- Costo de serigrafía = bloques de 100 × cantidad de colores × valor por color.
-- Si la cantidad no es múltiplo de 100, el sistema no debe permitir aplicar serigrafía.
-- El recargo de serigrafía no se multiplica directamente por cada unidad.
+- La serigrafía es opcional.
+- Solo puede aplicarse desde 20 unidades.
+- Los lotes se calcularán mediante la fórmula: Lotes = REDONDEAR HACIA ARRIBA(cantidad / 100)
+- El costo se calculará mediante: Costo de serigrafía = lotes × colores × tarifa
+- De 20 a 300 unidades, la tarifa será S/45.
+- De 301 a 500 unidades, la tarifa será S/40.
+- Desde 501 unidades, la tarifa será S/30.
+- Un remanente también se considera un lote.
+- La cantidad de colores debe ser un número entero positivo.
 
 <br>**US-013 — Calcular cotización**</br>
 Descripción:
@@ -254,17 +265,14 @@ Dado que no se seleccionó un producto o cantidad.
 Cuando el administrador intenta calcular.
 Entonces el sistema debe solicitar la información faltante.
 <br>**Reglas de negocio**</br>
-- Si no se aplica serigrafía, el costo de serigrafía es S/0.
-- Precio de productos = precio unitario aplicable × cantidad
-- Si se aplica serigrafía, bloques de serigrafía = cantidad ÷ 100.
-- Costo de serigrafía = bloques de serigrafía × colores × valor por color.
-- Subtotal = precio de productos + costo de serigrafía
-- IGV = subtotal × tasa configurada
-- Total = subtotal + IGV
-- Las cotizaciones no se guardan.
-- Si la cantidad es 1, se aplica el precio minorista.
-- Si la cantidad es igual o mayor que 2, se aplica el precio mayorista.
-- El precio se aplica automáticamente según la cantidad ingresada.
+- El subtotal base se calculará usando el precio minorista o mayorista correspondiente.
+- La serigrafía se agregará al subtotal base cuando corresponda.
+- El descuento será opcional.
+- Solo podrá aplicarse un descuento por operación.
+- El descuento podrá ser porcentual o de monto fijo.
+- La cotización mostrará: Subtotal base, Costo de serigrafía, Descuento aplicado, Subtotal final, IGV y Total.
+- Las cotizaciones no se guardarán.
+- Las cotizaciones no modifican el stock.
 
 
 <br>**US-014 — Registrar venta**</br>
@@ -283,10 +291,26 @@ Entonces el sistema debe mostrar los campos pendientes.
 Dado que el administrador está revisando los datos de la venta.
 Cuando cancela la operación.
 Entonces el sistema no debe registrar la venta ni modificar el stock.
+<br>**Escenario 4: Registrar venta con descuento porcentual**</br>
+Dado que ingreso un descuento porcentual válido. 
+Cuando confirmo la venta.
+Entonces el sistema debe calcular el descuento y guardar la venta con sus valores correspondientes.
+<br>**Escenario 5: Registrar venta con descuento fijo**</br>
+Dado que ingreso un descuento fijo válido.
+Cuando confirmo la venta.
+Entonces el sistema debe calcular el descuento y guardar la venta con sus valores correspondientes.
+<br>**Escenario 6: Ingresar dos tipos de descuento**</br>
+Dado que ingreso simultáneamente un descuento porcentual y uno fijo.
+Cuando intento confirmar la venta. 
+Entonces el sistema debe impedirlo y mostrar un mensaje de validación.
 <br>**Reglas de negocio**</br>
 - Solo se deben registrar ventas confirmadas.
 - La venta debe conservar producto, cantidad, precios, serigrafía, subtotal, IGV, total y fecha.
 - Una venta cancelada no debe generar movimientos de stock.
+- El descuento es opcional.
+- Solo se permite un tipo de descuento por venta.
+- La venta debe guardar el tipo, valor y monto real del descuento aplicado.
+- La venta confirmada debe disminuir el stock automáticamente.
 
 <br>**US-015 — Disminuir stock automáticamente por venta**</br>
 Descripción:
@@ -326,24 +350,36 @@ Entonces el sistema debe mostrar un mensaje informativo.
 - Solo deben mostrarse ventas confirmadas.
 - Las ventas históricas deben conservar sus precios y totales originales.
 - Una modificación posterior del precio del producto no debe alterar ventas anteriores.
+- El historial debe mostrar el descuento aplicado, si existiera.
+- Debe indicar si el descuento fue porcentual o fijo.
+- Debe mostrar el subtotal final, IGV y total de la venta.
+- Debe conservar los valores utilizados al momento de registrar la venta.
 
 <br>**US-017 — Configurar IGV y serigrafía**</br>
 Descripción:
-Como administrador, quiero configurar la tasa del IGV y el valor de la serigrafía, para mantener actualizados los cálculos de la aplicación.
-Criterios de aceptación
-<br>**Escenario 1: Configuración exitosa**</br>
-Dado que el administrador se encuentra en la configuración.
-Cuando ingresa valores válidos y confirma los cambios.
-Entonces el sistema debe guardar la nueva configuración.
-<br>**Escenario 2: Valores inválidos**</br>
-Dado que el administrador ingresa valores negativos o inválidos.
-Cuando intenta guardar la configuración.
-Entonces el sistema debe mostrar un error y conservar la configuración anterior.
+Como administrador, quiero configurar la tasa del IGV y las tarifas de serigrafía para que los cálculos de cotizaciones y ventas se adapten a las reglas comerciales del negocio.
+Criterios de aceptación:
+<br>**Escenario 1: Configurar IGV**</br>
+Dado que accedo a configuración. 
+Cuando ingreso una tasa de IGV válida. 
+Entonces el sistema debe guardar la nueva tasa.
+<br>**Escenario 2: Configurar tarifas de serigrafía**</br>
+Dado que accedo a configuración.
+Cuando registro las tarifas correspondientes.
+Entonces el sistema debe guardar:
+De 20 a 300 unidades: S/45.
+De 301 a 500 unidades: S/40.
+Desde 501 unidades: S/30.
+<br>**Escenario 3: Configurar valores inválidos**</br>
+Dado que ingreso una tasa o tarifa inválida. 
+Cuando intento guardar. 
+Entonces el sistema debe mostrar un mensaje de validación.
 <br>**Reglas de negocio**</br>
-- El IGV tendrá un valor inicial de 18 %.
-- La serigrafía tendrá un valor inicial de S/45 por cada bloque de 100 unidades y por color.
-- Los valores configurados se utilizarán en nuevas cotizaciones y ventas.
-- Las ventas anteriores deben conservar sus valores originales.
+- El IGV tendrá inicialmente un valor de 18 %.
+- La serigrafía tendrá un mínimo de 20 unidades.
+- Las tarifas se aplicarán por lote de 100 unidades y por color.
+- El administrador podrá modificar las tarifas.
+- La configuración será utilizada tanto por cotizaciones como por ventas.
 
 <br>**US-018 — Configurar apariencia de la aplicación**</br>
 Descripción:
@@ -438,3 +474,36 @@ Entonces el sistema debe solicitar la información faltante.
 - La corrección podrá aumentar o disminuir el stock.
 - Todo ajuste debe registrar producto, cantidad, motivo, fecha, stock anterior y stock posterior.
 - El stock nunca puede ser negativo.
+
+<br>**US-023 — Aplicar descuento**</br>
+Descripción:
+Como administrador, quiero aplicar un descuento opcional a una cotización o venta para ofrecer condiciones comerciales especiales a un cliente.
+Criterios de aceptación:
+<br>**Escenario 1: Operación sin descuento**</br>
+Dado que no ingreso ningún descuento.
+Cuando calculo una cotización o venta.
+Entonces el sistema debe mantener el importe original.
+<br>**Escenario 2: Descuento porcentual**</br>
+Dado que selecciono el tipo porcentual.
+Cuando ingreso un porcentaje válido.
+Entonces el sistema debe calcular y mostrar el monto descontado.
+<br>**Escenario 3: Descuento fijo**</br>
+Dado que selecciono el tipo fijo.
+Cuando ingreso un monto válido.
+Entonces el sistema debe calcular y mostrar el descuento aplicado.
+<br>**Escenario 4: Descuento superior al importe**</br>
+Dado que ingreso un descuento fijo mayor al importe de la operación.
+Cuando intento continuar. 
+Entonces el sistema debe impedirlo.
+<br>**Escenario 5: Dos descuentos simultáneos**</br>
+Dado que ingreso un descuento porcentual y uno fijo.
+Cuando intento continuar.
+Entonces el sistema debe impedirlo.
+<br>**Reglas de negocio**</br>
+- El descuento es opcional.
+- Solo se permite un descuento por operación.
+- El descuento puede ser porcentual o fijo.
+- El porcentaje debe estar entre 0 % y 100 %.
+- El descuento fijo no puede ser negativo ni superar el importe permitido.
+- Las cotizaciones no guardan el descuento.
+- Las ventas deben guardar el tipo, valor y monto del descuento.
