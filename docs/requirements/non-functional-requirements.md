@@ -122,7 +122,7 @@ Descripción:
 Los cálculos de precios, serigrafía, subtotal, IGV y total deben ser exactos y consistentes.
 Criterios de aceptación
 <br>**Escenario 1: Cálculo consistente**</br>
-Dado que el administrador selecciona un producto y una cantidad.
+Dado que el administrador selecciona uno o varios productos e ingresa sus cantidades.
 Cuando realiza una cotización o venta.
 Entonces el frontend y el backend deben obtener el mismo resultado.
 <br>**Escenario 2: Redondeo**</br>
