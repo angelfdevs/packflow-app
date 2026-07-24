@@ -47,7 +47,7 @@ Responsable de:
 - Sesiones activas y revocación de sesiones.
 - Datos de la cuenta y del negocio.
 
-El MVP operativo manejará una cuenta administradora por negocio. No se implementarán roles avanzados ni múltiples usuarios en la primera versión.
+La primera versión operativa manejará una cuenta administradora por negocio. No se implementarán múltiples usuarios ni roles avanzados mientras no exista una necesidad real del negocio.
 
 ### 4.2 Catalog
 
@@ -269,7 +269,11 @@ La seguridad se implementará mediante defensa en profundidad:
 - HSTS y encabezados de seguridad.
 - CORS restrictivo por origen permitido.
 - Protección CSRF/antiforgery cuando se utilicen cookies.
-- Cookies `HttpOnly`, `Secure` y `SameSite`.
+- Cookie `pf_refresh` con `HttpOnly`, `Secure`, `SameSite=None` y `Path=/api/v1/auth`.
+- Cookie antiforgery `XSRF-TOKEN` con `Secure`, `SameSite=None` y `Path=/api/v1/auth`.
+- Encabezado `X-CSRF-TOKEN` obligatorio en operaciones autenticadas mediante cookies.
+- Access tokens únicamente en memoria del frontend.
+- Refresh tokens rotativos con expiración absoluta, sin cierre automático por inactividad.
 - Hash seguro de contraseñas mediante una solución estándar de ASP.NET Core.
 - Recuperación de contraseña mediante token de un solo uso y expiración controlada.
 - Sesión persistente hasta que el usuario cierre sesión, revoque la sesión o la cuenta sea bloqueada.
@@ -308,26 +312,33 @@ La venta se considerará confirmada únicamente cuando se hayan guardado la oper
 
 ## 11. Despliegue e infraestructura
 
-La infraestructura inicial será:
+La infraestructura objetivo para producción será:
 
 ```text
 Usuario
    ↓ HTTPS
-Cloudflare Pages
-   ↓ HTTPS / API REST
-Backend ASP.NET Core en contenedor Docker
-   ↓ red privada o conexión segura
-PostgreSQL administrado
+Cloudflare Pages + CDN + WAF/DDoS
+   ↓ HTTPS
+Render Load Balancer
+   ├── Backend ASP.NET Core - Instancia 1
+   └── Backend ASP.NET Core - Instancia 2
+          ↓ TLS
+Render PostgreSQL con alta disponibilidad
+   ├── Nodo principal
+   └── Nodo standby
 ```
 
 Componentes previstos:
 
 - Vue.js desplegado en Cloudflare Pages.
-- Backend ASP.NET Core desplegado como servicio Docker en Render.
-- PostgreSQL administrado en Render.
+- Backend ASP.NET Core desplegado como servicio Docker stateless en Render.
+- Mínimo dos instancias del backend en producción.
+- PostgreSQL administrado en Render con PITR y alta disponibilidad en el plan contratado.
 - Código fuente y flujo CI/CD en GitHub.
-- Monitoreo básico de disponibilidad.
+- Monitoreo externo de frontend, backend y base de datos.
 - Variables de entorno para configuración y secretos.
+- El backend no utilizará discos persistentes ni estado local de sesión.
+- Los despliegues utilizarán health checks, apagado controlado y rollback.
 
 ## 12. CI/CD y calidad
 
@@ -352,22 +363,17 @@ Los objetivos de PackFlow serán:
 - RTO objetivo: máximo una hora.
 - RPO objetivo: máximo 15 minutos.
 
-Estos son objetivos del sistema y no deben presentarse como garantías mientras se utilice una única instancia de backend y una única base de datos básica. Para cumplirlos de forma contractual se requerirían, según el proveedor, alta disponibilidad, redundancia, respaldos continuos, monitoreo avanzado y posiblemente instancias superiores.
+Estos objetivos se medirán utilizando la infraestructura redundante definida en esta arquitectura. El 99.99 % no deberá presentarse como garantía contractual hasta confirmar el SLA del proveedor, el plan contratado y los resultados del monitoreo.
 
-La primera versión deberá contar como mínimo con respaldos administrados, recuperación probada y un procedimiento documentado de restauración.
+La primera versión deberá contar con PITR, respaldos lógicos independientes, recuperación probada y un procedimiento documentado de restauración.
 
 ## 14. Costos de infraestructura
 
 La arquitectura no genera costos de licencia por utilizar DDD, Clean Architecture, CQRS, Docker, CORS o los bounded contexts.
 
-El presupuesto inicial estimado es de aproximadamente US$13 mensuales, equivalente a unos S/45 según el tipo de cambio utilizado en la planificación:
+El presupuesto de aproximadamente US$13 mensuales corresponde únicamente a una infraestructura básica con una instancia de backend y una base de datos sin alta disponibilidad.
 
-- Backend: aproximadamente US$7.
-- PostgreSQL administrado: aproximadamente US$6.
-- Frontend, GitHub y HTTPS: inicialmente sin costo.
-- Monitoreo y correo transaccional: uso de planes gratuitos mientras el volumen sea bajo.
-
-Este presupuesto es adecuado para comenzar con una arquitectura funcional y segura para un negocio pequeño. La alta disponibilidad, el cumplimiento estricto del 99.99 %, los respaldos avanzados, el WAF avanzado y la observabilidad empresarial pueden requerir una ampliación posterior.
+La infraestructura objetivo con dos instancias de backend, PostgreSQL HA, respaldos avanzados, monitoreo y correo transaccional tendrá un costo superior. El precio definitivo deberá verificarse con los planes vigentes del proveedor antes del despliegue.
 
 ## 15. Evolución futura
 
@@ -403,4 +409,3 @@ La solución estará preparada para crecer, mantener la consistencia del stock, 
 - [Cloudflare plans](https://www.cloudflare.com/plans/).
 - [Resend pricing](https://resend.com/pricing).
 - [UptimeRobot pricing](https://uptimerobot.com/pricing/).
-
