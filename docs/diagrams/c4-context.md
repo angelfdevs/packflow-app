@@ -1,5 +1,5 @@
 Diagrama C4 Context
-```dls
+```dsl
 workspace "PackFlow - C4 Context" "Diagrama de contexto del sistema PackFlow." {
 
     !identifiers hierarchical
