@@ -630,3 +630,4 @@ Entonces el sistema no debe guardar la operación ni modificar el stock.
 - El descuento será único para toda la operación.
 - El descuento se aplicará antes del IGV.
 - El backend debe recalcular todos los importes y no confiar en los valores enviados por el frontend.
+
