@@ -507,3 +507,66 @@ Entonces el sistema debe impedirlo.
 - El descuento fijo no puede ser negativo ni superar el importe permitido.
 - Las cotizaciones no guardan el descuento.
 - Las ventas deben guardar el tipo, valor y monto del descuento.
+
+<br>**US-024 — Solicitar recuperación de contraseña**</br>
+Descripción:
+Como administrador, quiero solicitar la recuperación de mi contraseña mediante mi correo electrónico, para volver a acceder a la cuenta de mi negocio si olvidé mis credenciales.
+Criterios de aceptación
+<br>**Escenario 1: Correo registrado**</br>
+Dado que el administrador se encuentra en el formulario de recuperación de contraseña.
+Cuando ingresa un correo electrónico registrado y solicita la recuperación.
+Entonces el sistema debe mostrar un mensaje genérico e iniciar el envío de un enlace de recuperación.
+<br>**Escenario 2: Correo no registrado**</br>
+Dado que el administrador ingresa un correo electrónico que no pertenece a una cuenta registrada.
+Cuando solicita la recuperación.
+Entonces el sistema debe mostrar el mismo mensaje genérico y no debe revelar si el correo existe.
+<br>**Escenario 3: Correo inválido o incompleto**</br>
+Dado que el administrador ingresa un correo vacío o con formato inválido.
+Cuando intenta solicitar la recuperación.
+Entonces el sistema debe mostrar un mensaje de validación y no debe iniciar el proceso.
+<br>**Escenario 4: Solicitudes excesivas**</br>
+Dado que se realizan varias solicitudes de recuperación en un periodo corto.
+Cuando el administrador intenta solicitar otra recuperación.
+Entonces el sistema debe limitar temporalmente la operación y mostrar un mensaje genérico.
+<br>**Reglas de negocio**</br>
+- El sistema no debe revelar si un correo está registrado.
+- El enlace de recuperación debe enviarse únicamente por correo electrónico.
+- El token debe ser aleatorio, de un solo uso y tener una expiración limitada.
+- El token no debe almacenarse en texto plano ni registrarse en logs.
+- El enlace debe utilizar HTTPS.
+- El sistema debe limitar las solicitudes repetitivas.
+- El correo no debe contener la contraseña actual.
+- Una nueva solicitud podrá invalidar tokens anteriores.
+
+<br>**US-025 — Restablecer contraseña**</br>
+Descripción:
+Como administrador, quiero establecer una nueva contraseña utilizando un enlace válido de recuperación, para recuperar el acceso seguro a la cuenta de mi negocio.
+Criterios de aceptación
+<br>**Escenario 1: Restablecimiento exitoso**</br>
+Dado que el administrador posee un enlace de recuperación válido y vigente.
+Cuando ingresa una nueva contraseña válida y la confirma correctamente.
+Entonces el sistema debe actualizar la contraseña, invalidar el token y mostrar un mensaje de confirmación.
+<br>**Escenario 2: Token inválido o expirado**</br>
+Dado que el enlace de recuperación es inválido, fue utilizado o expiró.
+Cuando el administrador intenta establecer una nueva contraseña.
+Entonces el sistema debe rechazar la operación y solicitar una nueva recuperación.
+<br>**Escenario 3: Contraseña no válida**</br>
+Dado que el administrador ingresa una contraseña que no cumple los requisitos de seguridad.
+Cuando intenta confirmar el cambio.
+Entonces el sistema debe mostrar los requisitos incumplidos y no actualizar la contraseña.
+<br>**Escenario 4: Contraseñas diferentes**</br>
+Dado que el administrador ingresa dos contraseñas diferentes.
+Cuando intenta confirmar el restablecimiento.
+Entonces el sistema debe mostrar un mensaje de validación y no actualizar la contraseña.
+<br>**Escenario 5: Uso repetido del token**</br>
+Dado que el token ya fue utilizado correctamente.
+Cuando el administrador intenta utilizarlo nuevamente.
+Entonces el sistema debe rechazar la operación.
+<br>**Reglas de negocio**</br>
+- El token solo podrá utilizarse una vez.
+- El token debe expirar después de un periodo definido.
+- La nueva contraseña debe almacenarse mediante un hash seguro.
+- La contraseña nunca debe enviarse en respuestas de la API ni registrarse en logs.
+- Después de restablecer la contraseña, las sesiones activas anteriores deben revocarse.
+- El administrador deberá iniciar sesión nuevamente después de restablecer la contraseña.
+- El sistema no debe mostrar información técnica del token.
