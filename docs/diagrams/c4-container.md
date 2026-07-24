@@ -1,5 +1,5 @@
 Diagrama C4 Container
-```dls
+```dsl
 workspace "PackFlow - C4 Container" "Diagrama de contenedores del sistema PackFlow." {
 
     !identifiers hierarchical
