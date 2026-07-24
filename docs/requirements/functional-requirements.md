@@ -54,25 +54,38 @@ Entonces el sistema debe rechazar la operación.
 
 <br>**US-004 — Registrar producto**</br>
 Descripción:
-Como administrador, quiero registrar un producto, para incorporarlo al catálogo del negocio y utilizarlo en consultas, cotizaciones y ventas.
+Como administrador, quiero registrar un producto con sus características y precios, para incorporarlo al catálogo del negocio y utilizarlo en consultas, cotizaciones y ventas.
 Criterios de aceptación
-<br>**Escenario 1: Registro exitoso**</br>
+<br>**Escenario 1: Registro exitoso sin stock inicial**</br>
 Dado que el administrador se encuentra en el formulario de productos.
-Cuando completa correctamente los datos obligatorios.
-Entonces el sistema debe registrar el producto y mostrar un mensaje de confirmación.
-<br>**Escenario 2: Datos obligatorios incompletos**</br>
-Dado que el administrador se encuentra en el formulario de productos.
-Cuando intenta guardar el producto sin completar los campos obligatorios.
-Entonces el sistema debe mostrar los campos pendientes y no registrar el producto.
-<br>**Escenario 3: Datos inválidos**</br>
-Dado que el administrador ingresa precios o stock negativos.
-Cuando intenta guardar el producto.
-Entonces el sistema debe mostrar un mensaje de validación y rechazar el registro.
+Cuando completa correctamente la categoría, nombre, medidas, material, precio minorista y precio mayorista.
+Entonces el sistema debe registrar el producto activo con stock cero.
+<br>**Escenario 2: Registro exitoso con stock inicial**</br>
+Dado que el administrador registra un producto e ingresa una cantidad inicial.
+Cuando confirma la operación.
+Entonces el sistema debe registrar el producto y generar un movimiento de ingreso inicial con la cantidad indicada.
+<br>**Escenario 3: Datos obligatorios incompletos**</br>
+Dado que el administrador deja campos obligatorios vacíos.
+Cuando intenta registrar el producto.
+Entonces el sistema debe mostrar los campos pendientes y rechazar la operación.
+<br>**Escenario 4: Datos inválidos**</br>
+Dado que el administrador ingresa precios negativos, cantidades inválidas o información incorrecta.
+Cuando intenta registrar el producto.
+Entonces el sistema debe mostrar un mensaje de validación y no guardar la información.
+<br>**Escenario 5: Producto duplicado**</br>
+Dado que ya existe un producto con las mismas características dentro del negocio.
+Cuando el administrador intenta registrarlo nuevamente.
+Entonces el sistema debe informar el conflicto y evitar duplicados según las reglas definidas.
 <br>**Reglas de negocio**</br>
-- El producto debe tener categoría, nombre, medidas, material, precio minorista, precio mayorista y stock inicial.
-- El stock inicial no puede ser negativo.
+- El producto debe pertenecer a la cuenta del negocio autenticado.
+- El producto debe tener categoría, nombre, medidas, material, precio minorista y precio mayorista.
 - Los precios no pueden ser negativos.
-- El producto debe pertenecer a la cuenta del negocio.
+- El stock inicial no se modificará directamente en la entidad producto.
+- El stock inicial se registrará mediante un movimiento de ingreso.
+- Todo movimiento inicial debe guardar producto, cantidad, fecha y tipo de movimiento.
+- La edición del producto no debe modificar directamente el stock.
+- El producto se registrará activo por defecto.
+- El backend debe validar toda la información recibida.
 
 <br>**US-005 — Editar producto**</br>
 Descripción:
@@ -570,3 +583,50 @@ Entonces el sistema debe rechazar la operación.
 - Después de restablecer la contraseña, las sesiones activas anteriores deben revocarse.
 - El administrador deberá iniciar sesión nuevamente después de restablecer la contraseña.
 - El sistema no debe mostrar información técnica del token.
+
+<br>**US-026 — Registrar una operación con múltiples productos**</br>
+Descripción:
+Como administrador, quiero agregar varios productos a una cotización o venta, para calcular o registrar una operación completa solicitada por el cliente.
+Criterios de aceptación
+<br>**Escenario 1: Agregar varios productos**</br>
+Dado que el administrador se encuentra en el formulario de cotización o venta.
+Cuando selecciona varios productos activos e ingresa una cantidad para cada uno.
+Entonces el sistema debe mostrar cada producto como una línea independiente de la operación.
+<br>**Escenario 2: Aplicar precios por producto**</br>
+Dado que la operación contiene varios productos.
+Cuando se calcula la operación.
+Entonces el sistema debe aplicar el precio minorista o mayorista según la cantidad de cada producto.
+<br>**Escenario 3: Cotización con múltiples productos**</br>
+Dado que el administrador agregó varios productos a una cotización.
+Cuando solicita el cálculo.
+Entonces el sistema debe mostrar el subtotal, serigrafía, descuento, IGV y total de toda la operación sin modificar el stock ni guardar la cotización.
+<br>**Escenario 4: Venta con stock suficiente**</br>
+Dado que todos los productos tienen stock suficiente.
+Cuando el administrador confirma la venta.
+Entonces el sistema debe guardar la venta, registrar sus detalles y disminuir el stock de todos los productos correspondientes.
+<br>**Escenario 5: Stock insuficiente en un producto**</br>
+Dado que uno de los productos no tiene stock suficiente.
+Cuando el administrador intenta confirmar la venta.
+Entonces el sistema debe rechazar toda la operación y no modificar ningún producto ni registrar parcialmente la venta.
+<br>**Escenario 6: Producto inactivo**</br>
+Dado que uno de los productos seleccionados está desactivado.
+Cuando el administrador intenta continuar con la cotización o venta.
+Entonces el sistema debe impedir su selección o solicitar que sea reemplazado por un producto activo.
+<br>**Escenario 7: Cancelar operación**</br>
+Dado que el administrador agregó varios productos.
+Cuando cancela la cotización o venta antes de confirmarla.
+Entonces el sistema no debe guardar la operación ni modificar el stock.
+<br>**Reglas de negocio**</br>
+- Una operación debe contener al menos un producto.
+- Cada producto debe aparecer una sola vez dentro de la operación.
+- Cada línea debe tener una cantidad entera mayor que cero.
+- El precio minorista o mayorista se determinará por la cantidad de cada línea.
+- La serigrafía se calculará por cada línea de producto y no se mezclarán cantidades de productos diferentes.
+- Solo se podrán seleccionar productos activos.
+- Una cotización no se guardará ni modificará el stock.
+- Una venta confirmada guardará todos sus detalles.
+- La venta y todos sus movimientos de inventario deben ejecutarse dentro de una única transacción.
+- Si un producto no tiene stock suficiente, toda la venta debe rechazarse.
+- El descuento será único para toda la operación.
+- El descuento se aplicará antes del IGV.
+- El backend debe recalcular todos los importes y no confiar en los valores enviados por el frontend.
