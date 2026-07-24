@@ -143,7 +143,7 @@ Respuesta `200 OK`:
   "accessToken": "access-token-temporal",
   "expiresIn": 900,
   "account": {
-    "id": "account-uuid",
+    "businessAccountId": "account-uuid",
     "businessName": "Negocio de ejemplo",
     "email": "admin@negocio.com"
   }
@@ -948,4 +948,3 @@ El archivo deberá mantenerse sincronizado con los endpoints implementados e inc
 - Requisitos de seguridad por endpoint.
 
 Swagger UI deberá utilizarse para desarrollo y pruebas, pero no debe quedar expuesto sin protección en producción.
-
