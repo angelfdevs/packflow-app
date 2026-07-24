@@ -307,6 +307,8 @@ PostgreSQL será la base de datos principal. Se aplicarán:
 - Control de concurrencia.
 - Registro de movimientos de stock.
 - Claves de idempotencia para evitar operaciones duplicadas.
+- Row-Level Security para reforzar el aislamiento por `business_account_id`.
+- Foreign keys compuestas para impedir referencias entre negocios.
 
 La venta se considerará confirmada únicamente cuando se hayan guardado la operación y su movimiento de inventario dentro de la misma transacción.
 
@@ -339,6 +341,8 @@ Componentes previstos:
 - Variables de entorno para configuración y secretos.
 - El backend no utilizará discos persistentes ni estado local de sesión.
 - Los despliegues utilizarán health checks, apagado controlado y rollback.
+
+La especificación operativa del despliegue se encuentra en [`docs/deployment/deployment.md`](../deployment/deployment.md).
 
 ## 12. CI/CD y calidad
 
