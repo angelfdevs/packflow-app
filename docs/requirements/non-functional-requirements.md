@@ -27,7 +27,7 @@ Entonces la sesión debe permanecer activa sin cerrarse automáticamente por ina
 Dado que el administrador está completando una venta.
 Cuando transcurre un periodo prolongado sin interacción.
 Entonces el sistema no debe cerrar la sesión ni perder la información ingresada.
-<br>**Escenario 3: Cierre de sesión manual**</br>
+<br>**Escenario 3: Sesión persistente durante una cotización o venta**</br>
 Dado que el administrador está completando una cotización o venta.
 Cuando transcurre un periodo prolongado sin interacción.
 Entonces el sistema no debe cerrar automáticamente la sesión ni perder la información ingresada.
@@ -134,7 +134,7 @@ Entonces debe utilizar dos decimales.
 - Desde 101 unidades se debe aplicar el precio mayorista.
 - La serigrafía solo debe habilitarse desde 20 unidades.
 - Los lotes deben calcularse mediante ceil(cantidad / 100).
-- La tarifa debe seleccionarse según el total de unidades:20–300: S/45, 301–500: S/40, 501 en adelante: S/30.
+- La tarifa de serigrafía debe seleccionarse según la cantidad de cada línea de producto: 20–300: S/45, 301–500: S/40, 501 en adelante: S/30.
 - El costo de serigrafía debe calcularse por lote y por color.
 - El descuento debe validarse antes de calcular el resultado final.
 - Solo puede existir un tipo de descuento por operación.
