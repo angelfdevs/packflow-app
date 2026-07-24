@@ -39,8 +39,12 @@ Entonces puede invalidar la sesión y solicitar un nuevo inicio de sesión.
 - No debe existir cierre automático por inactividad durante el uso normal.
 - La sesión debe permanecer activa mientras el administrador no seleccione “Cerrar sesión”.
 - La sesión debe renovarse de forma segura sin interrumpir al usuario.
+- El access token debe permanecer únicamente en memoria del frontend.
+- El refresh token debe almacenarse en una cookie `HttpOnly`, `Secure` y `SameSite=None`.
+- El refresh token debe rotarse después de cada renovación.
+- La sesión debe tener una expiración absoluta, aunque no debe expirar por inactividad.
 - Después de cerrar sesión, la sesión anterior no debe permitir acceder a módulos protegidos.
-- La sesión podrá revocarse por cambio de contraseña, desactivación de cuenta o una situación de seguridad.
+- La sesión podrá revocarse por cambio de contraseña, recuperación de contraseña, desactivación de cuenta o una situación de seguridad.
 - La información de formularios importantes debe conservarse temporalmente ante una interrupción de red.
 - El sistema debe limitar temporalmente los intentos fallidos consecutivos de inicio de sesión.
 
@@ -122,7 +126,7 @@ Descripción:
 Los cálculos de precios, serigrafía, subtotal, IGV y total deben ser exactos y consistentes.
 Criterios de aceptación
 <br>**Escenario 1: Cálculo consistente**</br>
-Dado que el administrador selecciona uno o varios productos e ingresa sus cantidades.
+Dado que el administrador selecciona un producto y una cantidad.
 Cuando realiza una cotización o venta.
 Entonces el frontend y el backend deben obtener el mismo resultado.
 <br>**Escenario 2: Redondeo**</br>
@@ -213,8 +217,11 @@ Entonces la información debe poder restaurarse desde una copia válida.
 <br>**Restricciones técnicas**</br>
 - Las copias deben realizarse como mínimo diariamente.
 - Los respaldos deben conservarse durante al menos siete días.
-- Debe definirse un tiempo máximo de recuperación.
-- Debe definirse la cantidad máxima de información que podría perderse.
+- Debe utilizarse recuperación punto en el tiempo cuando el plan contratado lo permita.
+- Debe existir un respaldo lógico independiente con retención mínima de siete días.
+- Debe existir un procedimiento documentado y probado de restauración.
+- El RTO objetivo será de una hora.
+- El RPO objetivo será de 15 minutos.
 
 <br>**RNF-012 — Diseño responsive**</br>
 Descripción:
@@ -271,6 +278,8 @@ Entonces los demás módulos no deben verse afectados innecesariamente.
 - Las migraciones deben mantenerse versionadas.
 - Las decisiones técnicas importantes deben documentarse.
 - Debe evitarse duplicar reglas de cálculo entre frontend y backend.
+- Las operaciones de actualización deben utilizar control de concurrencia mediante `If-Match` y ETags.
+- Las operaciones que modifican datos deben utilizar idempotencia para soportar reintentos seguros.
 
 <br>**RNF-015 — Pruebas**</br>
 Descripción:
@@ -325,6 +334,9 @@ Entonces la venta debe guardarse y el stock debe disminuir correctamente.
 - Las pruebas deben ejecutarse antes de cada despliegue a producción.
 - Las pruebas del frontend y backend deben utilizar resultados consistentes.
 - Deben realizarse pruebas para evitar que una venta genere stock negativo.
+- Deben probarse solicitudes repetidas con la misma clave de idempotencia.
+- Deben probarse conflictos de concurrencia mediante `If-Match` y ETags.
+- Deben probarse aislamiento entre cuentas de negocio.
 - Deben probarse cantidades de 19, 20, 100, 101, 150, 200, 300, 301, 500 y 501 unidades.
 
 <br>**RNF-016 — Documentación técnica**</br>
@@ -357,7 +369,7 @@ Entonces los importes deben mostrarse en soles peruanos.
 <br>**Escenario 2: Fechas y horarios**</br>
 Dado que el sistema registra una venta o movimiento.
 Cuando muestra la fecha y hora.
-Entonces debe utilizar la zona horaria configurada para el negocio.
+Entonces debe utilizar la zona horaria fija `America/Lima`.
 <br>**Restricciones técnicas**</br>
 - La moneda principal será el sol peruano.
 - La interfaz utilizará el idioma español.
@@ -382,6 +394,7 @@ Entonces el sistema debe registrar la incidencia y generar una alerta.
 <br>**Restricciones técnicas**</br>
 - El backend debe contar con un endpoint de health check.
 - El health check debe comprobar la conexión con la base de datos.
+- Deben existir los endpoints `/health/live` y `/health/ready`.
 - El frontend debe ser verificable mediante una solicitud externa.
 - Debe existir un monitor externo que compruebe periódicamente el frontend y backend.
 - Los logs deben incluir fecha, nivel, operación y contexto del error.
@@ -390,6 +403,7 @@ Entonces el sistema debe registrar la incidencia y generar una alerta.
 - La aplicación debe considerarse parcialmente no disponible si el frontend, backend o base de datos no responde.
 - El sistema debe generar alertas ante fallas críticas.
 - La medición de disponibilidad debe realizarse mediante un servicio externo.
+- Los despliegues deben utilizar health checks y apagado controlado.
 
 <br>**RNF-019 — Privacidad de la información**</br>
 Descripción:
@@ -427,6 +441,8 @@ Entonces debe registrar el incidente y notificarlo para iniciar su recuperación
 - La medición debe considerar el funcionamiento completo del frontend, backend y base de datos.
 - La aplicación no debe considerarse disponible si el frontend carga, pero la API o la base de datos no responden.
 - Los despliegues deben minimizar la interrupción del servicio.
+- La producción debe utilizar como mínimo dos instancias stateless del backend.
+- PostgreSQL debe utilizar alta disponibilidad y respaldos administrados en el plan contratado.
 - El monitoreo debe comprobar frontend, backend y base de datos.
 - La aplicación debe considerarse no disponible si cualquiera de sus componentes esenciales no responde.
 - La medición debe realizarse mediante un monitor externo.
