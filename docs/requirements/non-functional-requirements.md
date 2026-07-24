@@ -23,27 +23,26 @@ Criterios de aceptación
 Dado que el administrador inició sesión correctamente.
 Cuando continúa utilizando la aplicación.
 Entonces la sesión debe permanecer activa sin cerrarse automáticamente por inactividad.
-<br>**Escenario 2: Registro de venta**</br>
+<br>**Escenario 2: Sesión activa durante una operación**</br>
 Dado que el administrador está completando una venta.
 Cuando transcurre un periodo prolongado sin interacción.
 Entonces el sistema no debe cerrar la sesión ni perder la información ingresada.
 <br>**Escenario 3: Cierre de sesión manual**</br>
-Dado que el administrador tiene una sesión activa.
-Cuando selecciona la opción de cerrar sesión.
-Entonces el sistema debe finalizar la sesión y redirigirlo al inicio de sesión.
+Dado que el administrador está completando una cotización o venta.
+Cuando transcurre un periodo prolongado sin interacción.
+Entonces el sistema no debe cerrar automáticamente la sesión ni perder la información ingresada.
 <br>**Escenario 4: Revocación por seguridad**</br>
 Dado que la cuenta fue desactivada, la contraseña fue modificada o se detectó una situación de seguridad.
 Cuando el sistema intenta validar la sesión.
 Entonces puede invalidar la sesión y solicitar un nuevo inicio de sesión.
 <br>**Restricciones técnicas**</br>
 - No debe existir cierre automático por inactividad durante el uso normal.
+- La sesión debe permanecer activa mientras el administrador no seleccione “Cerrar sesión”.
 - La sesión debe renovarse de forma segura sin interrumpir al usuario.
 - Después de cerrar sesión, la sesión anterior no debe permitir acceder a módulos protegidos.
-- La sesión debe poder revocarse por razones de seguridad.
-- La información de formularios importantes debería conservarse temporalmente ante una interrupción de red.
-- El sistema debe limitar temporalmente los intentos fallidos consecutivos de inicio de sesión.
-- La sesión solo debe invalidarse por cierre manual, cambio de contraseña, desactivación de cuenta o una razón de seguridad.
+- La sesión podrá revocarse por cambio de contraseña, desactivación de cuenta o una situación de seguridad.
 - La información de formularios importantes debe conservarse temporalmente ante una interrupción de red.
+- El sistema debe limitar temporalmente los intentos fallidos consecutivos de inicio de sesión.
 
 <br>**RNF-003 — Separación de información por negocio**</br>
 Descripción:
@@ -118,7 +117,7 @@ Entonces el sistema debe rechazar la operación y no modificar el stock.
 - Una misma solicitud de venta no debe registrarse dos veces si se reenvía accidentalmente.
 - Las operaciones de inventario deben ejecutarse mediante transacciones.
 
-<br>**RNF-007 — Precisión de cálculos monetarios**</br>
+<br>**RNF-007 — Precisión y consistencia de cálculos monetarios**</br>
 Descripción:
 Los cálculos de precios, serigrafía, subtotal, IGV y total deben ser exactos y consistentes.
 Criterios de aceptación
@@ -131,14 +130,16 @@ Dado que el sistema calcula importes monetarios.
 Cuando muestra los resultados.
 Entonces debe utilizar dos decimales.
 <br>**Restricciones técnicas**</br>
-- Si la cantidad es 1, debe utilizarse el precio minorista.
-- Si la cantidad es igual o mayor que 2, debe utilizarse el precio mayorista.
-- La serigrafía solo puede aplicarse cuando la cantidad sea múltiplo de 100.
-- El costo de serigrafía debe ser: bloques de 100 × colores × valor configurado.
-- Si la cantidad no es múltiplo de 100, la serigrafía debe permanecer deshabilitada.
-- La base de datos debe utilizar tipos decimales para los importes.
-- No se deben utilizar números de punto flotante para almacenar dinero.
-- El backend debe validar el cálculo final.
+- De 1 a 100 unidades se debe aplicar el precio minorista.
+- Desde 101 unidades se debe aplicar el precio mayorista.
+- La serigrafía solo debe habilitarse desde 20 unidades.
+- Los lotes deben calcularse mediante ceil(cantidad / 100).
+- La tarifa debe seleccionarse según el total de unidades:20–300: S/45, 301–500: S/40, 501 en adelante: S/30.
+- El costo de serigrafía debe calcularse por lote y por color.
+- El descuento debe validarse antes de calcular el resultado final.
+- Solo puede existir un tipo de descuento por operación.
+- El frontend y backend deben utilizar la misma fórmula.
+- Los importes deben manejarse con precisión decimal y redondearse a dos decimales.
 
 <br>**RNF-008 — Trazabilidad de operaciones**</br>
 Descripción:
@@ -169,14 +170,15 @@ Entonces los resultados deberían mostrarse en aproximadamente dos segundos bajo
 <br>**Escenario 2: Cálculo de operación**</br>
 Dado que el administrador completa los datos de una cotización o venta.
 Cuando solicita el cálculo.
-Entonces los importes deben mostrarse sin retrasos perceptibles.
+Entonces el subtotal, el IGV, el total, el descuento y el costo de serigrafía deben mostrarse en un máximo aproximado de dos segundos bajo condiciones normales de operación.
 <br>**Restricciones técnicas**</br>
 - Las consultas deben estar optimizadas.
 - Las búsquedas deben utilizar filtros adecuados.
 - No deben cargarse datos innecesarios en cada pantalla.
 - Las listas extensas deben utilizar paginación o carga progresiva cuando sea necesario.
-- Las búsquedas y cálculos deberían responder en aproximadamente dos segundos bajo condiciones normales de operación.
-- El tiempo debe medirse considerando frontend, backend y base de datos.
+- Las búsquedas, cálculos de cotizaciones y registros de ventas deben responder en un máximo aproximado de dos segundos bajo condiciones normales.
+- El tiempo de respuesta debe medirse considerando frontend, backend y base de datos.
+- El tiempo de respuesta no debe considerar periodos de mantenimiento programado, interrupciones de servicios externos o fallas de infraestructura.
 
 <br>**RNF-010 — Manejo de errores**</br>
 Descripción:
@@ -274,19 +276,56 @@ Entonces los demás módulos no deben verse afectados innecesariamente.
 Descripción:
 Las reglas críticas de PackFlow deben verificarse mediante pruebas automatizadas y manuales.
 Criterios de aceptación
-<br>**Escenario 1: Pruebas de cálculos**</br>
-Dado que existen diferentes cantidades, precios y colores de serigrafía.
-Cuando se ejecutan las pruebas.
-Entonces los resultados deben coincidir con las reglas definidas.
-<br>**Escenario 2: Pruebas de inventario**</br>
-Dado que existen ingresos, ventas y ajustes.
-Cuando se ejecutan las pruebas.
+<br>**Escenario 1: Pruebas de precios minoristas y mayoristas**</br>
+Dado que existen productos con precio minorista y mayorista.
+Cuando se prueban cantidades de 1, 100 y 101 unidades.
+Entonces el sistema debe aplicar correctamente el precio minorista de 1 a 100 unidades y el precio mayorista desde 101 unidades.
+<br>**Escenario 2: Pruebas del límite mínimo de serigrafía**</br>
+Dado que la serigrafía requiere una cantidad mínima.
+Cuando se prueban cantidades de 19 y 20 unidades.
+Entonces la serigrafía debe estar deshabilitada para 19 unidades y habilitada para 20 unidades.
+<br>**Escenario 3: Pruebas de tarifas de serigrafía**</br>
+Dado que existen diferentes rangos de tarifas.
+Cuando se prueban cantidades de 300, 301, 500 y 501 unidades.
+Entonces el sistema debe aplicar S/45, S/40, S/40 y S/30 respectivamente por lote y color.
+<br>**Escenario 4: Pruebas de cálculo por lotes**</br>
+Dado que la serigrafía se calcula por lotes de 100 unidades.
+Cuando se prueban cantidades de 100, 150 y 200 unidades.
+Entonces el sistema debe considerar 1, 2 y 2 lotes respectivamente.
+<br>**Escenario 5: Pruebas de colores de serigrafía**</br>
+Dado que la serigrafía puede tener uno o más colores.
+Cuando se seleccionan uno, dos o tres colores.
+Entonces el sistema debe multiplicar la tarifa por la cantidad de colores seleccionados.
+<br>**Escenario 6: Pruebas de descuentos**</br>
+Dado que una cotización o venta puede tener un descuento.
+Cuando se aplica un descuento porcentual o fijo válido.
+Entonces el sistema debe calcular correctamente el importe descontado.
+<br>**Escenario 7: Pruebas de descuentos incompatibles**</br>
+Dado que solo se permite un tipo de descuento.
+Cuando se ingresan simultáneamente un descuento porcentual y uno fijo.
+Entonces el sistema debe rechazar la operación.
+<br>**Escenario 8: Pruebas de inventario**</br>
+Dado que existen ingresos, ventas y ajustes manuales.
+Cuando se ejecutan las operaciones.
 Entonces el stock debe actualizarse correctamente y nunca ser negativo.
+<br>**Escenario 9: Prueba de cotización**</br>
+Dado que el administrador genera una cotización.
+Cuando se calcula el resultado.
+Entonces el sistema debe mostrar el subtotal, IGV, total, descuento y serigrafía sin guardar la cotización ni modificar el stock.
+<br>**Escenario 10: Prueba de venta**</br>
+Dado que el administrador registra una venta.
+Cuando confirma la operación.
+Entonces la venta debe guardarse y el stock debe disminuir correctamente.
 <br>**Restricciones técnicas**</br>
-- Las reglas críticas deben contar con pruebas unitarias.
-- Los flujos principales deben contar con pruebas de integración.
+- Las reglas de precios, descuentos, IGV, serigrafía e inventario deben contar con pruebas unitarias.
+- Los flujos de cotización y venta deben contar con pruebas de integración.
 - Las historias de usuario deben verificarse mediante sus criterios de aceptación.
+- Deben probarse los límites de cada regla de negocio.
 - Deben probarse los escenarios exitosos y los escenarios de error.
+- Las pruebas deben ejecutarse antes de cada despliegue a producción.
+- Las pruebas del frontend y backend deben utilizar resultados consistentes.
+- Deben realizarse pruebas para evitar que una venta genere stock negativo.
+- Deben probarse cantidades de 19, 20, 100, 101, 150, 200, 300, 301, 500 y 501 unidades.
 
 <br>**RNF-016 — Documentación técnica**</br>
 Descripción:
@@ -328,22 +367,29 @@ Entonces debe utilizar la zona horaria configurada para el negocio.
 Descripción:
 El sistema debe permitir detectar errores y revisar el estado de la aplicación en producción.
 Criterios de aceptación
-<br>**Escenario 1: Estado de la aplicación**</br>
-Dado que la aplicación se encuentra desplegada.
-Cuando se consulta su estado.
-Entonces debe poder verificarse si el backend está disponible.
+<br>**Escenario 1: Estado completo de la aplicación**</br>
+Dado que PackFlow se encuentra desplegado.
+Cuando el monitor externo verifica la aplicación.
+Entonces debe comprobar que el frontend sea accesible, que el backend responda y que la base de datos se encuentre disponible.
 <br>**Escenario 2: Error de aplicación**</br>
 Dado que ocurre un error inesperado.
 Cuando el sistema procesa la operación.
 Entonces debe registrar información suficiente para investigarlo sin incluir datos sensibles.
+<br>**Escenario 3: Detección de indisponibilidad**</br>
+Dado que uno de los componentes esenciales de PackFlow deja de responder.
+Cuando el monitor externo realiza una comprobación.
+Entonces el sistema debe registrar la incidencia y generar una alerta.
 <br>**Restricciones técnicas**</br>
 - El backend debe contar con un endpoint de health check.
-- Los logs deben incluir fecha, nivel y contexto del error.
+- El health check debe comprobar la conexión con la base de datos.
+- El frontend debe ser verificable mediante una solicitud externa.
+- Debe existir un monitor externo que compruebe periódicamente el frontend y backend.
+- Los logs deben incluir fecha, nivel, operación y contexto del error.
 - Los logs no deben incluir contraseñas, tokens ni secretos.
-- Deben existir mecanismos para revisar errores de producción.
-- El monitoreo debe comprobar frontend, backend y base de datos.
-- La aplicación debe considerarse no disponible si cualquiera de sus componentes esenciales no responde.
-- La medición debe realizarse mediante un monitor externo.
+- Deben existir mecanismos para consultar errores y eventos de producción.
+- La aplicación debe considerarse parcialmente no disponible si el frontend, backend o base de datos no responde.
+- El sistema debe generar alertas ante fallas críticas.
+- La medición de disponibilidad debe realizarse mediante un servicio externo.
 
 <br>**RNF-019 — Privacidad de la información**</br>
 Descripción:
