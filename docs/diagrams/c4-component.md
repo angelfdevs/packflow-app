@@ -1,5 +1,5 @@
 Diagrama C4 Component
-```dls
+```dsl
 workspace "PackFlow - C4 Component" "Diagrama de componentes del Backend API de PackFlow." {
 
     !identifiers hierarchical
