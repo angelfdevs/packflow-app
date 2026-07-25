@@ -74,6 +74,7 @@ Responsable de:
 - Descuento de stock por ventas.
 - Historial de movimientos.
 - Validación de stock no negativo.
+- Clasificación de bajo stock cuando el stock actual es menor o igual a 15 unidades.
 
 La disminución de stock por venta y el registro de la venta deberán ejecutarse dentro de una transacción. Se utilizarán controles de concurrencia e idempotencia para evitar descuentos duplicados.
 
