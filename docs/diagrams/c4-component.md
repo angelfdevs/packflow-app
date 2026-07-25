@@ -141,6 +141,5 @@ workspace "PackFlow - C4 Component" "Diagrama de componentes del Backend API de 
             }
         }
     }
-```
 }
-
+```
