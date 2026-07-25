@@ -29,7 +29,7 @@ Instancia stateless 1         Instancia stateless 2
 - Backend ASP.NET Core desplegado como contenedor Docker stateless.
 - Mínimo dos instancias del backend en producción.
 - PostgreSQL administrado con alta disponibilidad, PITR y respaldos lógicos independientes.
-- Rate limiting perimetral mediante Cloudflare y, cuando se requieran límites estrictos por cuenta entre varias instancias, un almacén distribuido administrado compatible con Redis. Este almacén no contendrá datos de negocio.
+- Rate limiting perimetral mediante Cloudflare y un almacén distribuido administrado compatible con Redis para mantener límites por cuenta entre las dos instancias del backend. Este almacén no contendrá datos de negocio.
 - Variables de entorno y secretos administrados por el proveedor de despliegue.
 - Monitoreo externo de frontend, backend y base de datos.
 
