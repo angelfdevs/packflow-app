@@ -58,7 +58,7 @@ Responsable de:
 - Sesiones activas y revocación de sesiones.
 - Datos de la cuenta y del negocio.
 
-La primera versión operativa manejará una cuenta administradora por negocio. No se implementarán múltiples usuarios ni roles avanzados mientras no exista una necesidad real del negocio.
+La primera versión operativa manejará una cuenta administradora dueña de un único negocio. No se implementarán múltiples usuarios ni roles avanzados mientras no exista una necesidad real del negocio.
 
 No existirá un registro público de cuentas. Las cuentas serán provisionadas mediante un comando administrativo o job controlado que creará la cuenta, configuración, tipos de precio y rangos iniciales de serigrafía. Las credenciales se recibirán mediante un gestor de secretos o entrada segura y nunca se almacenarán en el repositorio.
 
@@ -291,10 +291,11 @@ La seguridad se implementará mediante defensa en profundidad:
 - El inicio de sesión y la renovación emitirán `XSRF-TOKEN` mediante `Set-Cookie`; el frontend copiará su valor en `X-CSRF-TOKEN`. La cookie de refresh nunca será accesible desde JavaScript.
 - Access tokens únicamente en memoria del frontend.
 - Access tokens con duración objetivo de 15 minutos y almacenados únicamente en memoria del frontend.
-- Refresh tokens rotativos con duración absoluta de 30 días, sin cierre automático por inactividad.
+- Refresh tokens rotativos sin expiración por tiempo, sin cierre automático por inactividad y revocables por el backend.
+- La reutilización de un refresh token ya rotado se considera un evento de seguridad y revoca la familia de tokens de la sesión.
 - Hash de contraseñas mediante `PasswordHasher` de ASP.NET Core Identity, sin implementar criptografía propia.
 - Recuperación de contraseña mediante token de un solo uso con duración de 30 minutos.
-- Sesión sin expiración por inactividad; podrá mantenerse activa mediante renovación hasta alcanzar la expiración absoluta de 30 días o hasta que el usuario cierre sesión, revoque la sesión o la cuenta sea bloqueada.
+- Sesión sin expiración por inactividad ni por tiempo absoluto; podrá mantenerse activa mediante renovación hasta que el usuario cierre sesión, revoque la sesión, la cuenta sea bloqueada o el proveedor de despliegue no esté disponible.
 - Rotación y revocación de sesiones.
 - Rate limiting para autenticación y endpoints sensibles.
 - Rate limiting particionado por cuenta e IP, con límites distribuidos o aplicados en el perímetro cuando existan varias instancias.
@@ -335,6 +336,8 @@ Como mínimo, las migraciones deberán implementar:
 - `UNIQUE (business_account_id, category_name)` en categorías.
 - `UNIQUE (business_account_id, material_name)` en materiales.
 - `UNIQUE (business_account_id, idempotency_key)` en solicitudes idempotentes.
+- `UNIQUE (business_account_id, minimum_quantity)` en rangos de serigrafía.
+- Índice único parcial para impedir dos productos activos con la misma combinación de negocio, categoría, material, nombre y medidas. Los precios no forman parte de esta identidad.
 - Claves foráneas compuestas para que una categoría, material, venta, movimiento o solicitud idempotente solo pueda asociarse a registros del mismo negocio.
 - `CHECK (current_stock >= 0)`, `CHECK (quantity > 0)` y `CHECK (price_amount >= 0)`.
 - Validaciones de dimensiones, tarifas y colores conforme a los límites definidos en los requisitos y el contrato OpenAPI.
