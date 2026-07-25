@@ -263,10 +263,10 @@ Entonces el sistema debe mostrar un mensaje de validación.
 
 <br>**US-013 — Calcular cotización**</br>
 Descripción:
-Como administrador, quiero obtener el subtotal, IGV y total de una cotización, para informar correctamente el precio al cliente.
+Como administrador, quiero obtener el subtotal, IGV y total de una cotización con uno o varios productos, para informar correctamente el precio al cliente.
 Criterios de aceptación
 <br>**Escenario 1: Cálculo exitoso**</br>
-Dado que el administrador seleccionó un producto e ingresó una cantidad válida.
+Dado que el administrador seleccionó uno o varios productos e ingresó una cantidad válida para cada línea.
 Cuando solicita el cálculo.
 Entonces el sistema debe mostrar el subtotal, IGV y total.
 <br>**Escenario 2: Cálculo con serigrafía**</br>
@@ -274,7 +274,7 @@ Dado que el administrador activó la serigrafía.
 Cuando solicita el cálculo.
 Entonces el sistema debe incluir el recargo correspondiente.
 <br>**Escenario 3: Datos incompletos**</br>
-Dado que no se seleccionó un producto o cantidad.
+Dado que no se seleccionó ningún producto o falta la cantidad de una línea.
 Cuando el administrador intenta calcular.
 Entonces el sistema debe solicitar la información faltante.
 <br>**Reglas de negocio**</br>
@@ -283,7 +283,7 @@ Entonces el sistema debe solicitar la información faltante.
 - El descuento será opcional.
 - Solo podrá aplicarse un descuento por operación.
 - El descuento podrá ser porcentual o de monto fijo.
-- La cotización mostrará: Subtotal base, Costo de serigrafía, Descuento aplicado, Subtotal final, IGV y Total.
+- La cotización podrá contener uno o varios productos y mostrará: Subtotal base, Costo de serigrafía, Descuento aplicado, Subtotal final, IGV y Total.
 - Las cotizaciones no se guardarán.
 - Las cotizaciones no modifican el stock.
 
@@ -293,11 +293,11 @@ Descripción:
 Como administrador, quiero registrar una venta, para conservar un control de las operaciones realizadas por el negocio.
 Criterios de aceptación
 <br>**Escenario 1: Registro exitoso**</br>
-Dado que el administrador seleccionó un producto y una cantidad válida.
+Dado que el administrador seleccionó uno o varios productos e ingresó una cantidad válida para cada línea.
 Cuando confirma la venta.
 Entonces el sistema debe registrar la venta y mostrar un mensaje de confirmación.
 <br>**Escenario 2: Datos incompletos**</br>
-Dado que falta seleccionar un producto o ingresar una cantidad.
+Dado que falta seleccionar un producto o ingresar la cantidad de una línea.
 Cuando el administrador intenta confirmar la venta.
 Entonces el sistema debe mostrar los campos pendientes.
 <br>**Escenario 3: Venta cancelada**</br>
@@ -318,7 +318,7 @@ Cuando intento confirmar la venta.
 Entonces el sistema debe impedirlo y mostrar un mensaje de validación.
 <br>**Reglas de negocio**</br>
 - Solo se deben registrar ventas confirmadas.
-- La venta debe conservar producto, cantidad, precios, serigrafía, subtotal, IGV, total y fecha.
+- La venta debe conservar todos sus productos, cantidades, precios, serigrafía, subtotal, IGV, total y fecha.
 - Una venta cancelada no debe generar movimientos de stock.
 - El descuento es opcional.
 - Solo se permite un tipo de descuento por venta.
@@ -430,6 +430,7 @@ Entonces el sistema debe mostrar un estado vacío con indicaciones para comenzar
 - El Dashboard debe mostrar información actualizada.
 - Los indicadores deben pertenecer únicamente a la cuenta del negocio.
 - El Dashboard no debe modificar información.
+- Un producto se considerará con bajo stock cuando su stock actual sea menor o igual a 15 unidades.
 
 <br>**US-020 — Registrar categoría**</br>
 Descripción:
@@ -630,4 +631,3 @@ Entonces el sistema no debe guardar la operación ni modificar el stock.
 - El descuento será único para toda la operación.
 - El descuento se aplicará antes del IGV.
 - El backend debe recalcular todos los importes y no confiar en los valores enviados por el frontend.
-
