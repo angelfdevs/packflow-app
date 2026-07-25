@@ -40,6 +40,8 @@ Entonces puede invalidar la sesión y solicitar un nuevo inicio de sesión.
 - La sesión debe expirar automáticamente después de 15 minutos sin interacción.
 - La actividad normal del administrador debe reiniciar el contador de inactividad.
 - No debe existir un botón “Mantener sesión activa” ni un heartbeat automático para evitar la expiración.
+- Para efectos del contador del servidor, se considerará interacción una solicitud autenticada procesada por el backend, como consultar información o guardar una operación.
+- Los eventos locales del navegador, como escribir en un formulario o mover el cursor sin realizar una solicitud, no reiniciarán el contador de inactividad.
 - El frontend podrá mostrar un aviso informativo antes de la expiración, pero no podrá extender la sesión sin actividad del administrador.
 - El backend debe validar la expiración utilizando la última actividad registrada en la sesión; no debe depender únicamente del reloj del frontend.
 - La sesión debe renovarse de forma segura sin interrumpir al usuario.
