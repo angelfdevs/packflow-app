@@ -60,10 +60,10 @@ Permite configurar los datos del negocio, la tasa del IGV, las tarifas de serigr
 
 ## Reglas de negocio principales
 
-1. Cada negocio tendrá una cuenta administradora independiente.
+1. Cada cuenta administradora será dueña de un único negocio y tendrá información independiente.
 2. El administrador tendrá acceso completo a la aplicación.
 3. Las cuentas serán provisionadas mediante un procedimiento administrativo controlado; no habrá registro público.
-4. El administrador registrará y mantendrá sus propios productos, categorías y materiales.
+4. El administrador registrará y mantendrá sus propios productos, categorías y materiales. No podrán existir dos productos activos con la misma categoría, material, nombre y medidas dentro del mismo negocio.
 5. Los productos podrán desactivarse mediante borrado lógico.
 6. El stock nunca podrá ser negativo.
 7. El stock inicial se registrará mediante un movimiento de ingreso.
