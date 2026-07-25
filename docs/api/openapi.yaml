@@ -40,7 +40,15 @@ paths:
           application/json:
             schema: { $ref: '#/components/schemas/LoginRequest' }
       responses:
-        '200': { description: Sesión iniciada, content: { application/json: { schema: { $ref: '#/components/schemas/LoginResponse' } } } }
+        '200':
+          description: Sesión iniciada. El servidor establece las cookies pf_refresh y XSRF-TOKEN.
+          headers:
+            Set-Cookie:
+              description: Cookies HttpOnly de refresh y token CSRF no sensible.
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LoginResponse' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
@@ -54,7 +62,15 @@ paths:
           csrfToken: []
       description: No existe expiración por inactividad. El refresh token rota y tiene expiración absoluta.
       responses:
-        '200': { description: Access token renovado, content: { application/json: { schema: { $ref: '#/components/schemas/AccessTokenResponse' } } } }
+        '200':
+          description: Access token renovado. El servidor rota pf_refresh y establece XSRF-TOKEN.
+          headers:
+            Set-Cookie:
+              description: Cookies rotadas de refresh y token CSRF no sensible.
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AccessTokenResponse' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
   /auth/me:
@@ -137,7 +153,9 @@ paths:
       summary: PATCH /account
       operationId: patchaccount9
       tags: [Account]
-      parameters: [{ $ref: '#/components/parameters/IfMatch' }]
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
       requestBody:
         required: true
         content:
@@ -159,7 +177,9 @@ paths:
       summary: PATCH /settings
       operationId: patchsettings11
       tags: [Account]
-      parameters: [{ $ref: '#/components/parameters/IfMatch' }]
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
       requestBody:
         required: true
         content:
@@ -256,7 +276,9 @@ paths:
       summary: PUT /products/{productId}
       operationId: putproductsProductId19
       tags: [Catalog]
-      parameters: [{ $ref: '#/components/parameters/IfMatch' }]
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
       requestBody:
         required: true
         content:
@@ -273,7 +295,9 @@ paths:
       summary: PATCH /products/{productId}/status
       operationId: patchproductsProductIdStatus20
       tags: [Catalog]
-      parameters: [{ $ref: '#/components/parameters/IfMatch' }]
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
       requestBody:
         required: true
         content:
@@ -287,6 +311,7 @@ paths:
         '200': { description: Estado actualizado, content: { application/json: { schema: { $ref: '#/components/schemas/Product' } } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
   /inventory/stock:
     get:
       summary: GET /inventory/stock
@@ -437,7 +462,11 @@ components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
     refreshCookie: { type: apiKey, in: cookie, name: pf_refresh }
-    csrfToken: { type: apiKey, in: header, name: X-CSRF-TOKEN }
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-TOKEN
+      description: Debe coincidir con el valor no sensible de la cookie XSRF-TOKEN.
   parameters:
     IdempotencyKey:
       name: Idempotency-Key
