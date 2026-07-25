@@ -48,7 +48,7 @@ Permite consultar el stock, registrar ingresos de mercadería, registrar ajustes
 
 Permite agregar uno o varios productos, ingresar cantidades, aplicar serigrafía opcional y registrar un descuento porcentual o fijo.
 
-La cotización calcula productos, serigrafía, descuento, subtotal, IGV y total. Las cotizaciones son simulaciones temporales: no se guardan ni modifican el stock.
+La cotización calcula los importes de productos y serigrafía, aplica opcionalmente un descuento y muestra un único subtotal, IGV y total. Si existe descuento, también muestra su tipo, valor y monto aplicado. Las cotizaciones son simulaciones temporales: no se guardan ni modifican el stock.
 
 ### Ventas
 
@@ -63,7 +63,7 @@ Permite configurar los datos del negocio, la tasa del IGV, las tarifas de serigr
 1. Cada cuenta administradora será dueña de un único negocio y tendrá información independiente.
 2. El administrador tendrá acceso completo a la aplicación.
 3. Las cuentas serán provisionadas mediante un procedimiento administrativo controlado; no habrá registro público.
-4. El administrador registrará y mantendrá sus propios productos, categorías y materiales. No podrán existir dos productos activos con la misma categoría, material, nombre y medidas dentro del mismo negocio.
+4. El administrador registrará y mantendrá sus propios productos, categorías y materiales. No podrán existir dos productos activos con la misma categoría, material, nombre y medidas dentro del mismo negocio. Los nombres se compararán sin distinguir mayúsculas de minúsculas y sin espacios externos.
 5. Los productos podrán desactivarse mediante borrado lógico.
 6. El stock nunca podrá ser negativo.
 7. Si se registra un stock inicial mayor que cero, se creará un movimiento de ingreso inicial; si el stock inicial es cero, no se creará ningún movimiento.
