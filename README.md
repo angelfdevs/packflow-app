@@ -34,6 +34,7 @@ Sabremos que esta hipótesis es válida cuando, durante el periodo de prueba, el
 ### Dashboard
 
 Muestra productos activos, productos con stock bajo, ventas recientes y movimientos recientes.
+Un producto se considera con bajo stock cuando tiene 15 unidades o menos.
 
 ### Productos
 
@@ -80,6 +81,8 @@ Permite configurar los datos del negocio, la tasa del IGV, las tarifas de serigr
 19. El descuento se aplicará antes del IGV.
 20. El IGV tendrá un valor inicial de 18 % y podrá configurarse.
 
+21. Un producto se considerará con bajo stock cuando su stock actual sea menor o igual a 15 unidades.
+
 ## Fuera de alcance
 
 - Facturación electrónica.
@@ -94,4 +97,3 @@ Permite configurar los datos del negocio, la tasa del IGV, las tarifas de serigr
 - Gestión contable.
 - Reportes financieros avanzados.
 - Control de insumos de serigrafía.
-
