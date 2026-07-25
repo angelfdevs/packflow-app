@@ -15,10 +15,10 @@ Dado que el administrador deja campos vacíos.
 Cuando intenta iniciar sesión.
 Entonces el sistema debe solicitar la información faltante.
 <br>**Reglas de negocio**</br>
-- Solo podrá acceder una cuenta administradora por negocio.
+- Cada cuenta administradora será dueña de un único negocio y solo podrá existir una cuenta administradora por negocio.
 - Las cuentas serán provisionadas mediante un procedimiento administrativo controlado; no existirá registro público durante el alcance actual.
 - Las contraseñas deben almacenarse de forma segura.
-- El sistema no debe revelar si el correo o la contraseña son incorrectos, en su lugar indica que uno de los campos de inicio de sesion son incorrectos.
+- El sistema no debe revelar si el correo o la contraseña son incorrectos; en su lugar, debe indicar que las credenciales de inicio de sesión son incorrectas.
 
 <br>**US-002 — Cerrar sesión**</br>
 Descripción:
@@ -73,13 +73,14 @@ Entonces el sistema debe mostrar los campos pendientes y rechazar la operación.
 Dado que el administrador ingresa precios negativos, cantidades inválidas o información incorrecta.
 Cuando intenta registrar el producto.
 Entonces el sistema debe mostrar un mensaje de validación y no guardar la información.
-<br>**Escenario 5: Producto duplicado**</br>
-Dado que ya existe un producto con las mismas características dentro del negocio.
+<br>**Escenario 5: Producto activo duplicado**</br>
+Dado que ya existe un producto activo con la misma categoría, material, nombre y medidas dentro del negocio.
 Cuando el administrador intenta registrarlo nuevamente.
-Entonces el sistema debe informar el conflicto y evitar duplicados según las reglas definidas.
+Entonces el sistema debe informar el conflicto y evitar el duplicado.
 <br>**Reglas de negocio**</br>
 - El producto debe pertenecer a la cuenta del negocio autenticado.
 - El producto debe tener categoría, nombre, medidas, material, precio minorista y precio mayorista.
+- No podrán existir dos productos activos del mismo negocio con la misma categoría, material, nombre y medidas. Los precios no forman parte de la identidad del producto.
 - Los precios no pueden ser negativos.
 - Cada dimensión debe ser mayor que cero y no superar 1 000 cm.
 - El stock inicial no podrá superar 1 000 000 unidades.
@@ -124,10 +125,15 @@ Entonces el producto debe dejar de aparecer como disponible para nuevas cotizaci
 Dado que el producto está desactivado.
 Cuando el administrador confirma su activación.
 Entonces el producto debe volver a estar disponible.
+<br>**Escenario 3: Reactivación conflictiva**</br>
+Dado que existe otro producto activo con la misma categoría, material, nombre y medidas.
+Cuando el administrador intenta activar el producto desactivado.
+Entonces el sistema debe rechazar la activación e informar el conflicto.
 <br>**Reglas de negocio**</br>
 - La desactivación debe realizarse mediante borrado lógico.
 - Los productos desactivados no deben eliminarse físicamente.
 - Las ventas históricas relacionadas con el producto deben conservarse.
+- La activación debe volver a validar la unicidad de la identidad activa del producto.
 
 <br>**US-007 — Consultar stock**</br>
 Descripción:
