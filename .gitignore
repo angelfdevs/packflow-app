@@ -427,3 +427,16 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+
+# PackFlow local secrets and credentials
+.env
+.env.*
+!.env.example
+appsettings.*.json
+!appsettings.json
+*.pfx
+*.p12
+*.pem
+*.key
+
