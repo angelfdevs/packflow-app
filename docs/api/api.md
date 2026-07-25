@@ -80,6 +80,7 @@ La sesión no tendrá expiración por inactividad ni expiración absoluta. Podr�
 
 El access token tendrá una duración objetivo de 15 minutos. El refresh token no tendrá expiración por tiempo, será de un solo uso por rotación y podrá revocarse en cualquier momento. Los tokens de recuperación de contraseña tendrán una duración de 30 minutos y serán de un solo uso.
 Si el backend detecta la reutilización de un refresh token que ya fue rotado, deberá revocar la familia de tokens de la sesión y exigir un nuevo inicio de sesión.
+Cada refresh token deberá estar asociado a una sesión mediante `session_id`, que identificará la familia de tokens. El `session_id` no sustituye al secreto del refresh token: el backend deberá validar tanto la sesión como el hash del token.
 
 Las solicitudes `/auth/refresh` y `/auth/logout` deberán incluir el encabezado `X-CSRF-TOKEN`. CORS permitirá únicamente el origen configurado del frontend. El backend rechazará la solicitud si el valor del encabezado no coincide con la cookie `XSRF-TOKEN`.
 
@@ -352,10 +353,8 @@ Respuesta `200 OK`:
       { "from": 301, "to": 500, "ratePerColor": "40.00" },
       { "from": 501, "to": null, "ratePerColor": "30.00" }
   ],
-  "appearance": {
-    "theme": "LIGHT",
-    "fontSize": "MEDIUM"
-  }
+  "theme": "LIGHT",
+  "fontSize": "MEDIUM"
 }
 ```
 
@@ -468,7 +467,7 @@ Solicitud:
 }
 ```
 
-El backend debe crear el producto y, si `initialStock` es mayor que cero, registrar un movimiento de ingreso inicial dentro de la misma transacción. El stock no se debe actualizar mediante una asignación directa al producto.
+El backend debe crear el producto y, si `initialStock` es mayor que cero, registrar un movimiento de ingreso inicial dentro de la misma transacción. Si `initialStock` es cero, el producto se creará con stock cero y no se registrará ningún movimiento inicial. El stock no se debe actualizar mediante una asignación directa al producto.
 
 Las dimensiones deben ser mayores que cero y no superar `1000.00 cm` en ninguno de sus ejes. El stock inicial no podrá superar `1 000 000` unidades.
 
@@ -964,7 +963,7 @@ Códigos principales:
 - El stock nunca podrá ser negativo.
 - Los movimientos históricos serán inmutables.
 - Los precios y totales históricos de una venta no cambiarán al editar un producto.
-- El stock inicial será un movimiento de ingreso.
+- El stock inicial mayor que cero será un movimiento de ingreso; un stock inicial igual a cero no generará movimiento.
 - La edición del producto no modificará el stock.
 - El descuento será opcional y solo podrá existir uno por operación.
 - Un descuento fijo no podrá superar el importe antes del descuento.
