@@ -136,7 +136,7 @@ Entonces el sistema debe rechazar la operación y no modificar el stock.
 
 <br>**RNF-007 — Precisión y consistencia de cálculos monetarios**</br>
 Descripción:
-Los cálculos de precios, serigrafía, subtotal, IGV y total deben ser exactos y consistentes.
+Los cálculos de precios, serigrafía, el único subtotal de la operación, IGV y total deben ser exactos y consistentes.
 Criterios de aceptación
 <br>**Escenario 1: Cálculo consistente**</br>
 Dado que el administrador selecciona un producto y una cantidad.
@@ -155,6 +155,8 @@ Entonces debe utilizar dos decimales.
 - El costo de serigrafía debe calcularse por lote y por color.
 - El descuento debe validarse antes de calcular el resultado final.
 - Solo puede existir un tipo de descuento por operación.
+- El resultado debe exponer un único subtotal después de aplicar el descuento, cuando corresponda.
+- Cuando exista descuento, debe informar su tipo, valor y monto aplicado sin crear otro subtotal.
 - El frontend y backend deben utilizar la misma fórmula.
 - Los importes deben manejarse con precisión decimal y redondearse a dos decimales.
 
