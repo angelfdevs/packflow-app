@@ -277,6 +277,8 @@ Contendrá:
 
 No se almacenarán contraseñas, tokens sensibles ni información crítica en `localStorage`.
 
+Los datos temporales de una cotización o venta en progreso podrán conservarse en memoria durante una reautenticación, pero no se persistirán credenciales, tokens ni secretos en el almacenamiento del navegador.
+
 ## 9. Seguridad
 
 La seguridad se implementará mediante defensa en profundidad:
@@ -291,13 +293,14 @@ La seguridad se implementará mediante defensa en profundidad:
 - Cuando el frontend y el backend estén en orígenes distintos, el frontend obtendrá el token CSRF mediante `GET /api/v1/auth/csrf` y lo conservará únicamente en memoria. El inicio de sesión y la renovación también devolverán el valor no sensible cuando emitan o roten `XSRF-TOKEN`; la cookie de refresh nunca será accesible desde JavaScript.
 - Access tokens únicamente en memoria del frontend.
 - Access tokens con duración objetivo de 15 minutos y almacenados únicamente en memoria del frontend.
-- Refresh tokens rotativos sin expiración por tiempo, sin cierre automático por inactividad y revocables por el backend.
+- Refresh tokens rotativos con expiración por inactividad de 15 minutos, sin expiración absoluta y revocables por el backend.
+- La expiración por inactividad se validará en el backend utilizando la última actividad registrada en `sessions.last_seen_at`; el contador del frontend solo tendrá fines informativos.
 - La reutilización de un refresh token ya rotado se considera un evento de seguridad y revoca la familia de tokens de la sesión.
 - Cada refresh token estará asociado a una sesión mediante `session_id`, que identificará la familia de tokens. El backend validará la sesión y el hash del token; el `session_id` no será el secreto.
 - Cada refresh token emitido se conservará en `session_refresh_tokens` mediante un hash único, con sus fechas de emisión, uso, revocación y eventual reemplazo. La rotación se ejecutará en una transacción; la reutilización de un token usado revocará toda la familia.
 - Hash de contraseñas mediante `PasswordHasher` de ASP.NET Core Identity, sin implementar criptografía propia.
 - Recuperación de contraseña mediante token de un solo uso con duración de 30 minutos.
-- Sesión sin expiración por inactividad ni por tiempo absoluto; podrá mantenerse activa mediante renovación hasta que el usuario cierre sesión, revoque la sesión, la cuenta sea bloqueada o el proveedor de despliegue no esté disponible.
+- Sesión con expiración por inactividad de 15 minutos y sin expiración absoluta. Mientras exista actividad, podrá renovarse de forma transparente; no habrá un botón “Mantener sesión activa” ni un heartbeat automático. También podrá revocarse por cierre de sesión, bloqueo de cuenta, cambio o recuperación de contraseña, detección de seguridad o indisponibilidad del proveedor.
 - Rotación y revocación de sesiones.
 - Rate limiting para autenticación y endpoints sensibles.
 - Rate limiting particionado por cuenta e IP, con límites distribuidos o aplicados en el perímetro cuando existan varias instancias.
