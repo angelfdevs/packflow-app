@@ -273,7 +273,9 @@ Contendrá:
 - Manejo de cookies y sesión.
 - Adaptadores para la API REST.
 - Configuración de entorno.
-- Persistencia local únicamente para preferencias no sensibles, como el tema visual.
+- Persistencia local únicamente como caché temporal de preferencias visuales no sensibles, como el tema y el tamaño de fuente.
+- La configuración de apariencia guardada por el backend (`theme` y `fontSize`) será la fuente oficial. La preferencia local no reemplazará una respuesta válida de `/api/v1/settings`.
+- En la primera visita, el frontend podrá utilizar `prefers-color-scheme` como valor inicial cuando todavía no exista una preferencia del negocio.
 
 No se almacenarán contraseñas, tokens sensibles ni información crítica en `localStorage`.
 
