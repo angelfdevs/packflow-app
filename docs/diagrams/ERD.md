@@ -13,7 +13,7 @@ entity "business_accounts" as business_accounts {
     * business_account_id : UUID <<PK>>
     --
     * business_name : VARCHAR(150)
-    * admin_email : VARCHAR(254) <<UNIQUE>>
+    * admin_email : VARCHAR(254) <<UNIQUE normalized>>
     * password_hash : VARCHAR(255)
     * account_status : VARCHAR(20)
     * version : BIGINT
@@ -66,7 +66,7 @@ entity "categories" as categories {
     * category_id : UUID <<PK>>
     --
     * business_account_id : UUID <<FK, composite scope>>
-    * category_name : VARCHAR(100) <<UNIQUE per account>>
+    * category_name : VARCHAR(100) <<UNIQUE per account, normalized>>
     * created_at : TIMESTAMPTZ
 }
 
@@ -74,7 +74,7 @@ entity "materials" as materials {
     * material_id : UUID <<PK>>
     --
     * business_account_id : UUID <<FK, composite scope>>
-    * material_name : VARCHAR(100) <<UNIQUE per account>>
+    * material_name : VARCHAR(100) <<UNIQUE per account, normalized>>
     * created_at : TIMESTAMPTZ
 }
 
@@ -84,7 +84,7 @@ entity "products" as products {
     * business_account_id : UUID <<FK, composite scope>>
     * category_id : UUID <<FK, composite scope>>
     * material_id : UUID <<FK, composite scope>>
-    * product_name : VARCHAR(150) <<UNIQUE active identity>>
+    * product_name : VARCHAR(150) <<UNIQUE active identity, normalized>>
     * length_cm : DECIMAL(10,2) <<CHECK > 0 and <= 1000>>
     * width_cm : DECIMAL(10,2) <<CHECK > 0 and <= 1000>>
     * height_cm : DECIMAL(10,2) <<CHECK > 0 and <= 1000>>
@@ -149,11 +149,10 @@ entity "sales" as sales {
     * idempotency_request_id : UUID <<FK composite, UNIQUE>>
     * sale_status : VARCHAR(20) <<CHECK CONFIRMED>>
     * created_at : TIMESTAMPTZ
-    * subtotal_before_discount : DECIMAL(12,2) <<CHECK >= 0>>
     discount_type : VARCHAR(20) <<CHECK PERCENTAGE/FIXED or NULL>>
     discount_value : DECIMAL(12,2) <<CHECK >= 0>>
     discount_amount : DECIMAL(12,2) <<CHECK >= 0>>
-    * subtotal_after_discount : DECIMAL(12,2) <<CHECK >= 0>>
+    * subtotal_amount : DECIMAL(12,2) <<CHECK >= 0, single operation subtotal>>
     * igv_rate_applied : DECIMAL(5,4)
     * igv_amount : DECIMAL(12,2) <<CHECK >= 0>>
     * total_amount : DECIMAL(12,2) <<CHECK >= 0>>
@@ -174,7 +173,7 @@ entity "sale_items" as sale_items {
     * height_cm_at_sale : DECIMAL(10,2)
     * quantity : INTEGER <<CHECK > 0>>
     * unit_price_applied : DECIMAL(12,2)
-    * product_subtotal : DECIMAL(12,2)
+    * product_amount : DECIMAL(12,2) <<CHECK >= 0>>
 }
 
 entity "sale_item_serigraphy" as sale_item_serigraphy {
