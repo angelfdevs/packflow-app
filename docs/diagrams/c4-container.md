@@ -13,7 +13,7 @@ workspace "PackFlow - C4 Container" "Diagrama de contenedores del sistema PackFl
 
             backend = container "Backend API" "Expone la API REST, autentica al administrador y aplica las reglas de negocio." "ASP.NET Core, C#"
 
-            database = container "Base de datos" "Almacena cuentas, sesiones, productos, precios, ventas, movimientos y configuraciones." "PostgreSQL" {
+            database = container "Base de datos" "Almacena cuentas, sesiones, refresh tokens, productos, precios, ventas, movimientos y configuraciones." "PostgreSQL" {
                 tags "Database"
             }
         }
