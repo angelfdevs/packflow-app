@@ -823,13 +823,13 @@ components:
       description: El backend debe rechazar productId repetidos y recalcular todos los importes.
     OperationLineResult:
       type: object
-      required: [productId, quantity, unitPrice, priceType, productsSubtotal, lineSubtotal]
+      required: [productId, quantity, unitPrice, priceType, productAmount, lineAmount]
       properties:
         productId: { type: string, format: uuid }
         quantity: { type: integer, minimum: 1 }
         unitPrice: { $ref: '#/components/schemas/DecimalAmount' }
         priceType: { type: string, enum: [RETAIL, WHOLESALE] }
-        productsSubtotal: { $ref: '#/components/schemas/DecimalAmount' }
+        productAmount: { $ref: '#/components/schemas/DecimalAmount', description: 'Importe de las unidades de la línea, sin serigrafía.' }
         screenPrinting:
           type: object
           required: [enabled, colors, lots, ratePerColor, amount]
@@ -839,9 +839,10 @@ components:
             lots: { type: integer, minimum: 0 }
             ratePerColor: { $ref: '#/components/schemas/DecimalAmount' }
             amount: { $ref: '#/components/schemas/DecimalAmount' }
-        lineSubtotal: { $ref: '#/components/schemas/DecimalAmount' }
+        lineAmount: { $ref: '#/components/schemas/DecimalAmount', description: 'Importe de la línea, incluyendo serigrafía cuando corresponda.' }
     DiscountResult:
       type: object
+      description: Tipo, valor y monto real del descuento aplicado a la operación.
       required: [type, value, amount]
       properties:
         type: { type: string, enum: [PERCENTAGE, FIXED] }
@@ -849,15 +850,12 @@ components:
         amount: { $ref: '#/components/schemas/DecimalAmount' }
     OperationResult:
       type: object
-      required: [items, productsSubtotal, screenPrintingSubtotal, subtotalBeforeDiscount, subtotal, igvRate, igv, total, currency]
+      description: Resultado con un único subtotal después del descuento, IGV y total.
+      required: [items, subtotal, igvRate, igv, total, currency]
       properties:
         items: { type: array, minItems: 1, items: { $ref: '#/components/schemas/OperationLineResult' } }
-        productsSubtotal: { $ref: '#/components/schemas/DecimalAmount' }
-        screenPrintingSubtotal: { $ref: '#/components/schemas/DecimalAmount' }
-        subtotalBeforeDiscount: { $ref: '#/components/schemas/DecimalAmount' }
         discount: { $ref: '#/components/schemas/DiscountResult' }
-        discountAmount: { $ref: '#/components/schemas/DecimalAmount' }
-        subtotal: { $ref: '#/components/schemas/DecimalAmount' }
+        subtotal: { $ref: '#/components/schemas/DecimalAmount', description: 'Único subtotal de la operación, después de aplicar el descuento cuando exista.' }
         igvRate: { type: number, minimum: 0, maximum: 1 }
         igv: { $ref: '#/components/schemas/DecimalAmount' }
         total: { $ref: '#/components/schemas/DecimalAmount' }
