@@ -293,6 +293,7 @@ La seguridad se implementará mediante defensa en profundidad:
 - Access tokens con duración objetivo de 15 minutos y almacenados únicamente en memoria del frontend.
 - Refresh tokens rotativos sin expiración por tiempo, sin cierre automático por inactividad y revocables por el backend.
 - La reutilización de un refresh token ya rotado se considera un evento de seguridad y revoca la familia de tokens de la sesión.
+- Cada refresh token estará asociado a una sesión mediante `session_id`, que identificará la familia de tokens. El backend validará la sesión y el hash del token; el `session_id` no será el secreto.
 - Hash de contraseñas mediante `PasswordHasher` de ASP.NET Core Identity, sin implementar criptografía propia.
 - Recuperación de contraseña mediante token de un solo uso con duración de 30 minutos.
 - Sesión sin expiración por inactividad ni por tiempo absoluto; podrá mantenerse activa mediante renovación hasta que el usuario cierre sesión, revoque la sesión, la cuenta sea bloqueada o el proveedor de despliegue no esté disponible.
