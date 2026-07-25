@@ -8,7 +8,7 @@ La aplicación permitirá administrar productos, consultar el stock disponible, 
 
 - Vue.js 3 y JavaScript ES2023+.
 - .NET 10 LTS, ASP.NET Core 10, Entity Framework Core 10 y C# 14.
-- PostgreSQL.
+- PostgreSQL 18.x.
 - Docker.
 
 ## Problem Statement
