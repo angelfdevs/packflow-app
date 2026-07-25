@@ -76,9 +76,10 @@ XSRF-TOKEN: Secure; SameSite=None; Path=/api/v1/auth
 
 El usuario no será desconectado por inactividad durante el uso normal. El access token permanecerá únicamente en memoria y el refresh token será rotativo.
 
-La sesión podrá revocarse por cierre de sesión, cambio de contraseña, recuperación de contraseña, desactivación de cuenta o una situación de seguridad. También tendrá una expiración absoluta, aunque no tendrá expiración por inactividad.
+La sesión no tendrá expiración por inactividad ni expiración absoluta. Podrá mantenerse activa mediante la renovación del access token mientras la sesión no sea revocada por cierre de sesión, cambio de contraseña, recuperación de contraseña, desactivación de cuenta o una situación de seguridad.
 
-La duración objetivo será de 15 minutos para el access token, 30 días para el refresh token y 30 minutos para los tokens de recuperación de contraseña. El refresh token será de un solo uso por rotación y su expiración absoluta no se extenderá por actividad.
+El access token tendrá una duración objetivo de 15 minutos. El refresh token no tendrá expiración por tiempo, será de un solo uso por rotación y podrá revocarse en cualquier momento. Los tokens de recuperación de contraseña tendrán una duración de 30 minutos y serán de un solo uso.
+Si el backend detecta la reutilización de un refresh token que ya fue rotado, deberá revocar la familia de tokens de la sesión y exigir un nuevo inicio de sesión.
 
 Las solicitudes `/auth/refresh` y `/auth/logout` deberán incluir el encabezado `X-CSRF-TOKEN`. CORS permitirá únicamente el origen configurado del frontend. El backend rechazará la solicitud si el valor del encabezado no coincide con la cookie `XSRF-TOKEN`.
 
@@ -129,6 +130,9 @@ Los límites se aplicarán por cuenta de negocio y por dirección IP. En producc
 | Recuperación de contraseña por combinación IP/correo | 3 solicitudes por hora |
 
 Cloudflare aplicará una protección perimetral adicional contra abuso y DDoS. El límite de la aplicación se mantendrá como defensa en profundidad.
+
+Las operaciones sujetas a estos límites podrán responder `429 Too Many Requests`. El backend aplicará los límites por cuenta e IP; las solicitudes no autenticadas utilizarán principalmente la dirección IP y los identificadores disponibles de forma segura.
+Cuando sea posible, una respuesta `429` incluirá el encabezado `Retry-After` con la cantidad de segundos que el cliente debe esperar antes de reintentar.
 
 ## 5. Reglas de seguridad para todos los endpoints
 
@@ -470,6 +474,8 @@ Las dimensiones deben ser mayores que cero y no superar `1000.00 cm` en ninguno 
 
 Si la creación del producto o del movimiento falla, no debe persistirse ninguna de las dos operaciones.
 
+No podrán existir dos productos activos del mismo negocio con la misma combinación de categoría, material, nombre y medidas. Los precios no forman parte de la identidad del producto. Un producto inactivo no impedirá registrar otro producto activo con esa combinación; al reactivarlo, el backend deberá volver a validar la unicidad.
+
 ### 9.3 Consultar producto
 
 ```http
@@ -499,7 +505,7 @@ Solicitud:
 }
 ```
 
-El campo `stock` no forma parte de esta solicitud. La modificación de precios no debe cambiar ventas históricas.
+El campo `stock` no forma parte de esta solicitud. La modificación de precios no debe cambiar ventas históricas. El backend y la base de datos deben impedir que existan dos productos activos del mismo negocio con la misma categoría, material, nombre y medidas. Los precios no forman parte de la identidad del producto.
 
 ### 9.5 Activar o desactivar producto
 
@@ -515,7 +521,7 @@ Solicitud:
 }
 ```
 
-La desactivación será lógica. Los productos con historial no se eliminarán físicamente.
+La desactivación será lógica. Los productos con historial no se eliminarán físicamente. Al activar nuevamente un producto, el backend deberá volver a validar la unicidad de su categoría, material, nombre y medidas; si existe otro producto activo con esa identidad, la API responderá `409 Conflict`.
 
 ## 10. Inventario
 
@@ -937,7 +943,7 @@ Códigos principales:
 | Código HTTP | Uso |
 |---:|---|
 | 400 | Solicitud malformada o campos incompletos |
-| 401 | Sesión ausente, inválida o expirada |
+| 401 | Sesión ausente, inválida, revocada o access token vencido |
 | 403 | Operación no autorizada |
 | 404 | Recurso no encontrado dentro del negocio |
 | 409 | Conflicto, stock insuficiente o solicitud duplicada |
