@@ -6,7 +6,7 @@ El primer despliegue podrá utilizar una configuración reducida para iniciar op
 
 - Vue.js como sitio estático en Cloudflare Pages.
 - Una instancia stateless del backend ASP.NET Core en Render.
-- PostgreSQL administrado sin nodo standby.
+- PostgreSQL 18.x administrado sin nodo standby.
 - Rate limiting por cuenta e IP en el backend, reforzado por la protección perimetral disponible.
 - Health checks, backups, monitoreo y migraciones controladas.
 
@@ -40,7 +40,8 @@ Instancia stateless 1         Instancia stateless 2
 - Vue.js desplegado como sitio estático en Cloudflare Pages.
 - Backend ASP.NET Core desplegado como contenedor Docker stateless.
 - Mínimo dos instancias stateless del backend en el perfil objetivo.
-- PostgreSQL administrado con alta disponibilidad, PITR y respaldos lógicos independientes.
+- PostgreSQL 18.x administrado con alta disponibilidad, PITR y respaldos lógicos independientes.
+- Servicio de correo transaccional para la recuperación de contraseña; no se utilizará para notificaciones comerciales.
 - Rate limiting perimetral mediante Cloudflare y un almacén distribuido administrado compatible con Redis para mantener límites por cuenta entre las dos instancias del backend. Este almacén no contendrá datos de negocio.
 - Variables de entorno y secretos administrados por el proveedor de despliegue.
 - Monitoreo externo de frontend, backend y base de datos.
