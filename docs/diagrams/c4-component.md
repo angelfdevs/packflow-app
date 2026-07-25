@@ -77,7 +77,7 @@ workspace "PackFlow - C4 Component" "Diagrama de componentes del Backend API de 
 
         packflow.backend.cotizaciones -> packflow.backend.catalogo "Obtiene productos y precios activos" "C#"
 
-        packflow.backend.cotizaciones -> packflow.backend.reglas "Calcula subtotal, serigrafía, descuento, IGV y total" "C#"
+        packflow.backend.cotizaciones -> packflow.backend.reglas "Calcula importes de línea, subtotal único, serigrafía, descuento, IGV y total" "C#"
 
         packflow.backend.cotizaciones -> packflow.backend.configuracion "Obtiene tarifas e IGV configurados" "C#"
 
