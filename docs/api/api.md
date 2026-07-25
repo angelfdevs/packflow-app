@@ -65,12 +65,14 @@ Authorization: Bearer <access-token>
 
 El access token permanecerá únicamente en memoria del frontend. No se almacenará en `localStorage` ni en `sessionStorage`.
 
-La renovación de la sesión utilizará una cookie de refresh token con los atributos:
+El inicio de sesión y cada renovación emitirán las cookies necesarias mediante `Set-Cookie`. La cookie de refresh token tendrá los atributos:
 
 ```text
 pf_refresh: HttpOnly; Secure; SameSite=None; Path=/api/v1/auth
 XSRF-TOKEN: Secure; SameSite=None; Path=/api/v1/auth
 ```
+
+`pf_refresh` nunca será accesible desde JavaScript. `XSRF-TOKEN` no contendrá credenciales, podrá ser leído por el frontend y deberá enviarse también como `X-CSRF-TOKEN` en las solicitudes que utilicen cookies. El frontend utilizará `credentials: include`.
 
 El usuario no será desconectado por inactividad durante el uso normal. El access token permanecerá únicamente en memoria y el refresh token será rotativo.
 
@@ -78,11 +80,11 @@ La sesión podrá revocarse por cierre de sesión, cambio de contraseña, recupe
 
 La duración objetivo será de 15 minutos para el access token, 30 días para el refresh token y 30 minutos para los tokens de recuperación de contraseña. El refresh token será de un solo uso por rotación y su expiración absoluta no se extenderá por actividad.
 
-Las solicitudes `/auth/refresh` y `/auth/logout` deberán incluir el encabezado `X-CSRF-TOKEN`. El frontend utilizará `credentials: include` y CORS permitirá únicamente el origen configurado del frontend.
+Las solicitudes `/auth/refresh` y `/auth/logout` deberán incluir el encabezado `X-CSRF-TOKEN`. CORS permitirá únicamente el origen configurado del frontend. El backend rechazará la solicitud si el valor del encabezado no coincide con la cookie `XSRF-TOKEN`.
 
 ### 4.3 Idempotencia
 
-Las operaciones que modifican datos deberán recibir:
+Las operaciones persistentes de negocio deberán recibir:
 
 ```http
 Idempotency-Key: <unique-request-key>
@@ -91,9 +93,12 @@ Idempotency-Key: <unique-request-key>
 Será obligatorio en:
 
 - Creación de categorías, materiales y productos.
+- Actualización de cuenta, configuración, productos y estado de productos.
 - Registro de ventas.
 - Ingresos de inventario.
 - Ajustes de inventario.
+
+Las operaciones de autenticación tienen semánticas propias de un solo uso o revocación y no reutilizarán esta clave como sustituto del control de sesión. Las cotizaciones no requieren idempotencia porque no persisten información.
 
 La clave deberá ser única para la cuenta del negocio. El frontend deberá generar una clave diferente para cada operación. Si se reenvía la misma solicitud con el mismo contenido, la API debe devolver el resultado original sin repetir el movimiento. Si se reutiliza la clave con un contenido diferente, la API debe rechazar la solicitud con un conflicto.
 
@@ -105,7 +110,7 @@ Las operaciones `PUT` y `PATCH` deberán incluir:
 If-Match: <etag-del-recurso>
 ```
 
-El backend debe rechazar con `409 Conflict` una actualización basada en una versión desactualizada del recurso.
+El backend debe rechazar con `409 Conflict` una actualización basada en una versión desactualizada del recurso. Cuando una solicitud se reintente con la misma `Idempotency-Key`, deberá devolverse el resultado original si el contenido coincide.
 
 Los recursos `business_accounts`, `account_settings` y `products` tendrán un campo `version` entero. El backend incrementará este valor en cada actualización y generará el ETag a partir de él, por ejemplo `"v12"`.
 
