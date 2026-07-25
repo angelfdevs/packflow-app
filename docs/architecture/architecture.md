@@ -366,7 +366,22 @@ La venta se considerará confirmada únicamente cuando se hayan guardado la oper
 
 ## 11. Despliegue e infraestructura
 
-La infraestructura objetivo para producción será:
+PackFlow utilizará dos perfiles de despliegue. El perfil inicial permitirá poner en operación la aplicación con una infraestructura sencilla para los primeros negocios. El perfil objetivo incorporará redundancia y alta disponibilidad cuando el nivel operativo lo justifique.
+
+### 11.1 Perfil inicial
+
+- Vue.js desplegado como sitio estático en Cloudflare Pages.
+- Una instancia stateless del backend ASP.NET Core en Render.
+- PostgreSQL administrado sin nodo standby.
+- Rate limiting aplicado por cuenta e IP en el backend y reforzado en el perímetro cuando el proveedor lo permita.
+- Sin estado de sesión ni archivos persistentes en la instancia del backend.
+- Backups, health checks, monitoreo y migraciones controladas.
+
+Este perfil es adecuado para el inicio de operaciones con pocos negocios y no representa una garantía formal de alta disponibilidad. La aplicación deberá conservar la misma separación por negocio y los mismos controles de seguridad que el perfil objetivo.
+
+### 11.2 Perfil objetivo de alta disponibilidad
+
+La infraestructura objetivo será:
 
 ```text
 Usuario
@@ -386,13 +401,13 @@ Componentes previstos:
 
 - Vue.js desplegado en Cloudflare Pages.
 - Backend ASP.NET Core desplegado como servicio Docker stateless en Render.
-- Mínimo dos instancias del backend en producción.
+- Mínimo dos instancias stateless del backend en el perfil objetivo.
 - PostgreSQL administrado en Render con PITR y alta disponibilidad en el plan contratado.
 - Código fuente y flujo CI/CD en GitHub.
 - Monitoreo externo de frontend, backend y base de datos.
 - Variables de entorno para configuración y secretos.
 - El backend no utilizará discos persistentes ni estado local de sesión.
-- Los contadores de rate limiting no dependerán únicamente de memoria local cuando existan varias instancias.
+- Los contadores de rate limiting no dependerán únicamente de memoria local cuando existan varias instancias; se utilizará un almacén distribuido compatible con Redis o una política equivalente en el perímetro.
 - Los despliegues utilizarán health checks, apagado controlado y rollback.
 
 La especificación operativa del despliegue se encuentra en [`docs/deployment/deployment.md`](../deployment/deployment.md).
@@ -416,23 +431,19 @@ El flujo de integración y despliegue deberá incluir:
 
 Los objetivos de PackFlow serán:
 
-- Disponibilidad objetivo: 99.99 % mensual.
+- Disponibilidad objetivo: 99.9 % mensual en el perfil objetivo de alta disponibilidad.
 - RTO objetivo: máximo una hora.
 - RPO objetivo: máximo 15 minutos.
 
-Estos objetivos se medirán utilizando la infraestructura redundante definida en esta arquitectura. El 99.99 % no deberá presentarse como garantía contractual hasta confirmar el SLA del proveedor, el plan contratado y los resultados del monitoreo.
+Estos objetivos se medirán utilizando la infraestructura redundante definida en el perfil objetivo. El 99.9 % no deberá presentarse como garantía contractual hasta confirmar el SLA del proveedor, el plan contratado y los resultados del monitoreo. Durante el perfil inicial, la disponibilidad se medirá como best effort y deberá registrarse para decidir cuándo realizar la ampliación.
 
 La primera versión deberá contar con PITR, respaldos lógicos independientes, recuperación probada y un procedimiento documentado de restauración.
 
-## 14. Costos de infraestructura
+## 14. Evolución de la infraestructura
 
-La arquitectura no genera costos de licencia por utilizar DDD, Clean Architecture, CQRS, Docker, CORS o los bounded contexts.
+La aplicación podrá iniciar con el perfil inicial y evolucionar al perfil objetivo sin modificar el dominio ni el contrato funcional. La ampliación se realizará cuando el número de negocios, el tráfico, los requisitos de disponibilidad o las métricas operativas lo justifiquen.
 
-El presupuesto de aproximadamente US$13 mensuales corresponde únicamente a una infraestructura básica con una instancia de backend y una base de datos sin alta disponibilidad.
-
-La infraestructura objetivo con dos instancias de backend, PostgreSQL HA, respaldos avanzados, monitoreo y correo transaccional tendrá un costo superior. El precio definitivo deberá verificarse con los planes vigentes del proveedor antes del despliegue.
-
-Como la infraestructura objetivo utiliza dos instancias del backend, deberá considerarse el costo de un almacén distribuido administrado para rate limiting, compatible con Redis. No se utilizará para almacenar información del negocio.
+La alta disponibilidad requerirá dos instancias del backend, PostgreSQL administrado con nodo standby, respaldos y recuperación probada, monitoreo externo y rate limiting distribuido o perimetral. El almacén distribuido compatible con Redis se utilizará únicamente para controles técnicos como rate limiting; no almacenará información del negocio.
 
 ## 15. Evolución futura
 
