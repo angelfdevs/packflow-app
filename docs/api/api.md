@@ -77,11 +77,13 @@ XSRF-TOKEN: Secure; SameSite=None; Path=/api/v1/auth
 
 `pf_refresh` nunca será accesible desde JavaScript. `XSRF-TOKEN` no contendrá credenciales, pero tampoco se leerá desde `document.cookie` porque el frontend y la API se desplegarán en orígenes distintos. El frontend obtendrá el token mediante `GET /auth/csrf`, lo conservará únicamente en memoria y deberá enviarlo como `X-CSRF-TOKEN` en las solicitudes que utilicen cookies. El frontend utilizará `credentials: include`.
 
-El usuario no será desconectado por inactividad durante el uso normal. El access token permanecerá únicamente en memoria y el refresh token será rotativo.
+El usuario no será desconectado por inactividad mientras utilice la aplicación normalmente. El access token permanecerá únicamente en memoria y el refresh token será rotativo.
 
-La sesión no tendrá expiración por inactividad ni expiración absoluta. Podrá mantenerse activa mediante la renovación del access token mientras la sesión no sea revocada por cierre de sesión, cambio de contraseña, recuperación de contraseña, desactivación de cuenta o una situación de seguridad.
+La sesión expirará después de 15 minutos sin interacción y no tendrá expiración absoluta. La actividad normal reiniciará el contador de inactividad. No existirá un botón “Mantener sesión activa” ni un heartbeat automático para evitar la expiración.
 
-El access token tendrá una duración objetivo de 15 minutos. El refresh token no tendrá expiración por tiempo, será de un solo uso por rotación y podrá revocarse en cualquier momento. Los tokens de recuperación de contraseña tendrán una duración de 30 minutos y serán de un solo uso.
+El backend validará el vencimiento utilizando la última actividad registrada en `sessions.last_seen_at`; cualquier contador del frontend tendrá únicamente fines informativos.
+
+El access token tendrá una duración objetivo de 15 minutos. El refresh token será válido mientras la sesión tenga actividad, expirará después de 15 minutos sin interacción, será de un solo uso por rotación y podrá revocarse en cualquier momento. Los tokens de recuperación de contraseña tendrán una duración de 30 minutos y serán de un solo uso.
 Si el backend detecta la reutilización de un refresh token que ya fue rotado, deberá revocar la familia de tokens de la sesión y exigir un nuevo inicio de sesión.
 Cada refresh token deberá estar asociado a una sesión mediante `session_id`, que identificará la familia de tokens. El `session_id` no sustituye al secreto del refresh token: el backend deberá validar tanto la sesión como el hash del token.
 
@@ -226,7 +228,7 @@ Errores posibles:
 POST /api/v1/auth/refresh
 ```
 
-La solicitud utilizará la cookie de refresh token. El token será rotado y la sesión se mantendrá activa si no fue revocada.
+La solicitud utilizará la cookie de refresh token. El token será rotado y la sesión se mantendrá activa si no fue revocada ni expiró por 15 minutos de inactividad.
 
 Respuesta `200 OK`:
 
