@@ -319,6 +319,22 @@ Estas medidas reducen el riesgo frente a ataques como inyección SQL, XSS, CSRF,
 
 ## 10. Persistencia y consistencia
 
+### 10.1 Aislamiento de datos por negocio
+
+PackFlow aplicará aislamiento multiempresa mediante `business_account_id`. El
+backend determinará el negocio a partir de la sesión autenticada y no confiará
+en un identificador de negocio enviado por el frontend.
+
+Las migraciones de PostgreSQL reforzarán este aislamiento mediante restricciones
+`UNIQUE` y claves foráneas compuestas. Cuando una relación incluya
+`business_account_id`, la combinación de columnas referenciada deberá tener una
+clave primaria o una restricción `UNIQUE` compatible. Esto impedirá referencias
+cruzadas entre productos, ventas, movimientos, solicitudes idempotentes y otros
+registros pertenecientes a diferentes negocios.
+
+El aislamiento se validará tanto en la capa de aplicación como en PostgreSQL;
+ninguna de las dos capas será considerada suficiente por sí sola.
+
 PostgreSQL será la base de datos principal. Se aplicarán:
 
 - Claves primarias y foráneas.
