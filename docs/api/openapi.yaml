@@ -12,11 +12,11 @@ security:
   - bearerAuth: []
 tags:
   - name: Authentication
-    description: AutenticaciÃƒÆ’Ã‚Â³n, sesiones y recuperaciÃƒÆ’Ã‚Â³n de contraseÃƒÆ’Ã‚Â±a.
+    description: Autenticación, sesiones y recuperación de contraseña.
   - name: Account
-    description: Cuenta y configuraciÃƒÆ’Ã‚Â³n del negocio.
+    description: Cuenta y configuración del negocio.
   - name: Catalog
-    description: CategorÃƒÆ’Ã‚Â­as, materiales y productos.
+    description: Categorías, materiales y productos.
   - name: Inventory
     description: Stock, ingresos, ajustes y movimientos.
   - name: Quotes
@@ -40,7 +40,7 @@ paths:
           application/json:
             schema: { $ref: '#/components/schemas/LoginRequest' }
       responses:
-        '200': { description: SesiÃƒÆ’Ã‚Â³n iniciada, content: { application/json: { schema: { $ref: '#/components/schemas/LoginResponse' } } } }
+        '200': { description: Sesión iniciada, content: { application/json: { schema: { $ref: '#/components/schemas/LoginResponse' } } } }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
@@ -52,7 +52,7 @@ paths:
       security:
         - refreshCookie: []
           csrfToken: []
-      description: No existe expiraciÃƒÆ’Ã‚Â³n por inactividad. El refresh token rota y tiene expiraciÃƒÆ’Ã‚Â³n absoluta.
+      description: No existe expiración por inactividad. El refresh token rota y tiene expiración absoluta.
       responses:
         '200': { description: Access token renovado, content: { application/json: { schema: { $ref: '#/components/schemas/AccessTokenResponse' } } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -75,7 +75,7 @@ paths:
           refreshCookie: []
           csrfToken: []
       responses:
-        '204': { description: SesiÃƒÆ’Ã‚Â³n revocada }
+        '204': { description: Sesión revocada }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
   /auth/password/change:
@@ -89,7 +89,7 @@ paths:
           application/json:
             schema: { $ref: '#/components/schemas/ChangePasswordRequest' }
       responses:
-        '204': { description: ContraseÃƒÆ’Ã‚Â±a actualizada y sesiones revocadas }
+        '204': { description: Contraseña actualizada y sesiones revocadas }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
   /auth/password/forgot:
@@ -104,7 +104,11 @@ paths:
           application/json:
             schema: { $ref: '#/components/schemas/PasswordForgotRequest' }
       responses:
-        '202': { description: Respuesta genÃƒÆ’Ã‚Â©rica para evitar enumeraciÃƒÆ’Ã‚Â³n de cuentas }
+        '202':
+          description: Respuesta genérica para evitar enumeración de cuentas
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PasswordRecoveryAccepted' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
   /auth/password/reset:
@@ -119,7 +123,7 @@ paths:
           application/json:
             schema: { $ref: '#/components/schemas/PasswordResetRequest' }
       responses:
-        '204': { description: ContraseÃƒÆ’Ã‚Â±a restablecida y sesiones revocadas }
+        '204': { description: Contraseña restablecida y sesiones revocadas }
         '400': { $ref: '#/components/responses/BadRequest' }
   /account:
     get:
@@ -149,7 +153,7 @@ paths:
       operationId: getsettings10
       tags: [Account]
       responses:
-        '200': { description: ConfiguraciÃƒÆ’Ã‚Â³n, content: { application/json: { schema: { $ref: '#/components/schemas/Settings' } } } }
+        '200': { description: Configuración, content: { application/json: { schema: { $ref: '#/components/schemas/Settings' } } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
     patch:
       summary: PATCH /settings
@@ -162,7 +166,7 @@ paths:
           application/json:
             schema: { $ref: '#/components/schemas/SettingsPatchRequest' }
       responses:
-        '200': { description: ConfiguraciÃƒÆ’Ã‚Â³n actualizada, content: { application/json: { schema: { $ref: '#/components/schemas/Settings' } } } }
+        '200': { description: Configuración actualizada, content: { application/json: { schema: { $ref: '#/components/schemas/Settings' } } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '409': { $ref: '#/components/responses/Conflict' }
   /categories:
@@ -334,6 +338,10 @@ paths:
       operationId: getinventoryMovements24
       tags: [Inventory]
       parameters:
+        - { $ref: '#/components/parameters/MovementProductId' }
+        - { $ref: '#/components/parameters/MovementType' }
+        - { $ref: '#/components/parameters/FromDate' }
+        - { $ref: '#/components/parameters/ToDate' }
         - { $ref: '#/components/parameters/Page' }
         - { $ref: '#/components/parameters/PageSize' }
       responses:
@@ -344,7 +352,7 @@ paths:
       summary: POST /quotes/preview
       operationId: postquotesPreview25
       tags: [Quotes]
-      description: No guarda la cotizaciÃƒÆ’Ã‚Â³n ni modifica el stock. El backend calcula todos los valores.
+      description: No guarda la cotización ni modifica el stock. El backend calcula todos los valores.
       requestBody:
         required: true
         content:
@@ -360,6 +368,8 @@ paths:
       operationId: getsales26
       tags: [Sales]
       parameters:
+        - { $ref: '#/components/parameters/FromDate' }
+        - { $ref: '#/components/parameters/ToDate' }
         - { $ref: '#/components/parameters/Page' }
         - { $ref: '#/components/parameters/PageSize' }
       responses:
@@ -444,6 +454,22 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    MovementProductId:
+      name: productId
+      in: query
+      schema: { type: string, format: uuid }
+    MovementType:
+      name: movementType
+      in: query
+      schema: { type: string, enum: [INITIAL_RECEIPT, RECEIPT, SALE_OUT, LOSS, DAMAGE, CORRECTION] }
+    FromDate:
+      name: from
+      in: query
+      schema: { type: string, format: date-time }
+    ToDate:
+      name: to
+      in: query
+      schema: { type: string, format: date-time }
     Search: { name: search, in: query, schema: { type: string, maxLength: 100 } }
     CategoryId: { name: categoryId, in: query, schema: { type: string, format: uuid } }
     MaterialId: { name: materialId, in: query, schema: { type: string, format: uuid } }
@@ -539,6 +565,11 @@ components:
       required: [email]
       properties:
         email: { type: string, format: email, maxLength: 254 }
+    PasswordRecoveryAccepted:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string, example: "Si el correo está registrado, recibirás instrucciones para recuperar tu contraseña." }
     PasswordResetRequest:
       type: object
       required: [token, newPassword, confirmPassword]
@@ -815,10 +846,11 @@ components:
         totalItems: { type: integer, minimum: 0 }
     DashboardSummary:
       type: object
-      required: [activeProducts, lowStockProducts]
+      required: [activeProducts, lowStockProducts, lowStockThreshold]
       properties:
         activeProducts: { type: integer, minimum: 0 }
         lowStockProducts: { type: integer, minimum: 0 }
+        lowStockThreshold: { type: integer, minimum: 0, example: 15 }
     ProblemDetails:
       type: object
       required: [type, title, status, errorCode, traceId]
