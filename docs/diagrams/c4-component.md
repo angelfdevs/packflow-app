@@ -15,7 +15,7 @@ workspace "PackFlow - C4 Component" "Diagrama de componentes del Backend API de 
 
                 api = component "API REST" "Recibe solicitudes HTTP, valida el acceso y delega los casos de uso." "ASP.NET Core"
 
-                auth = component "Autenticación y sesión" "Gestiona inicio de sesión, cierre de sesión, renovación y recuperación de contraseña." "ASP.NET Core, C#"
+                auth = component "Identidad y sesión" "Gestiona la cuenta administradora, inicio de sesión, cierre de sesión, renovación, revocación y recuperación de contraseña." "ASP.NET Core, C#"
 
                 catalogo = component "Catálogo de productos" "Gestiona productos, categorías, materiales, precios y activación de productos." "C#"
 
