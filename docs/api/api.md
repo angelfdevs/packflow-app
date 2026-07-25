@@ -83,6 +83,8 @@ La sesión expirará después de 15 minutos sin interacción y no tendrá expira
 
 El backend validará el vencimiento utilizando la última actividad registrada en `sessions.last_seen_at`; cualquier contador del frontend tendrá únicamente fines informativos.
 
+Para esta regla, se considerará interacción una solicitud autenticada procesada por el backend, por ejemplo, consultar información o guardar una operación. El backend actualizará `sessions.last_seen_at` al procesar esa actividad. Los eventos locales del navegador, como escribir en un formulario o mover el cursor sin realizar una solicitud, no reiniciarán el contador; no se implementará un heartbeat automático.
+
 El access token tendrá una duración objetivo de 15 minutos. El refresh token será válido mientras la sesión tenga actividad, expirará después de 15 minutos sin interacción, será de un solo uso por rotación y podrá revocarse en cualquier momento. Los tokens de recuperación de contraseña tendrán una duración de 30 minutos y serán de un solo uso.
 Si el backend detecta la reutilización de un refresh token que ya fue rotado, deberá revocar la familia de tokens de la sesión y exigir un nuevo inicio de sesión.
 Cada refresh token deberá estar asociado a una sesión mediante `session_id`, que identificará la familia de tokens. El `session_id` no sustituye al secreto del refresh token: el backend deberá validar tanto la sesión como el hash del token.
@@ -646,8 +648,9 @@ Solicitud para corrección:
 Valores permitidos:
 
 ```text
-adjustmentType: LOSS | DAMAGE | CORRECTION
-direction: INCREASE | DECREASE
+LOSS:       DECREASE
+DAMAGE:     DECREASE
+CORRECTION: INCREASE | DECREASE
 ```
 
 Pérdida y daño solo podrán disminuir el stock. Corrección podrá aumentarlo o disminuirlo. El stock resultante nunca podrá ser negativo.
