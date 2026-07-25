@@ -44,6 +44,7 @@ Entonces puede invalidar la sesión y solicitar un nuevo inicio de sesión.
 - El refresh token debe almacenarse en una cookie `HttpOnly`, `Secure` y `SameSite=None`.
 - El refresh token debe rotarse después de cada renovación.
 - Si se detecta la reutilización de un refresh token ya rotado, el sistema debe revocar la familia de tokens de la sesión y exigir un nuevo inicio de sesión.
+- Cada refresh token debe estar asociado a una sesión mediante `session_id`, que identificará la familia de tokens. El `session_id` no sustituye al secreto del refresh token.
 - La sesión no tendrá expiración absoluta ni expiración por inactividad. El refresh token se rotará y podrá revocarse por cierre de sesión, cambio de contraseña, recuperación de contraseña, desactivación de cuenta o una situación de seguridad.
 - El access token tendrá una duración objetivo de 15 minutos.
 - El token de recuperación de contraseña tendrá una duración de 30 minutos y será de un solo uso.
