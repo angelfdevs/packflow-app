@@ -52,6 +52,24 @@ paths:
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
+  /auth/csrf:
+    get:
+      summary: GET /auth/csrf
+      operationId: getauthCsrf2
+      tags: [Authentication]
+      security: []
+      description: Genera o recupera un token CSRF no sensible para que el frontend lo envíe en el encabezado X-CSRF-TOKEN. El token solo se conserva en memoria del frontend y la cookie XSRF-TOKEN no es una credencial.
+      responses:
+        '200':
+          description: Token CSRF emitido. El servidor establece o renueva la cookie XSRF-TOKEN.
+          headers:
+            Set-Cookie:
+              description: Cookie XSRF-TOKEN no sensible.
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CsrfTokenResponse' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /auth/refresh:
     post:
       summary: POST /auth/refresh
@@ -63,7 +81,7 @@ paths:
       description: No existe expiración por inactividad ni por tiempo absoluto. El refresh token rota, está asociado a una sesión mediante session_id y puede revocarse.
       responses:
         '200':
-          description: Access token renovado. El servidor rota pf_refresh y establece XSRF-TOKEN.
+          description: Access token renovado. El servidor rota pf_refresh, establece XSRF-TOKEN y devuelve el nuevo token CSRF no sensible.
           headers:
             Set-Cookie:
               description: Cookies rotadas de refresh y token CSRF no sensible.
@@ -582,17 +600,24 @@ components:
         password: { type: string, format: password, minLength: 12, maxLength: 128 }
     LoginResponse:
       type: object
-      required: [accessToken, expiresIn, account]
+      required: [accessToken, expiresIn, account, csrfToken]
       properties:
         accessToken: { type: string }
         expiresIn: { type: integer, example: 900 }
         account: { $ref: '#/components/schemas/AccountIdentity' }
+        csrfToken: { type: string, minLength: 32, maxLength: 512 }
     AccessTokenResponse:
       type: object
-      required: [accessToken, expiresIn]
+      required: [accessToken, expiresIn, csrfToken]
       properties:
         accessToken: { type: string }
         expiresIn: { type: integer, example: 900 }
+        csrfToken: { type: string, minLength: 32, maxLength: 512 }
+    CsrfTokenResponse:
+      type: object
+      required: [csrfToken]
+      properties:
+        csrfToken: { type: string, minLength: 32, maxLength: 512 }
     AccountIdentity:
       type: object
       required: [businessAccountId, businessName, email]
@@ -681,7 +706,7 @@ components:
         heightCm: { type: number, exclusiveMinimum: 0, maximum: 1000 }
     DecimalAmount:
       type: string
-      pattern: '^\\d{1,10}(\\.\\d{1,2})?$'
+      pattern: '^[0-9]{1,10}([.][0-9]{1,2})?$'
     ProductCreateRequest:
       type: object
       required: [categoryId, materialId, name, dimensions, retailPrice, wholesalePrice]
@@ -911,11 +936,46 @@ components:
         totalItems: { type: integer, minimum: 0 }
     DashboardSummary:
       type: object
-      required: [activeProducts, lowStockProducts, lowStockThreshold]
+      required: [activeProducts, lowStockProducts, lowStockThreshold, lowStockItems, recentSales, recentMovements]
       properties:
         activeProducts: { type: integer, minimum: 0 }
         lowStockProducts: { type: integer, minimum: 0 }
         lowStockThreshold: { type: integer, minimum: 0, example: 15 }
+        lowStockItems:
+          type: array
+          maxItems: 100
+          items: { $ref: '#/components/schemas/DashboardStockItem' }
+        recentSales:
+          type: array
+          maxItems: 10
+          items: { $ref: '#/components/schemas/DashboardRecentSale' }
+        recentMovements:
+          type: array
+          maxItems: 10
+          items: { $ref: '#/components/schemas/DashboardRecentMovement' }
+    DashboardStockItem:
+      type: object
+      required: [productId, name, currentStock]
+      properties:
+        productId: { type: string, format: uuid }
+        name: { type: string, maxLength: 150 }
+        currentStock: { type: integer, minimum: 0 }
+    DashboardRecentSale:
+      type: object
+      required: [saleId, total, createdAt]
+      properties:
+        saleId: { type: string, format: uuid }
+        total: { $ref: '#/components/schemas/DecimalAmount' }
+        createdAt: { type: string, format: date-time }
+    DashboardRecentMovement:
+      type: object
+      required: [movementId, productId, movementType, quantityDelta, createdAt]
+      properties:
+        movementId: { type: string, format: uuid }
+        productId: { type: string, format: uuid }
+        movementType: { type: string, enum: [INITIAL_RECEIPT, RECEIPT, SALE_OUT, LOSS, DAMAGE, CORRECTION] }
+        quantityDelta: { type: integer, not: { const: 0 } }
+        createdAt: { type: string, format: date-time }
     ProblemDetails:
       type: object
       required: [type, title, status, errorCode, traceId]
