@@ -81,6 +81,7 @@ Entonces el sistema debe informar el conflicto y evitar el duplicado.
 - El producto debe pertenecer a la cuenta del negocio autenticado.
 - El producto debe tener categoría, nombre, medidas, material, precio minorista y precio mayorista.
 - No podrán existir dos productos activos del mismo negocio con la misma categoría, material, nombre y medidas. Los precios no forman parte de la identidad del producto.
+- Los nombres de productos, categorías y materiales se almacenarán sin espacios externos y se compararán sin distinguir mayúsculas de minúsculas para evitar duplicados aparentes.
 - Los precios no pueden ser negativos.
 - Cada dimensión debe ser mayor que cero y no superar 1 000 cm.
 - El stock inicial no podrá superar 1 000 000 unidades.
@@ -294,12 +295,13 @@ Dado que no se seleccionó ningún producto o falta la cantidad de una línea.
 Cuando el administrador intenta calcular.
 Entonces el sistema debe solicitar la información faltante.
 <br>**Reglas de negocio**</br>
-- El subtotal base se calculará usando el precio minorista o mayorista correspondiente.
-- La serigrafía se agregará al subtotal base cuando corresponda.
+- Los importes de productos se calcularán usando el precio minorista o mayorista correspondiente.
+- La serigrafía se agregará al importe de cada línea cuando corresponda.
 - El descuento será opcional.
 - Solo podrá aplicarse un descuento por operación.
 - El descuento podrá ser porcentual o de monto fijo.
-- La cotización podrá contener uno o varios productos y mostrará: Subtotal base, Costo de serigrafía, Descuento aplicado, Subtotal final, IGV y Total.
+- La cotización podrá contener uno o varios productos y mostrará un único subtotal, IGV y total.
+- Si se aplica un descuento, se mostrará su tipo, valor y monto aplicado; no se mostrará un segundo subtotal.
 - Las cotizaciones no se guardarán.
 - Las cotizaciones no modifican el stock.
 
@@ -334,7 +336,7 @@ Cuando intento confirmar la venta.
 Entonces el sistema debe impedirlo y mostrar un mensaje de validación.
 <br>**Reglas de negocio**</br>
 - Solo se deben registrar ventas confirmadas.
-- La venta debe conservar todos sus productos, cantidades, precios, serigrafía, subtotal, IGV, total y fecha.
+- La venta debe conservar todos sus productos, cantidades, precios, serigrafía, un único subtotal, IGV, total y fecha.
 - Una venta cancelada no debe generar movimientos de stock.
 - El descuento es opcional.
 - Solo se permite un tipo de descuento por venta.
@@ -381,7 +383,7 @@ Entonces el sistema debe mostrar un mensaje informativo.
 - Una modificación posterior del precio del producto no debe alterar ventas anteriores.
 - El historial debe mostrar el descuento aplicado, si existiera.
 - Debe indicar si el descuento fue porcentual o fijo.
-- Debe mostrar el subtotal final, IGV y total de la venta.
+- Debe mostrar un único subtotal final, IGV y total de la venta.
 - Debe conservar los valores utilizados al momento de registrar la venta.
 
 <br>**US-017 — Configurar IGV y serigrafía**</br>
@@ -463,6 +465,7 @@ Entonces el sistema debe mostrar un mensaje de error y no duplicarla.
 <br>**Reglas de negocio**</br>
 - El nombre de la categoría es obligatorio.
 - No pueden existir categorías duplicadas dentro del mismo negocio.
+- La comparación del nombre ignorará espacios externos y diferencias entre mayúsculas y minúsculas.
 - La categoría debe pertenecer a la cuenta del negocio.
 
 <br>**US-021 — Registrar material**</br>
@@ -480,6 +483,7 @@ Entonces el sistema debe mostrar un mensaje de error y no duplicarlo.
 <br>**Reglas de negocio**</br>
 - El nombre del material es obligatorio.
 - No pueden existir materiales duplicados dentro del mismo negocio.
+- La comparación del nombre ignorará espacios externos y diferencias entre mayúsculas y minúsculas.
 - El material debe pertenecer a la cuenta del negocio.
 
 <br>**US-022 — Ajustar stock**</br>
@@ -538,6 +542,7 @@ Entonces el sistema debe impedirlo.
 - El descuento fijo no puede ser negativo ni superar el importe permitido.
 - Las cotizaciones no guardan el descuento.
 - Las ventas deben guardar el tipo, valor y monto del descuento.
+- La operación debe mostrar un único subtotal después de aplicar el descuento, cuando corresponda.
 
 <br>**US-024 — Solicitar recuperación de contraseña**</br>
 Descripción:
@@ -617,7 +622,7 @@ Entonces el sistema debe aplicar el precio minorista o mayorista según la canti
 <br>**Escenario 3: Cotización con múltiples productos**</br>
 Dado que el administrador agregó varios productos a una cotización.
 Cuando solicita el cálculo.
-Entonces el sistema debe mostrar el subtotal, serigrafía, descuento, IGV y total de toda la operación sin modificar el stock ni guardar la cotización.
+Entonces el sistema debe mostrar un único subtotal, el descuento aplicado, el IGV y el total de toda la operación sin modificar el stock ni guardar la cotización.
 <br>**Escenario 4: Venta con stock suficiente**</br>
 Dado que todos los productos tienen stock suficiente.
 Cuando el administrador confirma la venta.
@@ -649,4 +654,5 @@ Entonces el sistema no debe guardar la operación ni modificar el stock.
 - Si un producto no tiene stock suficiente, toda la venta debe rechazarse.
 - El descuento será único para toda la operación.
 - El descuento se aplicará antes del IGV.
+- La operación mostrará un único subtotal, calculado después de aplicar el descuento.
 - El backend debe recalcular todos los importes y no confiar en los valores enviados por el frontend.
