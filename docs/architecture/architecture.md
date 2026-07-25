@@ -112,7 +112,7 @@ La serigrafía se podrá activar desde 20 unidades. El cobro se calculará por l
 | 301 a 500 unidades | S/40 |
 | 501 unidades a más | S/30 |
 
-El costo de serigrafía se multiplicará por la cantidad de colores y por la cantidad de lotes de 100 unidades, redondeando hacia arriba. El descuento se aplicará antes del IGV.
+El costo de serigrafía se multiplicará por la cantidad de colores y por la cantidad de lotes de 100 unidades, redondeando hacia arriba. El descuento se aplicará antes del IGV. Las cotizaciones y ventas expondrán un único subtotal, calculado después del descuento cuando este exista, además del IGV y el total. El descuento mostrará su tipo, valor y monto aplicado.
 
 Una operación podrá contener como máximo 20 productos diferentes. Cada línea podrá contener hasta 1 000 000 unidades y hasta 10 colores de serigrafía. Cada dimensión del producto será mayor que cero y no superará 1 000 cm.
 
@@ -336,11 +336,10 @@ PostgreSQL será la base de datos principal. Se aplicarán:
 
 Como mínimo, las migraciones deberán implementar:
 
-- `UNIQUE (business_account_id, category_name)` en categorías.
-- `UNIQUE (business_account_id, material_name)` en materiales.
+- Índices únicos funcionales sobre `(business_account_id, lower(btrim(category_name)))`, `(business_account_id, lower(btrim(material_name)))` y `lower(btrim(admin_email))` para evitar duplicados por espacios o mayúsculas.
 - `UNIQUE (business_account_id, idempotency_key)` en solicitudes idempotentes.
 - `UNIQUE (business_account_id, minimum_quantity)` en rangos de serigrafía.
-- Índice único parcial para impedir dos productos activos con la misma combinación de negocio, categoría, material, nombre y medidas. Los precios no forman parte de esta identidad.
+- Índice único parcial basado en `lower(btrim(product_name))` para impedir dos productos activos con la misma combinación de negocio, categoría, material, nombre y medidas. Los precios no forman parte de esta identidad.
 - `UNIQUE (type_code)` en `price_types`, que será un catálogo global de referencia; los precios de cada negocio se almacenarán en `product_prices`.
 - Claves foráneas compuestas para que una categoría, material, venta, movimiento o solicitud idempotente solo pueda asociarse a registros del mismo negocio.
 - Clave foránea compuesta desde `sale_items (product_id, price_type_id)` hacia `product_prices (product_id, price_type_id)`.
