@@ -12,6 +12,7 @@ Cuando se consulta la información de la cuenta.
 Entonces la contraseña no debe mostrarse.
 <br>**Restricciones técnicas**</br>
 - Se debe utilizar un algoritmo seguro de hash.
+- El backend debe utilizar `PasswordHasher` de ASP.NET Core Identity y no una implementación criptográfica propia.
 - Las contraseñas no deben almacenarse en logs.
 - La contraseña no debe enviarse en respuestas de la API.
 
@@ -43,6 +44,9 @@ Entonces puede invalidar la sesión y solicitar un nuevo inicio de sesión.
 - El refresh token debe almacenarse en una cookie `HttpOnly`, `Secure` y `SameSite=None`.
 - El refresh token debe rotarse después de cada renovación.
 - La sesión debe tener una expiración absoluta, aunque no debe expirar por inactividad.
+- El access token tendrá una duración objetivo de 15 minutos.
+- El refresh token tendrá una duración absoluta de 30 días.
+- El token de recuperación de contraseña tendrá una duración de 30 minutos y será de un solo uso.
 - Después de cerrar sesión, la sesión anterior no debe permitir acceder a módulos protegidos.
 - La sesión podrá revocarse por cambio de contraseña, recuperación de contraseña, desactivación de cuenta o una situación de seguridad.
 - La información de formularios importantes debe conservarse temporalmente ante una interrupción de red.
@@ -101,6 +105,11 @@ Entonces el sistema debe indicar los campos pendientes.
 - Las consultas a la base de datos deben utilizar parámetros seguros.
 - Los errores internos no deben mostrarse al usuario.
 - Los precios, cantidades, medidas y porcentajes deben validar sus rangos permitidos.
+- Cada operación podrá contener como máximo 20 productos diferentes.
+- Cada línea podrá contener como máximo 1 000 000 unidades y 10 colores de serigrafía.
+- Cada dimensión del producto tendrá un máximo de 1 000 cm.
+- El cuerpo máximo de una solicitud será de 256 KB.
+- `pageSize` tendrá un máximo de 100 registros y un valor predeterminado de 20.
 
 <br>**RNF-006 — Integridad del inventario**</br>
 Descripción:
@@ -280,7 +289,9 @@ Entonces los demás módulos no deben verse afectados innecesariamente.
 - Las decisiones técnicas importantes deben documentarse.
 - Debe evitarse duplicar reglas de cálculo entre frontend y backend.
 - Las operaciones de actualización deben utilizar control de concurrencia mediante `If-Match` y ETags.
+- Los recursos mutables utilizarán una versión entera para generar ETags deterministas.
 - Las operaciones que modifican datos deben utilizar idempotencia para soportar reintentos seguros.
+- Los límites de solicitudes deben aplicarse por cuenta e IP y mantenerse consistentes entre instancias mediante un almacén distribuido o protección perimetral.
 
 <br>**RNF-015 — Pruebas**</br>
 Descripción:
@@ -339,6 +350,7 @@ Entonces la venta debe guardarse y el stock debe disminuir correctamente.
 - Deben probarse conflictos de concurrencia mediante `If-Match` y ETags.
 - Deben probarse aislamiento entre cuentas de negocio.
 - Deben probarse cantidades de 19, 20, 100, 101, 150, 200, 300, 301, 500 y 501 unidades.
+- Deben probarse los límites de 20 productos por operación, 21 productos, 10 colores, 11 colores, 1 000 cm y 1 000.01 cm.
 - Debe probarse la clasificación de stock bajo con valores de 14, 15 y 16 unidades.
 
 <br>**RNF-016 — Documentación técnica**</br>
