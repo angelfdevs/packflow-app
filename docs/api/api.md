@@ -43,6 +43,9 @@ El dominio real se configurará mediante variables de entorno y no se escribirá
 - Cada dimensión del producto tendrá un máximo de 1 000 cm.
 - Los errores utilizarán el formato `ProblemDetails`.
 - El backend será la autoridad final de todas las reglas de negocio.
+- El backend eliminará los espacios externos de correos, nombres de productos, categorías y materiales antes de persistirlos.
+- El correo se almacenará en una forma canónica; los nombres conservarán la capitalización recortada que eligió el usuario, pero se compararán sin distinguir mayúsculas de minúsculas para evitar duplicados aparentes.
+- La base de datos reforzará esta regla mediante índices únicos funcionales basados en `lower(btrim(...))`.
 
 ## 4. Encabezados
 
@@ -743,7 +746,7 @@ Respuesta `200 OK`:
       "quantity": 150,
       "unitPrice": "0.80",
       "priceType": "WHOLESALE",
-      "productsSubtotal": "120.00",
+      "productAmount": "120.00",
       "screenPrinting": {
         "enabled": true,
         "colors": 1,
@@ -751,14 +754,14 @@ Respuesta `200 OK`:
         "ratePerColor": "45.00",
         "amount": "90.00"
       },
-      "lineSubtotal": "210.00"
+      "lineAmount": "210.00"
     },
     {
       "productId": "bag-product-uuid",
       "quantity": 50,
       "unitPrice": "1.00",
       "priceType": "RETAIL",
-      "productsSubtotal": "50.00",
+      "productAmount": "50.00",
       "screenPrinting": {
         "enabled": false,
         "colors": 0,
@@ -766,12 +769,9 @@ Respuesta `200 OK`:
         "ratePerColor": "0.00",
         "amount": "0.00"
       },
-      "lineSubtotal": "50.00"
+      "lineAmount": "50.00"
     }
   ],
-  "productsSubtotal": "170.00",
-  "screenPrintingSubtotal": "90.00",
-  "subtotalBeforeDiscount": "260.00",
   "discount": {
     "type": "PERCENTAGE",
     "value": "10.00",
@@ -792,11 +792,14 @@ Fórmulas:
 ```text
 Lotes = ceil(cantidad / 100)
 Costo de serigrafía = lotes × colores × tarifa
-Subtotal antes de descuento = productos + serigrafía
-Subtotal = subtotal antes de descuento - descuento
+Importe de línea = importe de productos + serigrafía de la línea
+Subtotal = suma de los importes de línea - descuento aplicado
 IGV = subtotal × tasa de IGV
 Total = subtotal + IGV
 ```
+
+El resultado expone un único `subtotal`. Cuando existe un descuento, el campo `discount` informa su tipo, valor y monto aplicado; no se expone un subtotal previo ni un segundo subtotal.
+Si no se aplica descuento, el descuento aplicado se considera `0.00` y el subtotal corresponde a la suma de los importes de línea.
 
 Reglas de serigrafía:
 
@@ -867,7 +870,7 @@ Respuesta `201 Created`:
       "quantity": 150,
       "unitPrice": "0.80",
       "priceType": "WHOLESALE",
-      "productsSubtotal": "120.00",
+      "productAmount": "120.00",
       "screenPrinting": {
         "enabled": true,
         "colors": 1,
@@ -875,12 +878,14 @@ Respuesta `201 Created`:
         "ratePerColor": "45.00",
         "amount": "90.00"
       },
-      "lineSubtotal": "210.00"
+      "lineAmount": "210.00"
     }
   ],
-  "productsSubtotal": "120.00",
-  "screenPrintingSubtotal": "90.00",
-  "discountAmount": "20.00",
+  "discount": {
+    "type": "FIXED",
+    "value": "20.00",
+    "amount": "20.00"
+  },
   "subtotal": "190.00",
   "igvRate": 0.18,
   "igv": "34.20",
@@ -913,7 +918,7 @@ Solo se mostrarán ventas confirmadas. La respuesta debe conservar los valores h
 GET /api/v1/sales/{saleId}
 ```
 
-La respuesta incluirá productos, cantidades, precios, tipo de precio, serigrafía, descuento, subtotal, IGV, total y fecha.
+La respuesta incluirá productos, cantidades, precios, tipo de precio, serigrafía, descuento, un único subtotal, IGV, total y fecha.
 
 No se incluye un endpoint para eliminar o editar ventas confirmadas, porque las historias actuales no contemplan esa operación y los registros deben conservarse para trazabilidad.
 
@@ -1039,6 +1044,7 @@ Códigos principales:
 - El stock inicial mayor que cero será un movimiento de ingreso; un stock inicial igual a cero no generará movimiento.
 - La edición del producto no modificará el stock.
 - El descuento será opcional y solo podrá existir uno por operación.
+- Las cotizaciones y ventas expondrán un único subtotal después de aplicar el descuento, cuando corresponda.
 - Un descuento fijo no podrá superar el importe antes del descuento.
 - El porcentaje de descuento estará entre 0 % y 100 %.
 - El descuento se aplicará antes del IGV.
