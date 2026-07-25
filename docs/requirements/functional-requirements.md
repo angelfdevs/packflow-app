@@ -16,6 +16,7 @@ Cuando intenta iniciar sesión.
 Entonces el sistema debe solicitar la información faltante.
 <br>**Reglas de negocio**</br>
 - Solo podrá acceder una cuenta administradora por negocio.
+- Las cuentas serán provisionadas mediante un procedimiento administrativo controlado; no existirá registro público durante el alcance actual.
 - Las contraseñas deben almacenarse de forma segura.
 - El sistema no debe revelar si el correo o la contraseña son incorrectos, en su lugar indica que uno de los campos de inicio de sesion son incorrectos.
 
@@ -80,6 +81,8 @@ Entonces el sistema debe informar el conflicto y evitar duplicados según las re
 - El producto debe pertenecer a la cuenta del negocio autenticado.
 - El producto debe tener categoría, nombre, medidas, material, precio minorista y precio mayorista.
 - Los precios no pueden ser negativos.
+- Cada dimensión debe ser mayor que cero y no superar 1 000 cm.
+- El stock inicial no podrá superar 1 000 000 unidades.
 - El stock inicial no se modificará directamente en la entidad producto.
 - El stock inicial se registrará mediante un movimiento de ingreso.
 - Todo movimiento inicial debe guardar producto, cantidad, fecha y tipo de movimiento.
@@ -157,6 +160,7 @@ Cuando intenta confirmar el ingreso.
 Entonces el sistema debe mostrar un mensaje de error y no modificar el stock.
 <br>**Reglas de negocio**</br>
 - La cantidad ingresada debe ser mayor que cero.
+- La cantidad ingresada no podrá superar 1 000 000 unidades por operación.
 - Todo ingreso debe registrar fecha, cantidad y producto.
 - El stock debe actualizarse de forma segura.
 
@@ -215,6 +219,7 @@ Entonces el sistema debe mostrar un mensaje de validación y no permitir continu
 - De 1 a 100 unidades se aplicará el precio minorista.
 - Desde 101 unidades se aplicará el precio mayorista.
 - La cantidad debe ser un número entero positivo.
+- La cantidad no podrá superar 1 000 000 unidades por línea.
 - El precio aplicado debe obtenerse del producto seleccionado.
 - La cotización no modifica el stock.
 
@@ -250,6 +255,10 @@ Entonces el sistema debe considerar dos lotes: 100 y 50 unidades, aplicando el c
 Dado que activo la serigrafía.
 Cuando ingreso una cantidad de colores menor o igual a cero.
 Entonces el sistema debe mostrar un mensaje de validación.
+<br>**Escenario 8: Exceso de colores**</br>
+Dado que activo la serigrafía.
+Cuando ingreso más de 10 colores.
+Entonces el sistema debe rechazar la cantidad e informar el límite permitido.
 <br>**Reglas de negocio**</br>
 - La serigrafía es opcional.
 - Solo puede aplicarse desde 20 unidades.
@@ -260,6 +269,7 @@ Entonces el sistema debe mostrar un mensaje de validación.
 - Desde 501 unidades, la tarifa será S/30.
 - Un remanente también se considera un lote.
 - La cantidad de colores debe ser un número entero positivo.
+- La cantidad máxima de colores será 10 por línea de producto.
 
 <br>**US-013 — Calcular cotización**</br>
 Descripción:
@@ -486,6 +496,7 @@ Entonces el sistema debe solicitar la información faltante.
 - Los motivos permitidos serán pérdida, daño y corrección.
 - La pérdida y el daño disminuirán el stock.
 - La corrección podrá aumentar o disminuir el stock.
+- La cantidad de ajuste no podrá superar 1 000 000 unidades por operación.
 - Todo ajuste debe registrar producto, cantidad, motivo, fecha, stock anterior y stock posterior.
 - El stock nunca puede ser negativo.
 
@@ -619,8 +630,10 @@ Cuando cancela la cotización o venta antes de confirmarla.
 Entonces el sistema no debe guardar la operación ni modificar el stock.
 <br>**Reglas de negocio**</br>
 - Una operación debe contener al menos un producto.
+- Una operación podrá contener como máximo 20 productos diferentes.
 - Cada producto debe aparecer una sola vez dentro de la operación.
 - Cada línea debe tener una cantidad entera mayor que cero.
+- La cantidad máxima será de 1 000 000 unidades por línea.
 - El precio minorista o mayorista se determinará por la cantidad de cada línea.
 - La serigrafía se calculará por cada línea de producto y no se mezclarán cantidades de productos diferentes.
 - Solo se podrán seleccionar productos activos.
