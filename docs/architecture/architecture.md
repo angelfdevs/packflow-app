@@ -20,6 +20,17 @@ PackFlow empleará una arquitectura de monolito modular seguro, organizada media
 - Docker.
 - DevSecOps.
 
+Versiones objetivo de la plataforma:
+
+- Vue.js 3.
+- JavaScript moderno compatible con ES2023 o superior.
+- .NET 10 LTS.
+- ASP.NET Core 10.
+- C# 14.
+- Entity Framework Core 10.
+- PostgreSQL administrado con una versión soportada por el proveedor.
+- Docker con imágenes base oficiales y actualizadas.
+
 No se implementarán microservicios inicialmente. Los módulos se ejecutarán dentro de un único backend desplegable, con límites claros entre dominios. Esto reduce la complejidad operativa y conserva la posibilidad de separar módulos en el futuro si el crecimiento lo justifica.
 
 ## 3. Principios de diseño
@@ -48,6 +59,8 @@ Responsable de:
 - Datos de la cuenta y del negocio.
 
 La primera versión operativa manejará una cuenta administradora por negocio. No se implementarán múltiples usuarios ni roles avanzados mientras no exista una necesidad real del negocio.
+
+No existirá un registro público de cuentas. Las cuentas serán provisionadas mediante un comando administrativo o job controlado que creará la cuenta, configuración, tipos de precio y rangos iniciales de serigrafía. Las credenciales se recibirán mediante un gestor de secretos o entrada segura y nunca se almacenarán en el repositorio.
 
 ### 4.2 Catalog
 
@@ -100,6 +113,8 @@ La serigrafía se podrá activar desde 20 unidades. El cobro se calculará por l
 | 501 unidades a más | S/30 |
 
 El costo de serigrafía se multiplicará por la cantidad de colores y por la cantidad de lotes de 100 unidades, redondeando hacia arriba. El descuento se aplicará antes del IGV.
+
+Una operación podrá contener como máximo 20 productos diferentes. Cada línea podrá contener hasta 1 000 000 unidades y hasta 10 colores de serigrafía. Cada dimensión del producto será mayor que cero y no superará 1 000 cm.
 
 ## 5. Módulo Shared
 
@@ -274,12 +289,14 @@ La seguridad se implementará mediante defensa en profundidad:
 - Cookie antiforgery `XSRF-TOKEN` con `Secure`, `SameSite=None` y `Path=/api/v1/auth`.
 - Encabezado `X-CSRF-TOKEN` obligatorio en operaciones autenticadas mediante cookies.
 - Access tokens únicamente en memoria del frontend.
-- Refresh tokens rotativos con expiración absoluta, sin cierre automático por inactividad.
-- Hash seguro de contraseñas mediante una solución estándar de ASP.NET Core.
-- Recuperación de contraseña mediante token de un solo uso y expiración controlada.
+- Access tokens con duración objetivo de 15 minutos y almacenados únicamente en memoria del frontend.
+- Refresh tokens rotativos con duración absoluta de 30 días, sin cierre automático por inactividad.
+- Hash de contraseñas mediante `PasswordHasher` de ASP.NET Core Identity, sin implementar criptografía propia.
+- Recuperación de contraseña mediante token de un solo uso con duración de 30 minutos.
 - Sesión persistente hasta que el usuario cierre sesión, revoque la sesión o la cuenta sea bloqueada.
 - Rotación y revocación de sesiones.
 - Rate limiting para autenticación y endpoints sensibles.
+- Rate limiting particionado por cuenta e IP, con límites distribuidos o aplicados en el perímetro cuando existan varias instancias.
 - Validación de entrada y límites de tamaño.
 - Consultas parametrizadas mediante Entity Framework Core.
 - Separación de secretos mediante variables de entorno.
@@ -306,6 +323,7 @@ PostgreSQL será la base de datos principal. Se aplicarán:
 - Migraciones versionadas.
 - Transacciones para ventas y movimientos de inventario.
 - Control de concurrencia.
+- Versionado entero de recursos mutables para generar ETags deterministas.
 - Registro de movimientos de stock.
 - Claves de idempotencia para evitar operaciones duplicadas.
 - Row-Level Security para reforzar el aislamiento por `business_account_id`.
@@ -341,6 +359,7 @@ Componentes previstos:
 - Monitoreo externo de frontend, backend y base de datos.
 - Variables de entorno para configuración y secretos.
 - El backend no utilizará discos persistentes ni estado local de sesión.
+- Los contadores de rate limiting no dependerán únicamente de memoria local cuando existan varias instancias.
 - Los despliegues utilizarán health checks, apagado controlado y rollback.
 
 La especificación operativa del despliegue se encuentra en [`docs/deployment/deployment.md`](../deployment/deployment.md).
@@ -379,6 +398,8 @@ La arquitectura no genera costos de licencia por utilizar DDD, Clean Architectur
 El presupuesto de aproximadamente US$13 mensuales corresponde únicamente a una infraestructura básica con una instancia de backend y una base de datos sin alta disponibilidad.
 
 La infraestructura objetivo con dos instancias de backend, PostgreSQL HA, respaldos avanzados, monitoreo y correo transaccional tendrá un costo superior. El precio definitivo deberá verificarse con los planes vigentes del proveedor antes del despliegue.
+
+Si se habilitan varias instancias y se exige un límite de solicitudes consistente por cuenta, también deberá considerarse el costo de un almacén distribuido administrado para rate limiting, compatible con Redis. No se utilizará para almacenar información del negocio.
 
 ## 15. Evolución futura
 
