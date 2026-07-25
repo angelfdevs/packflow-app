@@ -120,6 +120,7 @@ Entonces el sistema debe rechazar la operación y no modificar el stock.
 - El backend debe verificar el stock al confirmar la venta.
 - Una misma solicitud de venta no debe registrarse dos veces si se reenvía accidentalmente.
 - Las operaciones de inventario deben ejecutarse mediante transacciones.
+- Para los indicadores del Dashboard, un producto se considerará con bajo stock cuando su stock actual sea menor o igual a 15 unidades.
 
 <br>**RNF-007 — Precisión y consistencia de cálculos monetarios**</br>
 Descripción:
@@ -338,6 +339,7 @@ Entonces la venta debe guardarse y el stock debe disminuir correctamente.
 - Deben probarse conflictos de concurrencia mediante `If-Match` y ETags.
 - Deben probarse aislamiento entre cuentas de negocio.
 - Deben probarse cantidades de 19, 20, 100, 101, 150, 200, 300, 301, 500 y 501 unidades.
+- Debe probarse la clasificación de stock bajo con valores de 14, 15 y 16 unidades.
 
 <br>**RNF-016 — Documentación técnica**</br>
 Descripción:
