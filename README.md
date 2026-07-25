@@ -6,8 +6,8 @@ La aplicación permitirá administrar productos, consultar el stock disponible, 
 
 ## Tecnologías
 
-- Vue.js y JavaScript.
-- ASP.NET Core y C#.
+- Vue.js 3 y JavaScript ES2023+.
+- .NET 10 LTS, ASP.NET Core 10, Entity Framework Core 10 y C# 14.
 - PostgreSQL.
 - Docker.
 
@@ -62,26 +62,29 @@ Permite configurar los datos del negocio, la tasa del IGV, las tarifas de serigr
 
 1. Cada negocio tendrá una cuenta administradora independiente.
 2. El administrador tendrá acceso completo a la aplicación.
-3. El administrador registrará y mantendrá sus propios productos, categorías y materiales.
-4. Los productos podrán desactivarse mediante borrado lógico.
-5. El stock nunca podrá ser negativo.
-6. El stock inicial se registrará mediante un movimiento de ingreso.
-7. Los ingresos aumentarán el stock.
-8. Las ventas confirmadas disminuirán el stock.
-9. Las cotizaciones no modificarán el stock ni se guardarán.
-10. Las ventas confirmadas sí se guardarán.
-11. De 1 a 100 unidades se aplicará el precio minorista.
-12. Desde 101 unidades se aplicará el precio mayorista.
-13. La serigrafía será opcional y solo podrá aplicarse desde 20 unidades por línea de producto.
-14. La serigrafía se calculará por lotes de 100 unidades, incluyendo el lote parcial.
-15. De 20 a 300 unidades se cobrará S/45 por color y lote.
-16. De 301 a 500 unidades se cobrará S/40 por color y lote.
-17. Desde 501 unidades se cobrará S/30 por color y lote.
-18. El descuento será opcional, único por operación y podrá ser porcentual o fijo.
-19. El descuento se aplicará antes del IGV.
-20. El IGV tendrá un valor inicial de 18 % y podrá configurarse.
-
-21. Un producto se considerará con bajo stock cuando su stock actual sea menor o igual a 15 unidades.
+3. Las cuentas serán provisionadas mediante un procedimiento administrativo controlado; no habrá registro público.
+4. El administrador registrará y mantendrá sus propios productos, categorías y materiales.
+5. Los productos podrán desactivarse mediante borrado lógico.
+6. El stock nunca podrá ser negativo.
+7. El stock inicial se registrará mediante un movimiento de ingreso.
+8. Los ingresos aumentarán el stock.
+9. Las ventas confirmadas disminuirán el stock.
+10. Las cotizaciones no modificarán el stock ni se guardarán.
+11. Las ventas confirmadas sí se guardarán.
+12. De 1 a 100 unidades se aplicará el precio minorista.
+13. Desde 101 unidades se aplicará el precio mayorista.
+14. La serigrafía será opcional y solo podrá aplicarse desde 20 unidades por línea de producto.
+15. La serigrafía se calculará por lotes de 100 unidades, incluyendo el lote parcial.
+16. De 20 a 300 unidades se cobrará S/45 por color y lote.
+17. De 301 a 500 unidades se cobrará S/40 por color y lote.
+18. Desde 501 unidades se cobrará S/30 por color y lote.
+19. El descuento será opcional, único por operación y podrá ser porcentual o fijo.
+20. El descuento se aplicará antes del IGV.
+21. El IGV tendrá un valor inicial de 18 % y podrá configurarse.
+22. Una operación podrá contener como máximo 20 productos diferentes.
+23. Cada línea podrá contener como máximo 10 colores y 1 000 000 unidades.
+24. Cada dimensión del producto tendrá un máximo de 1 000 cm.
+25. Un producto se considerará con bajo stock cuando su stock actual sea menor o igual a 15 unidades.
 
 ## Fuera de alcance
 
