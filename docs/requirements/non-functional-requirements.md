@@ -290,7 +290,7 @@ Entonces los demás módulos no deben verse afectados innecesariamente.
 - Debe evitarse duplicar reglas de cálculo entre frontend y backend.
 - Las operaciones de actualización deben utilizar control de concurrencia mediante `If-Match` y ETags.
 - Los recursos mutables utilizarán una versión entera para generar ETags deterministas.
-- Las operaciones que modifican datos deben utilizar idempotencia para soportar reintentos seguros.
+- Las operaciones persistentes de negocio que puedan repetirse por reintentos de red deben utilizar `Idempotency-Key` para evitar duplicados. Las operaciones `PUT` y `PATCH` combinarán esta clave con `If-Match` y ETags. Los endpoints de autenticación utilizarán sus propios controles de un solo uso, rotación y revocación.
 - Los límites de solicitudes deben aplicarse por cuenta e IP y mantenerse consistentes entre instancias mediante un almacén distribuido o protección perimetral.
 
 <br>**RNF-015 — Pruebas**</br>
