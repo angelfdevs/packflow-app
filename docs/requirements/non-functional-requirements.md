@@ -27,25 +27,25 @@ Entonces la sesión debe permanecer activa sin cerrarse automáticamente por ina
 <br>**Escenario 2: Sesión activa durante una operación**</br>
 Dado que el administrador está completando una venta.
 Cuando transcurre un periodo prolongado sin interacción.
-Entonces el sistema no debe cerrar la sesión ni perder la información ingresada.
+Entonces el sistema no debe cerrar la sesión por inactividad ni perder la información ingresada. La sesión solo podrá finalizar por cierre de sesión, revocación de seguridad o indisponibilidad del proveedor.
 <br>**Escenario 3: Sesión persistente durante una cotización o venta**</br>
 Dado que el administrador está completando una cotización o venta.
 Cuando transcurre un periodo prolongado sin interacción.
-Entonces el sistema no debe cerrar automáticamente la sesión ni perder la información ingresada.
+Entonces el sistema no debe cerrar automáticamente la sesión por inactividad ni perder la información ingresada. La sesión solo podrá finalizar por cierre de sesión, revocación de seguridad o indisponibilidad del proveedor.
 <br>**Escenario 4: Revocación por seguridad**</br>
 Dado que la cuenta fue desactivada, la contraseña fue modificada o se detectó una situación de seguridad.
 Cuando el sistema intenta validar la sesión.
 Entonces puede invalidar la sesión y solicitar un nuevo inicio de sesión.
 <br>**Restricciones técnicas**</br>
 - No debe existir cierre automático por inactividad durante el uso normal.
-- La sesión debe permanecer activa mientras el administrador no seleccione “Cerrar sesión”.
+- La sesión debe permanecer activa mientras el administrador no seleccione “Cerrar sesión”, salvo revocación por seguridad o indisponibilidad del proveedor.
 - La sesión debe renovarse de forma segura sin interrumpir al usuario.
 - El access token debe permanecer únicamente en memoria del frontend.
 - El refresh token debe almacenarse en una cookie `HttpOnly`, `Secure` y `SameSite=None`.
 - El refresh token debe rotarse después de cada renovación.
-- La sesión debe tener una expiración absoluta, aunque no debe expirar por inactividad.
+- Si se detecta la reutilización de un refresh token ya rotado, el sistema debe revocar la familia de tokens de la sesión y exigir un nuevo inicio de sesión.
+- La sesión no tendrá expiración absoluta ni expiración por inactividad. El refresh token se rotará y podrá revocarse por cierre de sesión, cambio de contraseña, recuperación de contraseña, desactivación de cuenta o una situación de seguridad.
 - El access token tendrá una duración objetivo de 15 minutos.
-- El refresh token tendrá una duración absoluta de 30 días.
 - El token de recuperación de contraseña tendrá una duración de 30 minutos y será de un solo uso.
 - Después de cerrar sesión, la sesión anterior no debe permitir acceder a módulos protegidos.
 - La sesión podrá revocarse por cambio de contraseña, recuperación de contraseña, desactivación de cuenta o una situación de seguridad.
@@ -60,7 +60,7 @@ Criterios de aceptación
 Dado que el administrador inició sesión.
 Cuando consulta productos, ventas o movimientos.
 Entonces el sistema debe mostrar únicamente información de su negocio.
-<br>**Escenario 2: Acceso a información externao**</br>
+<br>**Escenario 2: Acceso a información externa**</br>
 Dado que una cuenta intenta acceder a un recurso de otro negocio.
 Cuando realiza la solicitud.
 Entonces el sistema debe rechazarla.
@@ -278,7 +278,7 @@ Criterios de aceptación
 Dado que se agrega una nueva funcionalidad.
 Cuando se implementa en el sistema.
 Entonces debe ubicarse en el módulo y capa correspondiente.
-<br>**Escenario 2: Modificación de un módulos**</br>
+<br>**Escenario 2: Modificación de un módulo**</br>
 Dado que se modifica un módulo.
 Cuando se ejecuta la aplicación.
 Entonces los demás módulos no deben verse afectados innecesariamente.
@@ -440,7 +440,7 @@ Entonces debe utilizar datos ficticios y credenciales de demostración.
 
 <br>**RNF-020 — Disponibilidad de la aplicación**</br>
 Descripción:
-PackFlow debe estar disponible para el administrador al menos el 99.99 % del tiempo durante cada mes.
+PackFlow tendrá como objetivo operativo una disponibilidad mensual del 99.99 %, sujeta al proveedor de despliegue, el plan contratado, el SLA, el monitoreo y las pruebas de recuperación.
 Criterios de aceptación
 <br>**Escenario 1: Aplicación disponible**</br>
 Dado que el administrador intenta acceder a PackFlow.
@@ -451,7 +451,7 @@ Dado que ocurre una interrupción en la aplicación.
 Cuando el sistema de monitoreo detecta la falla.
 Entonces debe registrar el incidente y notificarlo para iniciar su recuperación.
 <br>**Restricciones técnicas**</br>
-- La aplicación debe alcanzar una disponibilidad mensual mínima del 99.99 %.
+- La aplicación tendrá como objetivo operativo una disponibilidad mensual del 99.99 %, sujeta al proveedor de despliegue, el plan contratado, el SLA, el monitoreo y las pruebas de recuperación.
 - La medición debe considerar el funcionamiento completo del frontend, backend y base de datos.
 - La aplicación no debe considerarse disponible si el frontend carga, pero la API o la base de datos no responden.
 - Los despliegues deben minimizar la interrupción del servicio.
