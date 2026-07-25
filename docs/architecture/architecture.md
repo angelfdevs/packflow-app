@@ -288,12 +288,13 @@ La seguridad se implementará mediante defensa en profundidad:
 - Cookie `pf_refresh` con `HttpOnly`, `Secure`, `SameSite=None` y `Path=/api/v1/auth`.
 - Cookie antiforgery `XSRF-TOKEN` con `Secure`, `SameSite=None` y `Path=/api/v1/auth`.
 - Encabezado `X-CSRF-TOKEN` obligatorio en operaciones autenticadas mediante cookies.
+- El inicio de sesión y la renovación emitirán `XSRF-TOKEN` mediante `Set-Cookie`; el frontend copiará su valor en `X-CSRF-TOKEN`. La cookie de refresh nunca será accesible desde JavaScript.
 - Access tokens únicamente en memoria del frontend.
 - Access tokens con duración objetivo de 15 minutos y almacenados únicamente en memoria del frontend.
 - Refresh tokens rotativos con duración absoluta de 30 días, sin cierre automático por inactividad.
 - Hash de contraseñas mediante `PasswordHasher` de ASP.NET Core Identity, sin implementar criptografía propia.
 - Recuperación de contraseña mediante token de un solo uso con duración de 30 minutos.
-- Sesión persistente hasta que el usuario cierre sesión, revoque la sesión o la cuenta sea bloqueada.
+- Sesión sin expiración por inactividad; podrá mantenerse activa mediante renovación hasta alcanzar la expiración absoluta de 30 días o hasta que el usuario cierre sesión, revoque la sesión o la cuenta sea bloqueada.
 - Rotación y revocación de sesiones.
 - Rate limiting para autenticación y endpoints sensibles.
 - Rate limiting particionado por cuenta e IP, con límites distribuidos o aplicados en el perímetro cuando existan varias instancias.
@@ -328,6 +329,15 @@ PostgreSQL será la base de datos principal. Se aplicarán:
 - Claves de idempotencia para evitar operaciones duplicadas.
 - Row-Level Security para reforzar el aislamiento por `business_account_id`.
 - Foreign keys compuestas para impedir referencias entre negocios.
+
+Como mínimo, las migraciones deberán implementar:
+
+- `UNIQUE (business_account_id, category_name)` en categorías.
+- `UNIQUE (business_account_id, material_name)` en materiales.
+- `UNIQUE (business_account_id, idempotency_key)` en solicitudes idempotentes.
+- Claves foráneas compuestas para que una categoría, material, venta, movimiento o solicitud idempotente solo pueda asociarse a registros del mismo negocio.
+- `CHECK (current_stock >= 0)`, `CHECK (quantity > 0)` y `CHECK (price_amount >= 0)`.
+- Validaciones de dimensiones, tarifas y colores conforme a los límites definidos en los requisitos y el contrato OpenAPI.
 
 La venta se considerará confirmada únicamente cuando se hayan guardado la operación y su movimiento de inventario dentro de la misma transacción.
 
