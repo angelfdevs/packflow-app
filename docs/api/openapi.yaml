@@ -483,6 +483,8 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
   /health/live:
+    servers:
+      - url: https://api.packflow.example
     get:
       summary: GET /health/live
       operationId: gethealthLive30
@@ -491,6 +493,8 @@ paths:
       responses:
         '200': { description: Proceso disponible }
   /health/ready:
+    servers:
+      - url: https://api.packflow.example
     get:
       summary: GET /health/ready
       operationId: gethealthReady31
