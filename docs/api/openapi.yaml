@@ -790,6 +790,19 @@ components:
         direction: { type: string, enum: [INCREASE, DECREASE] }
         quantity: { type: integer, minimum: 1, maximum: 1000000 }
         reason: { type: string, minLength: 1, maxLength: 255 }
+      oneOf:
+        - title: Pérdida
+          properties:
+            adjustmentType: { type: string, enum: [LOSS] }
+            direction: { type: string, enum: [DECREASE] }
+        - title: Daño
+          properties:
+            adjustmentType: { type: string, enum: [DAMAGE] }
+            direction: { type: string, enum: [DECREASE] }
+        - title: Corrección
+          properties:
+            adjustmentType: { type: string, enum: [CORRECTION] }
+            direction: { type: string, enum: [INCREASE, DECREASE] }
     DiscountRequest:
       type: object
       required: [type, value]
