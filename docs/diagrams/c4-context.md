@@ -5,7 +5,7 @@ workspace "PackFlow - C4 Context" "Diagrama de contexto del sistema PackFlow." {
     !identifiers hierarchical
 
     model {
-        administrador = person "Administrador" "Propietario o trabajador autorizado que administra el negocio."
+        administrador = person "Administrador" "Persona responsable de administrar la cuenta y las operaciones del negocio."
 
         packflow = softwareSystem "PackFlow" "Aplicación web para administrar productos, consultar stock, simular cotizaciones y registrar ventas."
 
