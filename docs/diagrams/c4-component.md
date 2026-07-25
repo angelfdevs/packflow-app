@@ -67,6 +67,8 @@ workspace "PackFlow - C4 Component" "Diagrama de componentes del Backend API de 
 
         packflow.backend.api -> packflow.backend.dashboard "Delega consultas del dashboard" "C#"
 
+        packflow.backend.configuracion -> packflow.backend.persistencia "Guarda y consulta la configuración del negocio" "C#"
+
         packflow.backend.auth -> packflow.backend.persistencia "Guarda y consulta cuentas, sesiones y tokens de recuperación" "C#"
 
         packflow.backend.auth -> correo "Solicita enlaces de recuperación de contraseña" "HTTPS/API"
