@@ -18,27 +18,30 @@ Entonces la contraseña no debe mostrarse.
 
 <br>**RNF-002 — Persistencia y protección de la sesión**</br>
 Descripción:
-La sesión del administrador debe permanecer activa mientras utilice la aplicación y no presione explícitamente la opción de cerrar sesión.
+La sesión del administrador debe permanecer activa mientras utilice la aplicación. Si no existe interacción durante 15 minutos, la sesión debe expirar automáticamente por seguridad. No tendrá expiración absoluta.
 Criterios de aceptación
 <br>**Escenario 1: Sesión persistente**</br>
 Dado que el administrador inició sesión correctamente.
 Cuando continúa utilizando la aplicación.
-Entonces la sesión debe permanecer activa sin cerrarse automáticamente por inactividad.
+Entonces la sesión debe permanecer activa mientras exista interacción y no debe cerrarse automáticamente durante el uso normal.
 <br>**Escenario 2: Sesión activa durante una operación**</br>
 Dado que el administrador está completando una venta.
-Cuando transcurre un periodo prolongado sin interacción.
-Entonces el sistema no debe cerrar la sesión por inactividad ni perder la información ingresada. La sesión solo podrá finalizar por cierre de sesión, revocación de seguridad o indisponibilidad del proveedor.
+Cuando transcurren 15 minutos sin interacción.
+Entonces el sistema debe expirar la sesión por seguridad, sin perder la información ingresada en el formulario. La sesión también podrá finalizar por cierre de sesión, revocación de seguridad o indisponibilidad del proveedor.
 <br>**Escenario 3: Sesión persistente durante una cotización o venta**</br>
 Dado que el administrador está completando una cotización o venta.
-Cuando transcurre un periodo prolongado sin interacción.
-Entonces el sistema no debe cerrar automáticamente la sesión por inactividad ni perder la información ingresada. La sesión solo podrá finalizar por cierre de sesión, revocación de seguridad o indisponibilidad del proveedor.
+Cuando transcurren 15 minutos sin interacción.
+Entonces el sistema debe expirar la sesión por seguridad, sin perder la información ingresada en el formulario. La sesión también podrá finalizar por cierre de sesión, revocación de seguridad o indisponibilidad del proveedor.
 <br>**Escenario 4: Revocación por seguridad**</br>
 Dado que la cuenta fue desactivada, la contraseña fue modificada o se detectó una situación de seguridad.
 Cuando el sistema intenta validar la sesión.
 Entonces puede invalidar la sesión y solicitar un nuevo inicio de sesión.
 <br>**Restricciones técnicas**</br>
-- No debe existir cierre automático por inactividad durante el uso normal.
-- La sesión debe permanecer activa mientras el administrador no seleccione “Cerrar sesión”, salvo revocación por seguridad o indisponibilidad del proveedor.
+- La sesión debe expirar automáticamente después de 15 minutos sin interacción.
+- La actividad normal del administrador debe reiniciar el contador de inactividad.
+- No debe existir un botón “Mantener sesión activa” ni un heartbeat automático para evitar la expiración.
+- El frontend podrá mostrar un aviso informativo antes de la expiración, pero no podrá extender la sesión sin actividad del administrador.
+- El backend debe validar la expiración utilizando la última actividad registrada en la sesión; no debe depender únicamente del reloj del frontend.
 - La sesión debe renovarse de forma segura sin interrumpir al usuario.
 - El access token debe permanecer únicamente en memoria del frontend.
 - El refresh token debe almacenarse en una cookie `HttpOnly`, `Secure` y `SameSite=None`.
@@ -47,12 +50,12 @@ Entonces puede invalidar la sesión y solicitar un nuevo inicio de sesión.
 - Si se detecta la reutilización de un refresh token ya rotado, el sistema debe revocar la familia de tokens de la sesión y exigir un nuevo inicio de sesión.
 - Cada refresh token debe estar asociado a una sesión mediante `session_id`, que identificará la familia de tokens. El `session_id` no sustituye al secreto del refresh token.
 - Cada refresh token emitido debe conservarse en una tabla histórica mediante un hash único, junto con sus fechas de emisión, uso, revocación y eventual reemplazo. La tabla de sesiones representa la familia de tokens, no un único token.
-- La sesión no tendrá expiración absoluta ni expiración por inactividad. El refresh token se rotará y podrá revocarse por cierre de sesión, cambio de contraseña, recuperación de contraseña, desactivación de cuenta o una situación de seguridad.
+- La sesión tendrá una expiración por inactividad de 15 minutos y no tendrá expiración absoluta. El refresh token se rotará y podrá revocarse por cierre de sesión, cambio de contraseña, recuperación de contraseña, desactivación de cuenta o una situación de seguridad.
 - El access token tendrá una duración objetivo de 15 minutos.
 - El token de recuperación de contraseña tendrá una duración de 30 minutos y será de un solo uso.
 - Después de cerrar sesión, la sesión anterior no debe permitir acceder a módulos protegidos.
 - La sesión podrá revocarse por cambio de contraseña, recuperación de contraseña, desactivación de cuenta o una situación de seguridad.
-- La información de formularios importantes debe conservarse temporalmente ante una interrupción de red.
+- La información de formularios importantes debe conservarse temporalmente ante una interrupción de red o expiración de sesión.
 - El sistema debe limitar temporalmente los intentos fallidos consecutivos de inicio de sesión.
 
 <br>**RNF-003 — Separación de información por negocio**</br>
