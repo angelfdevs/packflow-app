@@ -62,7 +62,7 @@ Dado que el administrador se encuentra en el formulario de productos.
 Cuando completa correctamente la categoría, nombre, medidas, material, precio minorista y precio mayorista.
 Entonces el sistema debe registrar el producto activo con stock cero.
 <br>**Escenario 2: Registro exitoso con stock inicial**</br>
-Dado que el administrador registra un producto e ingresa una cantidad inicial.
+Dado que el administrador registra un producto e ingresa una cantidad inicial mayor que cero.
 Cuando confirma la operación.
 Entonces el sistema debe registrar el producto y generar un movimiento de ingreso inicial con la cantidad indicada.
 <br>**Escenario 3: Datos obligatorios incompletos**</br>
@@ -85,7 +85,7 @@ Entonces el sistema debe informar el conflicto y evitar el duplicado.
 - Cada dimensión debe ser mayor que cero y no superar 1 000 cm.
 - El stock inicial no podrá superar 1 000 000 unidades.
 - El stock inicial no se modificará directamente en la entidad producto.
-- El stock inicial se registrará mediante un movimiento de ingreso.
+- El stock inicial mayor que cero se registrará mediante un movimiento de ingreso inicial; si es cero, no se creará ningún movimiento.
 - Todo movimiento inicial debe guardar producto, cantidad, fecha y tipo de movimiento.
 - La edición del producto no debe modificar directamente el stock.
 - El producto se registrará activo por defecto.
