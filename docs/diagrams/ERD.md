@@ -122,8 +122,8 @@ entity "serigraphy_price_tiers" as serigraphy_price_tiers {
     * serigraphy_tier_id : UUID <<PK>>
     --
     * business_account_id : UUID <<FK, composite scope>>
-    * minimum_quantity : INTEGER <<UNIQUE per account and minimum, CHECK >= 20>>
-    maximum_quantity : INTEGER <<CHECK >= minimum or NULL>>
+    * minimum_quantity : INTEGER <<UNIQUE per account, allowed 20/301/501>>
+    maximum_quantity : INTEGER <<allowed 300/500/NULL according to minimum>>
     * price_per_lot_color : DECIMAL(12,2) <<CHECK >= 0>>
     * created_at : TIMESTAMPTZ
     * updated_at : TIMESTAMPTZ
@@ -229,6 +229,7 @@ idempotency_requests ||--o| sales
 idempotency_requests ||--o{ inventory_movements
 
 @enduml
+
 
 ```
 
