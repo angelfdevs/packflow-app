@@ -28,7 +28,7 @@ Versiones objetivo de la plataforma:
 - ASP.NET Core 10.
 - C# 14.
 - Entity Framework Core 10.
-- PostgreSQL administrado con una versión soportada por el proveedor.
+- PostgreSQL 18.x administrado, manteniendo la última versión menor soportada por el proveedor.
 - Docker con imágenes base oficiales y actualizadas.
 
 No se implementarán microservicios inicialmente. Los módulos se ejecutarán dentro de un único backend desplegable, con límites claros entre dominios. Esto reduce la complejidad operativa y conserva la posibilidad de separar módulos en el futuro si el crecimiento lo justifica.
@@ -295,6 +295,7 @@ La seguridad se implementará mediante defensa en profundidad:
 - Access tokens con duración objetivo de 15 minutos y almacenados únicamente en memoria del frontend.
 - Refresh tokens rotativos con expiración por inactividad de 15 minutos, sin expiración absoluta y revocables por el backend.
 - La expiración por inactividad se validará en el backend utilizando la última actividad registrada en `sessions.last_seen_at`; el contador del frontend solo tendrá fines informativos.
+- Para efectos del contador del servidor, se considerará interacción una solicitud autenticada procesada por el backend, como consultar información o guardar una operación. Los eventos locales del navegador, como escribir en un formulario o mover el cursor sin realizar una solicitud, no reiniciarán el contador; no se implementará un heartbeat automático.
 - La reutilización de un refresh token ya rotado se considera un evento de seguridad y revoca la familia de tokens de la sesión.
 - Cada refresh token estará asociado a una sesión mediante `session_id`, que identificará la familia de tokens. El backend validará la sesión y el hash del token; el `session_id` no será el secreto.
 - Cada refresh token emitido se conservará en `session_refresh_tokens` mediante un hash único, con sus fechas de emisión, uso, revocación y eventual reemplazo. La rotación se ejecutará en una transacción; la reutilización de un token usado revocará toda la familia.
@@ -353,6 +354,8 @@ PostgreSQL será la base de datos principal. Se aplicarán:
 - Row-Level Security para reforzar el aislamiento por `business_account_id`.
 - Foreign keys compuestas para impedir referencias entre negocios.
 
+Cada clave foránea compuesta que incluya `business_account_id` deberá apuntar a una clave primaria o restricción `UNIQUE` compatible en la tabla referenciada. Las migraciones de Entity Framework Core deberán crear esas restricciones antes de crear las claves foráneas y probar referencias válidas e inválidas entre negocios.
+
 Como mínimo, las migraciones deberán implementar:
 
 - Índices únicos funcionales sobre `(business_account_id, lower(btrim(category_name)))`, `(business_account_id, lower(btrim(material_name)))` y `lower(btrim(admin_email))` para evitar duplicados por espacios o mayúsculas.
@@ -388,7 +391,7 @@ PackFlow utilizará dos perfiles de despliegue. El perfil inicial permitirá pon
 
 - Vue.js desplegado como sitio estático en Cloudflare Pages.
 - Una instancia stateless del backend ASP.NET Core en Render.
-- PostgreSQL administrado sin nodo standby.
+- PostgreSQL 18.x administrado sin nodo standby.
 - Rate limiting aplicado por cuenta e IP en el backend y reforzado en el perímetro cuando el proveedor lo permita.
 - Sin estado de sesión ni archivos persistentes en la instancia del backend.
 - Backups, health checks, monitoreo y migraciones controladas.
@@ -418,7 +421,7 @@ Componentes previstos:
 - Vue.js desplegado en Cloudflare Pages.
 - Backend ASP.NET Core desplegado como servicio Docker stateless en Render.
 - Mínimo dos instancias stateless del backend en el perfil objetivo.
-- PostgreSQL administrado en Render con PITR y alta disponibilidad en el plan contratado.
+- PostgreSQL 18.x administrado en Render con PITR y alta disponibilidad en el plan contratado.
 - Código fuente y flujo CI/CD en GitHub.
 - Monitoreo externo de frontend, backend y base de datos.
 - Variables de entorno para configuración y secretos.
