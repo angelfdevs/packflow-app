@@ -35,6 +35,12 @@ El dominio real se configurará mediante variables de entorno y no se escribirá
 - Las fechas se representarán en formato ISO 8601.
 - La aplicación mostrará las fechas en la zona horaria `America/Lima`.
 - Las listas utilizarán paginación.
+- `pageSize` tendrá un valor predeterminado de 20 y un máximo de 100 registros.
+- Una solicitud HTTP tendrá un tamaño máximo de 256 KB.
+- Una operación podrá incluir como máximo 20 productos diferentes.
+- La cantidad máxima por línea será de 1 000 000 unidades.
+- Cada línea podrá incluir como máximo 10 colores de serigrafía.
+- Cada dimensión del producto tendrá un máximo de 1 000 cm.
 - Los errores utilizarán el formato `ProblemDetails`.
 - El backend será la autoridad final de todas las reglas de negocio.
 
@@ -70,6 +76,8 @@ El usuario no será desconectado por inactividad durante el uso normal. El acces
 
 La sesión podrá revocarse por cierre de sesión, cambio de contraseña, recuperación de contraseña, desactivación de cuenta o una situación de seguridad. También tendrá una expiración absoluta, aunque no tendrá expiración por inactividad.
 
+La duración objetivo será de 15 minutos para el access token, 30 días para el refresh token y 30 minutos para los tokens de recuperación de contraseña. El refresh token será de un solo uso por rotación y su expiración absoluta no se extenderá por actividad.
+
 Las solicitudes `/auth/refresh` y `/auth/logout` deberán incluir el encabezado `X-CSRF-TOKEN`. El frontend utilizará `credentials: include` y CORS permitirá únicamente el origen configurado del frontend.
 
 ### 4.3 Idempotencia
@@ -99,6 +107,24 @@ If-Match: <etag-del-recurso>
 
 El backend debe rechazar con `409 Conflict` una actualización basada en una versión desactualizada del recurso.
 
+Los recursos `business_accounts`, `account_settings` y `products` tendrán un campo `version` entero. El backend incrementará este valor en cada actualización y generará el ETag a partir de él, por ejemplo `"v12"`.
+
+El frontend debe enviar el ETag recibido en `If-Match`. No se utilizará únicamente `updated_at` para resolver concurrencia.
+
+### 4.5 Límites y rate limiting
+
+Los límites se aplicarán por cuenta de negocio y por dirección IP. En producción con más de una instancia del backend, los contadores deberán utilizar un almacén distribuido o una política equivalente en el perímetro, nunca únicamente memoria local de una instancia.
+
+| Grupo | Límite recomendado |
+|---|---:|
+| Lecturas y consultas por cuenta | 300 solicitudes por minuto, con ráfaga de 30 |
+| Cotizaciones por cuenta | 120 solicitudes por minuto, con ráfaga de 20 |
+| Escrituras de productos, inventario y ventas por cuenta | 60 solicitudes por minuto, con ráfaga de 10 |
+| Inicio de sesión por combinación IP/correo | 5 solicitudes por minuto |
+| Recuperación de contraseña por combinación IP/correo | 3 solicitudes por hora |
+
+Cloudflare aplicará una protección perimetral adicional contra abuso y DDoS. El límite de la aplicación se mantendrá como defensa en profundidad.
+
 ## 5. Reglas de seguridad para todos los endpoints
 
 1. Todo endpoint protegido debe validar la autenticación.
@@ -115,11 +141,29 @@ El backend debe rechazar con `409 Conflict` una actualización basada en una ver
 12. Las consultas deben utilizar parámetros seguros mediante Entity Framework Core.
 13. Los logs no deben contener contraseñas, tokens, secretos ni información sensible del negocio.
 14. La API debe establecer límites de tamaño para cuerpos, búsquedas y paginación.
-15. Swagger/OpenAPI debe estar protegido o deshabilitado públicamente en producción.
-16. Las operaciones de stock deben utilizar control de concurrencia y una actualización atómica que verifique el stock disponible.
-17. La verificación de stock y su disminución no deben ejecutarse como pasos independientes sin protección transaccional.
+15. La API debe limitar las operaciones a 20 líneas de productos, 1 000 000 unidades por línea, 10 colores por línea y 1 000 cm por dimensión.
+16. Los límites de solicitudes deben aplicarse por cuenta e IP, con contadores distribuidos o protección perimetral cuando existan varias instancias.
+17. Swagger/OpenAPI debe estar protegido o deshabilitado públicamente en producción.
+18. Las operaciones de stock deben utilizar control de concurrencia y una actualización atómica que verifique el stock disponible.
+19. La verificación de stock y su disminución no debe ejecutarse como pasos independientes sin protección transaccional.
 
 ## 6. Autenticación y cuenta
+
+### 6.0 Provisionamiento de cuentas
+
+La API no expondrá un endpoint público para crear cuentas administradoras. Cada cuenta de negocio será provisionada mediante un comando administrativo o job controlado ejecutado durante la preparación del entorno.
+
+El proceso deberá:
+
+1. Recibir el nombre del negocio, correo y contraseña mediante un gestor de secretos o entrada segura, nunca mediante valores escritos en el código fuente.
+2. Crear la cuenta con la contraseña procesada por el mecanismo estándar de hash de ASP.NET Core.
+3. Crear la configuración inicial del negocio.
+4. Crear los tipos de precio `RETAIL` y `WHOLESALE`.
+5. Crear los rangos iniciales de serigrafía: `20..300`, `301..500` y `501..NULL`.
+6. Ser idempotente y rechazar la creación si el correo ya está asociado a una cuenta.
+7. No mostrar ni registrar la contraseña proporcionada.
+
+La creación de cuentas adicionales para nuevos negocios utilizará el mismo procedimiento controlado. No se agregará un registro público durante el alcance actual.
 
 ### 6.1 Iniciar sesión
 
@@ -293,6 +337,7 @@ Respuesta `200 OK`:
 {
   "igvRate": 0.18,
   "minimumScreenPrintingQuantity": 20,
+  "version": 3,
   "screenPrintingTiers": [
       { "from": 20, "to": 300, "ratePerColor": "45.00" },
       { "from": 301, "to": 500, "ratePerColor": "40.00" },
@@ -311,7 +356,7 @@ Respuesta `200 OK`:
 PATCH /api/v1/settings
 ```
 
-La API debe validar rangos, evitar tarifas negativas y asegurar que los rangos de serigrafía no se superpongan.
+La API debe validar que existan exactamente los rangos `20..300`, `301..500` y `501..NULL`, evitar tarifas negativas y asegurar que no se superpongan. El administrador podrá modificar las tarifas, pero no el mínimo de 20 unidades ni los límites de los rangos.
 
 La configuración actualizada se utilizará en nuevas cotizaciones y ventas. Las ventas históricas conservarán los valores utilizados al momento de registrarse.
 
@@ -415,6 +460,8 @@ Solicitud:
 ```
 
 El backend debe crear el producto y, si `initialStock` es mayor que cero, registrar un movimiento de ingreso inicial dentro de la misma transacción. El stock no se debe actualizar mediante una asignación directa al producto.
+
+Las dimensiones deben ser mayores que cero y no superar `1000.00 cm` en ninguno de sus ejes. El stock inicial no podrá superar `1 000 000` unidades.
 
 Si la creación del producto o del movimiento falla, no debe persistirse ninguna de las dos operaciones.
 
@@ -640,16 +687,19 @@ Solicitud:
 El backend debe:
 
 1. Validar que exista al menos una línea.
-2. Validar que todos los productos estén activos.
-3. Validar que cada producto aparezca una sola vez en `items`.
-4. Obtener los precios actuales de cada producto.
-5. Seleccionar precio minorista de 1 a 100 unidades.
-6. Seleccionar precio mayorista desde 101 unidades.
-7. Calcular serigrafía por cada línea.
-8. Aplicar como máximo un descuento.
-9. Aplicar el descuento antes del IGV.
-10. Obtener la tasa de IGV de la configuración del negocio.
-11. Devolver el resultado sin verificar ni modificar el stock.
+2. Validar que la operación tenga como máximo 20 líneas de productos diferentes.
+3. Validar que todos los productos estén activos.
+4. Validar que cada producto aparezca una sola vez en `items`.
+5. Validar que cada línea tenga entre 1 y 1 000 000 unidades.
+6. Validar que los colores estén entre 0 y 10 y sean positivos cuando la serigrafía esté activa.
+7. Obtener los precios actuales de cada producto.
+8. Seleccionar precio minorista de 1 a 100 unidades.
+9. Seleccionar precio mayorista desde 101 unidades.
+10. Calcular serigrafía por cada línea.
+11. Aplicar como máximo un descuento.
+12. Aplicar el descuento antes del IGV.
+13. Obtener la tasa de IGV de la configuración del negocio.
+14. Devolver el resultado sin verificar ni modificar el stock.
 
 Respuesta `200 OK`:
 
