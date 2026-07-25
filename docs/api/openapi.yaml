@@ -60,7 +60,7 @@ paths:
       security:
         - refreshCookie: []
           csrfToken: []
-      description: No existe expiración por inactividad ni por tiempo absoluto. El refresh token rota y puede revocarse.
+      description: No existe expiración por inactividad ni por tiempo absoluto. El refresh token rota, está asociado a una sesión mediante session_id y puede revocarse.
       responses:
         '200':
           description: Access token renovado. El servidor rota pf_refresh y establece XSRF-TOKEN.
