@@ -448,7 +448,7 @@ Entonces debe utilizar datos ficticios y credenciales de demostración.
 
 <br>**RNF-020 — Disponibilidad de la aplicación**</br>
 Descripción:
-PackFlow tendrá como objetivo operativo una disponibilidad mensual del 99.99 %, sujeta al proveedor de despliegue, el plan contratado, el SLA, el monitoreo y las pruebas de recuperación.
+PackFlow tendrá como objetivo operativo una disponibilidad mensual del 99.9 % en el perfil de despliegue de alta disponibilidad, sujeta al proveedor de despliegue, el plan contratado, el SLA, el monitoreo y las pruebas de recuperación.
 Criterios de aceptación
 <br>**Escenario 1: Aplicación disponible**</br>
 Dado que el administrador intenta acceder a PackFlow.
@@ -459,12 +459,13 @@ Dado que ocurre una interrupción en la aplicación.
 Cuando el sistema de monitoreo detecta la falla.
 Entonces debe registrar el incidente y notificarlo para iniciar su recuperación.
 <br>**Restricciones técnicas**</br>
-- La aplicación tendrá como objetivo operativo una disponibilidad mensual del 99.99 %, sujeta al proveedor de despliegue, el plan contratado, el SLA, el monitoreo y las pruebas de recuperación.
+- La aplicación tendrá como objetivo operativo una disponibilidad mensual del 99.9 % en el perfil de despliegue de alta disponibilidad, sujeta al proveedor de despliegue, el plan contratado, el SLA, el monitoreo y las pruebas de recuperación.
 - La medición debe considerar el funcionamiento completo del frontend, backend y base de datos.
 - La aplicación no debe considerarse disponible si el frontend carga, pero la API o la base de datos no responden.
 - Los despliegues deben minimizar la interrupción del servicio.
-- La producción debe utilizar como mínimo dos instancias stateless del backend.
-- PostgreSQL debe utilizar alta disponibilidad y respaldos administrados en el plan contratado.
+- El perfil de despliegue de alta disponibilidad debe utilizar como mínimo dos instancias stateless del backend.
+- El perfil de despliegue de alta disponibilidad debe utilizar PostgreSQL con alta disponibilidad y respaldos administrados en el plan contratado.
+- El perfil inicial podrá utilizar una instancia stateless y una base de datos administrada sin nodo standby; durante esta etapa no se garantizará formalmente el 99.9 %.
 - El monitoreo debe comprobar frontend, backend y base de datos.
 - La aplicación debe considerarse no disponible si cualquiera de sus componentes esenciales no responde.
 - La medición debe realizarse mediante un monitor externo.
