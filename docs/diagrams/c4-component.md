@@ -15,7 +15,7 @@ workspace "PackFlow - C4 Component" "Diagrama de componentes del Backend API de 
 
                 api = component "API REST" "Recibe solicitudes HTTP, valida el acceso y delega los casos de uso." "ASP.NET Core"
 
-                auth = component "Identidad y sesión" "Gestiona la cuenta administradora, inicio de sesión, cierre de sesión, renovación, revocación y recuperación de contraseña." "ASP.NET Core, C#"
+                auth = component "Identidad y sesión" "Gestiona la cuenta administradora, inicio de sesión, cierre de sesión, renovación rotativa, historial de refresh tokens, revocación y recuperación de contraseña." "ASP.NET Core, C#"
 
                 catalogo = component "Catálogo de productos" "Gestiona productos, categorías, materiales, precios y activación de productos." "C#"
 
@@ -31,12 +31,12 @@ workspace "PackFlow - C4 Component" "Diagrama de componentes del Backend API de 
 
                 dashboard = component "Dashboard" "Obtiene indicadores de productos, stock, movimientos y ventas." "C#"
 
-                persistencia = component "Persistencia" "Implementa repositorios, transacciones e idempotencia." "Entity Framework Core, C#"
+                persistencia = component "Persistencia" "Implementa repositorios, transacciones, idempotencia y persistencia del historial de refresh tokens." "Entity Framework Core, C#"
 
                 shared = component "Shared" "Contiene validaciones, errores, identificadores y contratos comunes." "C#"
             }
 
-            database = container "Base de datos" "Almacena cuentas, sesiones, productos, precios, ventas, movimientos y configuraciones." "PostgreSQL" {
+            database = container "Base de datos" "Almacena cuentas, sesiones, refresh tokens, productos, precios, ventas, movimientos y configuraciones." "PostgreSQL" {
                 tags "Database"
             }
         }
