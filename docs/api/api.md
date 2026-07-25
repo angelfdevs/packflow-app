@@ -291,15 +291,13 @@ Respuesta `200 OK`:
 
 ```json
 {
-  "igvRate": "0.18",
-  "screenPrinting": {
-    "minimumQuantity": 20,
-    "ranges": [
+  "igvRate": 0.18,
+  "minimumScreenPrintingQuantity": 20,
+  "screenPrintingTiers": [
       { "from": 20, "to": 300, "ratePerColor": "45.00" },
       { "from": 301, "to": 500, "ratePerColor": "40.00" },
       { "from": 501, "to": null, "ratePerColor": "30.00" }
-    ]
-  },
+  ],
   "appearance": {
     "theme": "LIGHT",
     "fontSize": "MEDIUM"
@@ -499,7 +497,8 @@ Respuesta `200 OK`:
         "widthCm": 20.00,
         "heightCm": 10.00
       },
-      "material": "Cartón corrugado",
+      "categoryName": "Cajas",
+      "materialName": "Cartón corrugado",
       "currentStock": 150,
       "active": true
     }
@@ -591,12 +590,12 @@ Los movimientos serán inmutables desde operaciones comunes y conservarán produ
 Tipos de movimiento:
 
 ```text
-INITIAL_ENTRY
-STOCK_ENTRY
+INITIAL_RECEIPT
+RECEIPT
 SALE_OUT
-ADJUSTMENT_LOSS
-ADJUSTMENT_DAMAGE
-ADJUSTMENT_CORRECTION
+LOSS
+DAMAGE
+CORRECTION
 ```
 
 ## 11. Cotizaciones
@@ -697,7 +696,7 @@ Respuesta `200 OK`:
     "amount": "26.00"
   },
   "subtotal": "234.00",
-  "igvRate": "0.18",
+  "igvRate": 0.18,
   "igv": "42.12",
   "total": "276.12",
   "currency": "PEN"
@@ -785,7 +784,7 @@ Respuesta `201 Created`:
   "screenPrintingSubtotal": "90.00",
   "discountAmount": "20.00",
   "subtotal": "190.00",
-  "igvRate": "0.18",
+  "igvRate": 0.18,
   "igv": "34.20",
   "total": "224.20",
   "currency": "PEN",
@@ -828,13 +827,14 @@ No se incluye un endpoint para eliminar o editar ventas confirmadas, porque las 
 GET /api/v1/dashboard/summary
 ```
 
-La respuesta podrá incluir:
+La respuesta incluirá como mínimo:
 
 - Cantidad de productos activos.
 - Productos con stock bajo.
 - Stock total por producto.
 - Ventas recientes.
 - Movimientos recientes.
+- Umbral utilizado para considerar bajo stock: 15 unidades o menos.
 
 Todos los indicadores deben pertenecer exclusivamente al negocio autenticado y la consulta no debe modificar datos.
 
