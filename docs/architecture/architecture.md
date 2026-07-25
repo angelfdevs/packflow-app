@@ -338,7 +338,19 @@ Como mínimo, las migraciones deberán implementar:
 
 - Índices únicos funcionales sobre `(business_account_id, lower(btrim(category_name)))`, `(business_account_id, lower(btrim(material_name)))` y `lower(btrim(admin_email))` para evitar duplicados por espacios o mayúsculas.
 - `UNIQUE (business_account_id, idempotency_key)` en solicitudes idempotentes.
-- `UNIQUE (business_account_id, minimum_quantity)` en rangos de serigrafía.
+- `UNIQUE (business_account_id, minimum_quantity)` y el siguiente `CHECK` para mantener fijos los rangos de serigrafía:
+
+```sql
+CHECK (
+    (minimum_quantity = 20 AND maximum_quantity = 300)
+    OR
+    (minimum_quantity = 301 AND maximum_quantity = 500)
+    OR
+    (minimum_quantity = 501 AND maximum_quantity IS NULL)
+)
+```
+
+Las tarifas por color pueden modificarse; los límites de cantidad no.
 - Índice único parcial basado en `lower(btrim(product_name))` para impedir dos productos activos con la misma combinación de negocio, categoría, material, nombre y medidas. Los precios no forman parte de esta identidad.
 - `UNIQUE (type_code)` en `price_types`, que será un catálogo global de referencia; los precios de cada negocio se almacenarán en `product_prices`.
 - Claves foráneas compuestas para que una categoría, material, venta, movimiento o solicitud idempotente solo pueda asociarse a registros del mismo negocio.
