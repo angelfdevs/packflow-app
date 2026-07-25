@@ -1,6 +1,6 @@
 El siguiente diagrama representa el modelo de datos final de PackFlow, normalizado hasta la tercera forma normal.
 
-![Diagrama ERD en tercera forma normal](/images/packflow_erd_3nforma.svg)
+![Diagrama ERD en tercera forma normal](/images/packflow_erd_3nf.svg)
 
 ```plantuml
 @startuml packflow_erd_3nf
