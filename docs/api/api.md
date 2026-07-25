@@ -72,7 +72,7 @@ pf_refresh: HttpOnly; Secure; SameSite=None; Path=/api/v1/auth
 XSRF-TOKEN: Secure; SameSite=None; Path=/api/v1/auth
 ```
 
-`pf_refresh` nunca será accesible desde JavaScript. `XSRF-TOKEN` no contendrá credenciales, podrá ser leído por el frontend y deberá enviarse también como `X-CSRF-TOKEN` en las solicitudes que utilicen cookies. El frontend utilizará `credentials: include`.
+`pf_refresh` nunca será accesible desde JavaScript. `XSRF-TOKEN` no contendrá credenciales, pero tampoco se leerá desde `document.cookie` porque el frontend y la API se desplegarán en orígenes distintos. El frontend obtendrá el token mediante `GET /auth/csrf`, lo conservará únicamente en memoria y deberá enviarlo como `X-CSRF-TOKEN` en las solicitudes que utilicen cookies. El frontend utilizará `credentials: include`.
 
 El usuario no será desconectado por inactividad durante el uso normal. El access token permanecerá únicamente en memoria y el refresh token será rotativo.
 
@@ -82,7 +82,11 @@ El access token tendrá una duración objetivo de 15 minutos. El refresh token n
 Si el backend detecta la reutilización de un refresh token que ya fue rotado, deberá revocar la familia de tokens de la sesión y exigir un nuevo inicio de sesión.
 Cada refresh token deberá estar asociado a una sesión mediante `session_id`, que identificará la familia de tokens. El `session_id` no sustituye al secreto del refresh token: el backend deberá validar tanto la sesión como el hash del token.
 
+La tabla `sessions` representará la familia de tokens y la tabla `session_refresh_tokens` conservará cada refresh token emitido mediante su hash, fecha de emisión, fecha de uso, revocación y eventual reemplazo. La rotación deberá ejecutarse dentro de una transacción. Si se presenta un token cuyo campo `used_at` ya tiene valor, el backend deberá considerar que existe reutilización, revocar toda la familia y rechazar la solicitud.
+
 Las solicitudes `/auth/refresh` y `/auth/logout` deberán incluir el encabezado `X-CSRF-TOKEN`. CORS permitirá únicamente el origen configurado del frontend. El backend rechazará la solicitud si el valor del encabezado no coincide con la cookie `XSRF-TOKEN`.
+
+Antes de renovar una sesión, el frontend deberá solicitar `GET /auth/csrf`. El endpoint generará o devolverá un token CSRF no sensible, establecerá la cookie `XSRF-TOKEN` y devolverá el mismo valor en la respuesta. El inicio de sesión y la renovación también devolverán el token CSRF no sensible cuando emitan o roten la cookie. El token no se almacenará en `localStorage` ni en `sessionStorage`.
 
 ### 4.3 Idempotencia
 
@@ -168,7 +172,7 @@ El proceso deberá:
 1. Recibir el nombre del negocio, correo y contraseña mediante un gestor de secretos o entrada segura, nunca mediante valores escritos en el código fuente.
 2. Crear la cuenta con la contraseña procesada por el mecanismo estándar de hash de ASP.NET Core.
 3. Crear la configuración inicial del negocio.
-4. Crear los tipos de precio `RETAIL` y `WHOLESALE`.
+4. Verificar o sembrar los tipos de precio globales `RETAIL` y `WHOLESALE`.
 5. Crear los rangos iniciales de serigrafía: `20..300`, `301..500` y `501..NULL`.
 6. Ser idempotente y rechazar la creación si el correo ya está asociado a una cuenta.
 7. No mostrar ni registrar la contraseña proporcionada.
@@ -196,6 +200,7 @@ Respuesta `200 OK`:
 {
   "accessToken": "access-token-temporal",
   "expiresIn": 900,
+  "csrfToken": "csrf-token-no-sensible",
   "account": {
     "businessAccountId": "account-uuid",
     "businessName": "Negocio de ejemplo",
@@ -225,9 +230,26 @@ Respuesta `200 OK`:
 ```json
 {
   "accessToken": "new-access-token",
-  "expiresIn": 900
+  "expiresIn": 900,
+  "csrfToken": "csrf-token-no-sensible"
 }
 ```
+
+### 6.2.1 Obtener token CSRF
+
+```http
+GET /api/v1/auth/csrf
+```
+
+Respuesta `200 OK`:
+
+```json
+{
+  "csrfToken": "csrf-token-no-sensible"
+}
+```
+
+El endpoint establecerá o renovará la cookie `XSRF-TOKEN`. El frontend conservará el valor recibido únicamente en memoria y lo enviará como `X-CSRF-TOKEN` en `/auth/refresh` y `/auth/logout`.
 
 ### 6.3 Consultar sesión actual
 
@@ -839,7 +861,23 @@ Respuesta `201 Created`:
 {
   "saleId": "sale-uuid",
   "status": "CONFIRMED",
-  "items": [],
+  "items": [
+    {
+      "productId": "product-uuid",
+      "quantity": 150,
+      "unitPrice": "0.80",
+      "priceType": "WHOLESALE",
+      "productsSubtotal": "120.00",
+      "screenPrinting": {
+        "enabled": true,
+        "colors": 1,
+        "lots": 2,
+        "ratePerColor": "45.00",
+        "amount": "90.00"
+      },
+      "lineSubtotal": "210.00"
+    }
+  ],
   "productsSubtotal": "120.00",
   "screenPrintingSubtotal": "90.00",
   "discountAmount": "20.00",
@@ -890,11 +928,46 @@ GET /api/v1/dashboard/summary
 La respuesta incluirá como mínimo:
 
 - Cantidad de productos activos.
-- Productos con stock bajo.
-- Stock total por producto.
+- Cantidad de productos con stock bajo.
+- Detalle de los productos con stock bajo y su stock actual.
 - Ventas recientes.
 - Movimientos recientes.
 - Umbral utilizado para considerar bajo stock: 15 unidades o menos.
+
+El backend devolverá como máximo 100 productos con stock bajo, 10 ventas recientes y 10 movimientos recientes para evitar respuestas innecesariamente grandes.
+
+Respuesta `200 OK`:
+
+```json
+{
+  "activeProducts": 12,
+  "lowStockProducts": 2,
+  "lowStockThreshold": 15,
+  "lowStockItems": [
+    {
+      "productId": "product-uuid",
+      "name": "Caja dúo",
+      "currentStock": 8
+    }
+  ],
+  "recentSales": [
+    {
+      "saleId": "sale-uuid",
+      "total": "276.12",
+      "createdAt": "2026-07-24T10:00:00-05:00"
+    }
+  ],
+  "recentMovements": [
+    {
+      "movementId": "movement-uuid",
+      "productId": "product-uuid",
+      "movementType": "SALE_OUT",
+      "quantityDelta": -5,
+      "createdAt": "2026-07-24T10:00:00-05:00"
+    }
+  ]
+}
+```
 
 Todos los indicadores deben pertenecer exclusivamente al negocio autenticado y la consulta no debe modificar datos.
 
