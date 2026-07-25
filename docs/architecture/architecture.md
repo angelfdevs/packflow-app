@@ -60,7 +60,7 @@ Responsable de:
 
 La primera versión operativa manejará una cuenta administradora dueña de un único negocio. No se implementarán múltiples usuarios ni roles avanzados mientras no exista una necesidad real del negocio.
 
-No existirá un registro público de cuentas. Las cuentas serán provisionadas mediante un comando administrativo o job controlado que creará la cuenta, configuración, tipos de precio y rangos iniciales de serigrafía. Las credenciales se recibirán mediante un gestor de secretos o entrada segura y nunca se almacenarán en el repositorio.
+No existirá un registro público de cuentas. Las cuentas serán provisionadas mediante un comando administrativo o job controlado que creará la cuenta, configuración, verificará o sembrará los tipos de precio globales y creará los rangos iniciales de serigrafía. Las credenciales se recibirán mediante un gestor de secretos o entrada segura y nunca se almacenarán en el repositorio.
 
 ### 4.2 Catalog
 
@@ -288,12 +288,13 @@ La seguridad se implementará mediante defensa en profundidad:
 - Cookie `pf_refresh` con `HttpOnly`, `Secure`, `SameSite=None` y `Path=/api/v1/auth`.
 - Cookie antiforgery `XSRF-TOKEN` con `Secure`, `SameSite=None` y `Path=/api/v1/auth`.
 - Encabezado `X-CSRF-TOKEN` obligatorio en operaciones autenticadas mediante cookies.
-- El inicio de sesión y la renovación emitirán `XSRF-TOKEN` mediante `Set-Cookie`; el frontend copiará su valor en `X-CSRF-TOKEN`. La cookie de refresh nunca será accesible desde JavaScript.
+- Cuando el frontend y el backend estén en orígenes distintos, el frontend obtendrá el token CSRF mediante `GET /api/v1/auth/csrf` y lo conservará únicamente en memoria. El inicio de sesión y la renovación también devolverán el valor no sensible cuando emitan o roten `XSRF-TOKEN`; la cookie de refresh nunca será accesible desde JavaScript.
 - Access tokens únicamente en memoria del frontend.
 - Access tokens con duración objetivo de 15 minutos y almacenados únicamente en memoria del frontend.
 - Refresh tokens rotativos sin expiración por tiempo, sin cierre automático por inactividad y revocables por el backend.
 - La reutilización de un refresh token ya rotado se considera un evento de seguridad y revoca la familia de tokens de la sesión.
 - Cada refresh token estará asociado a una sesión mediante `session_id`, que identificará la familia de tokens. El backend validará la sesión y el hash del token; el `session_id` no será el secreto.
+- Cada refresh token emitido se conservará en `session_refresh_tokens` mediante un hash único, con sus fechas de emisión, uso, revocación y eventual reemplazo. La rotación se ejecutará en una transacción; la reutilización de un token usado revocará toda la familia.
 - Hash de contraseñas mediante `PasswordHasher` de ASP.NET Core Identity, sin implementar criptografía propia.
 - Recuperación de contraseña mediante token de un solo uso con duración de 30 minutos.
 - Sesión sin expiración por inactividad ni por tiempo absoluto; podrá mantenerse activa mediante renovación hasta que el usuario cierre sesión, revoque la sesión, la cuenta sea bloqueada o el proveedor de despliegue no esté disponible.
@@ -329,6 +330,7 @@ PostgreSQL será la base de datos principal. Se aplicarán:
 - Versionado entero de recursos mutables para generar ETags deterministas.
 - Registro de movimientos de stock.
 - Claves de idempotencia para evitar operaciones duplicadas.
+- Historial de refresh tokens para detectar reutilización después de la rotación.
 - Row-Level Security para reforzar el aislamiento por `business_account_id`.
 - Foreign keys compuestas para impedir referencias entre negocios.
 
@@ -339,8 +341,11 @@ Como mínimo, las migraciones deberán implementar:
 - `UNIQUE (business_account_id, idempotency_key)` en solicitudes idempotentes.
 - `UNIQUE (business_account_id, minimum_quantity)` en rangos de serigrafía.
 - Índice único parcial para impedir dos productos activos con la misma combinación de negocio, categoría, material, nombre y medidas. Los precios no forman parte de esta identidad.
+- `UNIQUE (type_code)` en `price_types`, que será un catálogo global de referencia; los precios de cada negocio se almacenarán en `product_prices`.
 - Claves foráneas compuestas para que una categoría, material, venta, movimiento o solicitud idempotente solo pueda asociarse a registros del mismo negocio.
+- Clave foránea compuesta desde `sale_items (product_id, price_type_id)` hacia `product_prices (product_id, price_type_id)`.
 - `CHECK (current_stock >= 0)`, `CHECK (quantity > 0)` y `CHECK (price_amount >= 0)`.
+- Restricciones para tipos de descuento, estados de venta, lotes y tarifas de serigrafía, y para impedir movimientos con `quantity_delta = 0`.
 - Validaciones de dimensiones, tarifas y colores conforme a los límites definidos en los requisitos y el contrato OpenAPI.
 
 La venta se considerará confirmada únicamente cuando se hayan guardado la operación y su movimiento de inventario dentro de la misma transacción.
@@ -413,7 +418,7 @@ El presupuesto de aproximadamente US$13 mensuales corresponde únicamente a una 
 
 La infraestructura objetivo con dos instancias de backend, PostgreSQL HA, respaldos avanzados, monitoreo y correo transaccional tendrá un costo superior. El precio definitivo deberá verificarse con los planes vigentes del proveedor antes del despliegue.
 
-Si se habilitan varias instancias y se exige un límite de solicitudes consistente por cuenta, también deberá considerarse el costo de un almacén distribuido administrado para rate limiting, compatible con Redis. No se utilizará para almacenar información del negocio.
+Como la infraestructura objetivo utiliza dos instancias del backend, deberá considerarse el costo de un almacén distribuido administrado para rate limiting, compatible con Redis. No se utilizará para almacenar información del negocio.
 
 ## 15. Evolución futura
 
