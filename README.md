@@ -66,7 +66,7 @@ Permite configurar los datos del negocio, la tasa del IGV, las tarifas de serigr
 4. El administrador registrará y mantendrá sus propios productos, categorías y materiales. No podrán existir dos productos activos con la misma categoría, material, nombre y medidas dentro del mismo negocio.
 5. Los productos podrán desactivarse mediante borrado lógico.
 6. El stock nunca podrá ser negativo.
-7. El stock inicial se registrará mediante un movimiento de ingreso.
+7. Si se registra un stock inicial mayor que cero, se creará un movimiento de ingreso inicial; si el stock inicial es cero, no se creará ningún movimiento.
 8. Los ingresos aumentarán el stock.
 9. Las ventas confirmadas disminuirán el stock.
 10. Las cotizaciones no modificarán el stock ni se guardarán.
