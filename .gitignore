@@ -440,3 +440,10 @@ appsettings.*.json
 *.p12
 *.pem
 *.key
+
+# PackFlow frontend local mock data
+frontend/mock/db.local.json
+frontend/coverage/
+frontend/dist/
+frontend/playwright-report/
+frontend/test-results/

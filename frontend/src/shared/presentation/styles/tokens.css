@@ -1,0 +1,59 @@
+:root {
+  --pf-font-sans: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  --pf-font-mono: 'IBM Plex Mono', Consolas, monospace;
+  --pf-radius-sm: 6px;
+  --pf-radius-md: 10px;
+  --pf-radius-lg: 14px;
+  --pf-shadow-sm: 0 5px 18px rgb(34 38 35 / 7%);
+  --pf-transition: 160ms ease;
+}
+
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+  --pf-bg: #f5f3ee;
+  --pf-surface: #fffdf8;
+  --pf-surface-muted: #f0eee8;
+  --pf-surface-strong: #e6e5de;
+  --pf-text: #222623;
+  --pf-text-muted: #6c746f;
+  --pf-border: #dde1db;
+  --pf-primary: #2f4a45;
+  --pf-primary-strong: #213a35;
+  --pf-primary-soft: #e0ebe5;
+  --pf-accent: #b86f4a;
+  --pf-warning: #b28a47;
+  --pf-success: #4b7a62;
+  --pf-danger: #a6534a;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --pf-bg: #151816;
+  --pf-surface: #1d2320;
+  --pf-surface-muted: #202824;
+  --pf-surface-strong: #242c28;
+  --pf-text: #eceee9;
+  --pf-text-muted: #a4aea6;
+  --pf-border: #33403a;
+  --pf-primary: #afc9bd;
+  --pf-primary-strong: #d4e4db;
+  --pf-primary-soft: #293b34;
+  --pf-accent: #d28a63;
+  --pf-warning: #d1a85d;
+  --pf-success: #83b398;
+  --pf-danger: #d4776c;
+}
+
+:root[data-font-size='small'] {
+  --pf-base-size: 13px;
+}
+
+:root[data-font-size='medium'],
+:root:not([data-font-size]) {
+  --pf-base-size: 16px;
+}
+
+:root[data-font-size='large'] {
+  --pf-base-size: 19px;
+}

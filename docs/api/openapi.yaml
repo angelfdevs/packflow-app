@@ -771,16 +771,21 @@ components:
       minProperties: 1
       properties:
         igvRate: { type: number, minimum: 0, maximum: 1 }
-        screenPrintingTiers: { type: array, minItems: 3, maxItems: 3, items: { $ref: '#/components/schemas/SerigraphyTier' } }
+        screenPrintingTiers:
+          type: array
+          minItems: 3
+          maxItems: 3
+          items: { $ref: '#/components/schemas/SerigraphyTier' }
+          description: El backend debe aceptar únicamente los rangos fijos 20..300, 301..500 y 501..NULL; el frontend solo permite modificar sus tarifas.
         theme: { type: string, enum: [LIGHT, DARK] }
         fontSize: { type: string, enum: [SMALL, MEDIUM, LARGE] }
     StockReceiptRequest:
       type: object
-      required: [productId, quantity, reason]
+      required: [productId, quantity]
       properties:
         productId: { type: string, format: uuid }
         quantity: { type: integer, minimum: 1, maximum: 1000000 }
-        reason: { type: string, minLength: 1, maxLength: 255 }
+        reason: { type: string, maxLength: 255, description: Motivo opcional para documentar un ingreso de mercadería. }
     StockAdjustmentRequest:
       type: object
       required: [productId, adjustmentType, direction, quantity, reason]
@@ -837,12 +842,17 @@ components:
           maxItems: 20
           items: { $ref: '#/components/schemas/OperationLineRequest' }
         discount: { $ref: '#/components/schemas/DiscountRequest' }
+        description: { type: string, maxLength: 1000, description: Información opcional de una venta, como datos de contacto o referencias del cliente. }
       description: El backend debe rechazar productId repetidos y recalcular todos los importes.
     OperationLineResult:
       type: object
-      required: [productId, quantity, unitPrice, priceType, productAmount, lineAmount]
+      required: [productId, productName, dimensions, quantity, unitPrice, priceType, productAmount, lineAmount]
       properties:
         productId: { type: string, format: uuid }
+        productName: { type: string, maxLength: 150 }
+        categoryName: { type: string, maxLength: 100 }
+        materialName: { type: string, maxLength: 100 }
+        dimensions: { $ref: '#/components/schemas/Dimensions' }
         quantity: { type: integer, minimum: 1 }
         unitPrice: { $ref: '#/components/schemas/DecimalAmount' }
         priceType: { type: string, enum: [RETAIL, WHOLESALE] }
@@ -885,6 +895,7 @@ components:
           properties:
             saleId: { type: string, format: uuid }
             status: { type: string, enum: [CONFIRMED] }
+            description: { type: string, maxLength: 1000 }
             createdAt: { type: string, format: date-time }
     StockMovementResult:
       type: object
@@ -925,6 +936,8 @@ components:
         - type: object
           properties:
             saleId: { type: string, format: uuid }
+            productName: { type: string, maxLength: 150 }
+            dimensions: { $ref: '#/components/schemas/Dimensions' }
     MovementPage:
       type: object
       required: [items, page, pageSize, totalItems]
@@ -988,6 +1001,8 @@ components:
       properties:
         movementId: { type: string, format: uuid }
         productId: { type: string, format: uuid }
+        productName: { type: string, maxLength: 150 }
+        dimensions: { $ref: '#/components/schemas/Dimensions' }
         movementType: { type: string, enum: [INITIAL_RECEIPT, RECEIPT, SALE_OUT, LOSS, DAMAGE, CORRECTION] }
         quantityDelta: { type: integer, not: { const: 0 } }
         createdAt: { type: string, format: date-time }

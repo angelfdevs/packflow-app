@@ -1,0 +1,112 @@
+{
+  "accounts": [
+    {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "businessAccountId": "11111111-1111-4111-8111-111111111111",
+      "businessName": "Empaques Andinos",
+      "email": "admin@packflow.local",
+      "accountStatus": "ACTIVE",
+      "version": 1,
+      "updatedAt": "2026-07-25T10:00:00-05:00",
+      "password": "PackFlowDemo123!"
+    }
+  ],
+  "categories": [
+    { "id": "22222222-2222-4222-8222-222222222222", "categoryId": "22222222-2222-4222-8222-222222222222", "name": "Caja dúo" },
+    { "id": "22222222-2222-4222-8222-222222222223", "categoryId": "22222222-2222-4222-8222-222222222223", "name": "Bolsa comercial" }
+  ],
+  "materials": [
+    { "id": "33333333-3333-4333-8333-333333333333", "materialId": "33333333-3333-4333-8333-333333333333", "name": "Cartón corrugado" },
+    { "id": "33333333-3333-4333-8333-333333333334", "materialId": "33333333-3333-4333-8333-333333333334", "name": "Papel kraft" }
+  ],
+  "products": [
+    {
+      "id": "44444444-4444-4444-8444-444444444444",
+      "productId": "44444444-4444-4444-8444-444444444444",
+      "categoryId": "22222222-2222-4222-8222-222222222222",
+      "categoryName": "Caja dúo",
+      "materialId": "33333333-3333-4333-8333-333333333333",
+      "materialName": "Cartón corrugado",
+      "name": "Caja dúo 20×20",
+      "dimensions": { "lengthCm": 20, "widthCm": 20, "heightCm": 10 },
+      "retailPrice": "1.00",
+      "wholesalePrice": "0.80",
+      "currentStock": 120,
+      "active": true,
+      "version": 1,
+      "updatedAt": "2026-07-25T09:00:00-05:00"
+    },
+    {
+      "id": "44444444-4444-4444-8444-444444444445",
+      "productId": "44444444-4444-4444-8444-444444444445",
+      "categoryId": "22222222-2222-4222-8222-222222222223",
+      "categoryName": "Bolsa comercial",
+      "materialId": "33333333-3333-4333-8333-333333333334",
+      "materialName": "Papel kraft",
+      "name": "Bolsa kraft mediana",
+      "dimensions": { "lengthCm": 18, "widthCm": 12, "heightCm": 28 },
+      "retailPrice": "1.20",
+      "wholesalePrice": "0.95",
+      "currentStock": 15,
+      "active": true,
+      "version": 1,
+      "updatedAt": "2026-07-25T09:00:00-05:00"
+    },
+    {
+      "id": "44444444-4444-4444-8444-444444444446",
+      "productId": "44444444-4444-4444-8444-444444444446",
+      "categoryId": "22222222-2222-4222-8222-222222222222",
+      "categoryName": "Caja dúo",
+      "materialId": "33333333-3333-4333-8333-333333333333",
+      "materialName": "Cartón corrugado",
+      "name": "Caja dúo grande",
+      "dimensions": { "lengthCm": 35, "widthCm": 25, "heightCm": 18 },
+      "retailPrice": "2.40",
+      "wholesalePrice": "2.00",
+      "currentStock": 0,
+      "active": true,
+      "version": 1,
+      "updatedAt": "2026-07-25T09:00:00-05:00"
+    }
+  ],
+  "settings": [
+    {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "igvRate": 0.18,
+      "minimumScreenPrintingQuantity": 20,
+      "screenPrintingTiers": [
+        { "from": 20, "to": 300, "ratePerColor": "45.00" },
+        { "from": 301, "to": 500, "ratePerColor": "40.00" },
+        { "from": 501, "to": null, "ratePerColor": "30.00" }
+      ],
+      "theme": "LIGHT",
+      "fontSize": "MEDIUM",
+      "version": 1
+    }
+  ],
+  "sales": [],
+  "movements": [
+    {
+      "id": "55555555-5555-4555-8555-555555555551",
+      "movementId": "55555555-5555-4555-8555-555555555551",
+      "productId": "44444444-4444-4444-8444-444444444444",
+      "movementType": "INITIAL_RECEIPT",
+      "quantityDelta": 120,
+      "previousStock": 0,
+      "resultingStock": 120,
+      "reason": "Stock inicial de demostración",
+      "createdAt": "2026-07-25T09:00:00-05:00"
+    },
+    {
+      "id": "55555555-5555-4555-8555-555555555552",
+      "movementId": "55555555-5555-4555-8555-555555555552",
+      "productId": "44444444-4444-4444-8444-444444444445",
+      "movementType": "INITIAL_RECEIPT",
+      "quantityDelta": 15,
+      "previousStock": 0,
+      "resultingStock": 15,
+      "reason": "Stock inicial de demostración",
+      "createdAt": "2026-07-25T09:00:00-05:00"
+    }
+  ]
+}
