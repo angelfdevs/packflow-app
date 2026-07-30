@@ -1,0 +1,434 @@
+@startuml
+hide methods
+hide stereotypes
+skinparam linetype ortho
+skinparam entity {
+    BackgroundColor #F8FAFC
+    BorderColor #334155
+    FontColor #0F172A
+}
+
+entity businesses {
+    * business_id : UUID <<PK>>
+    --
+    * business_name : VARCHAR(150)
+    * contact_email : VARCHAR(254)
+    * status : VARCHAR(20)
+    * version : BIGINT
+    * created_at : TIMESTAMPTZ
+    * updated_at : TIMESTAMPTZ
+    CHECK(status IN ('ACTIVE', 'SUSPENDED'))
+}
+
+entity users {
+    * user_id : UUID <<PK>>
+    --
+    * email : CITEXT <<UQ>>
+    * password_hash : VARCHAR(255)
+    * status : VARCHAR(20)
+    * created_at : TIMESTAMPTZ
+    * updated_at : TIMESTAMPTZ
+    CHECK(status IN ('ACTIVE', 'BLOCKED'))
+}
+
+entity business_memberships {
+    * business_membership_id : UUID <<PK>>
+    --
+    * business_id : UUID <<FK>>
+    * user_id : UUID <<FK>>
+    * role : VARCHAR(20)
+    * status : VARCHAR(20)
+    * version : BIGINT
+    * created_at : TIMESTAMPTZ
+    * updated_at : TIMESTAMPTZ
+    UNIQUE(business_id, user_id)
+    CHECK(role IN ('ADMIN', 'OPERATOR'))
+    CHECK(status IN ('ACTIVE', 'BLOCKED', 'INVITED'))
+}
+
+entity invitations {
+    * invitation_id : UUID <<PK>>
+    --
+    * business_id : UUID <<FK>>
+    * invited_email : VARCHAR(254)
+    * role : VARCHAR(20)
+    * token_hash : VARCHAR(255)
+    * status : VARCHAR(20)
+    * expires_at : TIMESTAMPTZ
+    accepted_at : TIMESTAMPTZ
+    * created_by_membership_id : UUID <<FK>>
+    * created_at : TIMESTAMPTZ
+    CHECK(role = 'OPERATOR')
+    CHECK(status IN ('PENDING', 'ACCEPTED', 'EXPIRED', 'REVOKED'))
+}
+
+entity sessions {
+    * session_id : UUID <<PK>>
+    --
+    * business_membership_id : UUID <<FK>>
+    * last_activity_at : TIMESTAMPTZ
+    * created_at : TIMESTAMPTZ
+    revoked_at : TIMESTAMPTZ
+}
+
+entity session_refresh_tokens {
+    * refresh_token_id : UUID <<PK>>
+    --
+    * session_id : UUID <<FK>>
+    * token_family_id : UUID
+    * token_hash : VARCHAR(255)
+    * issued_at : TIMESTAMPTZ
+    * expires_at : TIMESTAMPTZ
+    revoked_at : TIMESTAMPTZ
+    parent_refresh_token_id : UUID <<FK>>
+}
+
+entity password_reset_tokens {
+    * password_reset_token_id : UUID <<PK>>
+    --
+    * user_id : UUID <<FK>>
+    * token_hash : VARCHAR(255)
+    * expires_at : TIMESTAMPTZ
+    used_at : TIMESTAMPTZ
+    * created_at : TIMESTAMPTZ
+}
+
+entity account_settings {
+    * business_id : UUID <<PK, FK>>
+    --
+    * igv_rate : NUMERIC(5,4)
+    * version : BIGINT
+    * updated_at : TIMESTAMPTZ
+    CHECK(igv_rate >= 0 AND igv_rate <= 1)
+}
+
+entity user_preferences {
+    * user_id : UUID <<PK, FK>>
+    --
+    * theme : VARCHAR(10)
+    * font_size : VARCHAR(10)
+    * updated_at : TIMESTAMPTZ
+    CHECK(theme IN ('LIGHT', 'DARK'))
+    CHECK(font_size IN ('SMALL', 'MEDIUM', 'LARGE'))
+}
+
+entity product_groups {
+    * group_id : UUID <<PK>>
+    --
+    * business_id : UUID <<FK>>
+    * group_name : CITEXT
+    * active : BOOLEAN
+    * created_at : TIMESTAMPTZ
+    UNIQUE(business_id, group_name)
+}
+
+entity attribute_definitions {
+    * attribute_definition_id : UUID <<PK>>
+    --
+    * business_id : UUID <<FK>>
+    * attribute_name : CITEXT
+    * data_type : VARCHAR(20)
+    * is_required : BOOLEAN
+    * is_searchable : BOOLEAN
+    * active : BOOLEAN
+    * version : BIGINT
+    UNIQUE(business_id, attribute_name)
+}
+
+entity products {
+    * product_id : UUID <<PK>>
+    --
+    * business_id : UUID <<FK>>
+    * group_id : UUID <<FK>>
+    * product_name : VARCHAR(150)
+    * active : BOOLEAN
+    * version : BIGINT
+    * created_at : TIMESTAMPTZ
+    * updated_at : TIMESTAMPTZ
+}
+
+entity product_attribute_values {
+    * product_attribute_value_id : UUID <<PK>>
+    --
+    * product_id : UUID <<FK>>
+    * attribute_definition_id : UUID <<FK>>
+    value_text : TEXT
+    value_number : NUMERIC(18,4)
+    value_boolean : BOOLEAN
+    value_date : DATE
+    UNIQUE(product_id, attribute_definition_id)
+    CHECK((value_text IS NOT NULL)::INTEGER + (value_number IS NOT NULL)::INTEGER + (value_boolean IS NOT NULL)::INTEGER + (value_date IS NOT NULL)::INTEGER = 1)
+}
+
+entity product_price_rules {
+    * price_rule_id : UUID <<PK>>
+    --
+    * product_id : UUID <<FK>>
+    * minimum_quantity : INTEGER
+    maximum_quantity : INTEGER
+    * unit_price : NUMERIC(18,2)
+    * effective_from : TIMESTAMPTZ
+    effective_to : TIMESTAMPTZ
+    * version : BIGINT
+    CHECK(minimum_quantity >= 1)
+    CHECK(maximum_quantity IS NULL OR maximum_quantity >= minimum_quantity)
+    CHECK(unit_price >= 0)
+}
+
+entity product_stock {
+    * product_id : UUID <<PK, FK>>
+    --
+    * current_stock : INTEGER
+    * version : BIGINT
+    * updated_at : TIMESTAMPTZ
+    CHECK(current_stock >= 0)
+}
+
+entity charge_definitions {
+    * charge_definition_id : UUID <<PK>>
+    --
+    * business_id : UUID <<FK>>
+    * charge_name : VARCHAR(100)
+    * charge_kind : VARCHAR(20)
+    * scope : VARCHAR(20)
+    * multiplier_kind : VARCHAR(20)
+    lot_size : INTEGER
+    max_multiplier : INTEGER
+    * active : BOOLEAN
+    * version : BIGINT
+    UNIQUE(business_id, charge_name)
+    CHECK(charge_kind IN ('FIXED', 'PERCENTAGE'))
+    CHECK(scope IN ('LINE', 'OPERATION'))
+    CHECK(multiplier_kind IN ('NONE', 'LOTS', 'COLORS'))
+    CHECK(lot_size IS NULL OR lot_size > 0)
+    CHECK(max_multiplier IS NULL OR max_multiplier > 0)
+}
+
+entity charge_tiers {
+    * charge_tier_id : UUID <<PK>>
+    --
+    * charge_definition_id : UUID <<FK>>
+    * minimum_quantity : INTEGER
+    maximum_quantity : INTEGER
+    * amount : NUMERIC(18,2)
+    CHECK(minimum_quantity >= 1)
+    CHECK(maximum_quantity IS NULL OR maximum_quantity >= minimum_quantity)
+    CHECK(amount >= 0)
+}
+
+entity suppliers {
+    * supplier_id : UUID <<PK>>
+    --
+    * business_id : UUID <<FK>>
+    * supplier_name : VARCHAR(150)
+    tax_id : VARCHAR(30)
+    phone : VARCHAR(50)
+    email : VARCHAR(254)
+    address : VARCHAR(255)
+    * active : BOOLEAN
+    * version : BIGINT
+    UNIQUE(business_id, supplier_name)
+}
+
+entity supply_receipts {
+    * supply_receipt_id : UUID <<PK>>
+    --
+    * business_id : UUID <<FK>>
+    supplier_id : UUID <<FK>>
+    * created_by_membership_id : UUID <<FK>>
+    * status : VARCHAR(20)
+    note : VARCHAR(255)
+    * created_at : TIMESTAMPTZ
+}
+
+entity supply_receipt_items {
+    * supply_receipt_item_id : UUID <<PK>>
+    --
+    * supply_receipt_id : UUID <<FK>>
+    * product_id : UUID <<FK>>
+    * quantity : INTEGER
+    UNIQUE(supply_receipt_id, product_id)
+    CHECK(quantity > 0)
+}
+
+entity idempotency_requests {
+    * idempotency_request_id : UUID <<PK>>
+    --
+    * business_id : UUID <<FK>>
+    * actor_user_id : UUID <<FK>>
+    * idempotency_key : VARCHAR(255)
+    * request_hash : CHAR(64)
+    * response_status : INTEGER
+    response_body : JSONB
+    * created_at : TIMESTAMPTZ
+    * expires_at : TIMESTAMPTZ
+    UNIQUE(business_id, idempotency_key)
+    CHECK(length(idempotency_key) >= 16)
+}
+
+entity sales {
+    * sale_id : UUID <<PK>>
+    --
+    * business_id : UUID <<FK>>
+    * created_by_membership_id : UUID <<FK>>
+    * idempotency_request_id : UUID <<FK, UQ>>
+    * status : VARCHAR(20)
+    description : VARCHAR(2000)
+    * currency : CHAR(3)
+    * subtotal : NUMERIC(18,2)
+    discount_type : VARCHAR(20)
+    discount_value : NUMERIC(18,2)
+    discount_amount : NUMERIC(18,2)
+    * igv_rate : NUMERIC(5,4)
+    * igv_amount : NUMERIC(18,2)
+    * total : NUMERIC(18,2)
+    * created_at : TIMESTAMPTZ
+    cancelled_at : TIMESTAMPTZ
+    cancelled_by_membership_id : UUID <<FK>>
+    cancellation_reason : VARCHAR(255)
+    CHECK(status IN ('CONFIRMED', 'CANCELLED'))
+    CHECK(subtotal >= 0 AND discount_amount >= 0 AND igv_amount >= 0 AND total >= 0)
+    CHECK(discount_type IN ('PERCENTAGE', 'FIXED') OR discount_type IS NULL)
+    CHECK(discount_value IS NULL OR discount_value >= 0)
+    CHECK((status = 'CANCELLED' AND cancelled_at IS NOT NULL AND cancellation_reason IS NOT NULL) OR status = 'CONFIRMED')
+}
+
+entity sale_items {
+    * sale_item_id : UUID <<PK>>
+    --
+    * sale_id : UUID <<FK>>
+    * product_id : UUID <<FK>>
+    * product_name_snapshot : VARCHAR(150)
+    * quantity : INTEGER
+    * unit_price : NUMERIC(18,2)
+    * product_amount : NUMERIC(18,2)
+    * charges_amount : NUMERIC(18,2)
+    * line_amount : NUMERIC(18,2)
+    UNIQUE(sale_id, product_id)
+    CHECK(quantity > 0)
+    CHECK(unit_price >= 0 AND product_amount >= 0 AND charges_amount >= 0 AND line_amount >= 0)
+}
+
+entity sale_item_attribute_values {
+    * sale_item_attribute_value_id : UUID <<PK>>
+    --
+    * sale_item_id : UUID <<FK>>
+    * attribute_definition_id : UUID <<FK>>
+    * attribute_name_snapshot : VARCHAR(100)
+    value_text : TEXT
+    value_number : NUMERIC(18,4)
+    value_boolean : BOOLEAN
+    value_date : DATE
+    UNIQUE(sale_item_id, attribute_definition_id)
+    CHECK((value_text IS NOT NULL)::INTEGER + (value_number IS NOT NULL)::INTEGER + (value_boolean IS NOT NULL)::INTEGER + (value_date IS NOT NULL)::INTEGER = 1)
+}
+
+entity sale_charges {
+    * sale_charge_id : UUID <<PK>>
+    --
+    * sale_id : UUID <<FK>>
+    charge_definition_id : UUID <<FK>>
+    * charge_name_snapshot : VARCHAR(100)
+    * multiplier : INTEGER
+    * amount : NUMERIC(18,2)
+    CHECK(multiplier > 0)
+    CHECK(amount >= 0)
+}
+
+entity inventory_movements {
+    * movement_id : UUID <<PK>>
+    --
+    * business_id : UUID <<FK>>
+    * product_id : UUID <<FK>>
+    * actor_membership_id : UUID <<FK>>
+    sale_id : UUID <<FK>>
+    supply_receipt_id : UUID <<FK>>
+    idempotency_request_id : UUID <<FK>>
+    * movement_type : VARCHAR(30)
+    * quantity_delta : INTEGER
+    * previous_stock : INTEGER
+    * resulting_stock : INTEGER
+    reason : VARCHAR(255)
+    * created_at : TIMESTAMPTZ
+    CHECK(movement_type IN ('INITIAL_RECEIPT', 'RECEIPT', 'SUPPLY_RECEIPT', 'SALE_OUT', 'SALE_REVERSAL', 'ADJUSTMENT'))
+    CHECK(quantity_delta <> 0)
+    CHECK(previous_stock >= 0 AND resulting_stock >= 0)
+    CHECK(resulting_stock = previous_stock + quantity_delta)
+}
+
+entity audit_events {
+    * audit_event_id : UUID <<PK>>
+    --
+    * business_id : UUID <<FK>>
+    actor_membership_id : UUID <<FK>>
+    * action : VARCHAR(80)
+    * entity_type : VARCHAR(80)
+    * entity_id : UUID
+    * outcome : VARCHAR(20)
+    trace_id : VARCHAR(100)
+    metadata : JSONB
+    * created_at : TIMESTAMPTZ
+    CHECK(outcome IN ('SUCCESS', 'FAILURE'))
+}
+
+entity outbox_messages {
+    * outbox_message_id : UUID <<PK>>
+    --
+    * business_id : UUID <<FK>>
+    * aggregate_type : VARCHAR(80)
+    * aggregate_id : UUID
+    * event_type : VARCHAR(80)
+    * payload : JSONB
+    * occurred_at : TIMESTAMPTZ
+    published_at : TIMESTAMPTZ
+    * attempts : INTEGER
+    last_error : VARCHAR(1000)
+}
+
+businesses ||--o{ business_memberships
+users ||--o{ business_memberships
+businesses ||--o{ invitations
+business_memberships ||--o{ invitations
+business_memberships ||--o{ sessions
+sessions ||--o{ session_refresh_tokens
+session_refresh_tokens ||--o| session_refresh_tokens
+users ||--o{ password_reset_tokens
+businesses ||--|| account_settings
+users ||--|| user_preferences
+businesses ||--o{ product_groups
+businesses ||--o{ attribute_definitions
+businesses ||--o{ products
+product_groups ||--o{ products
+products ||--o{ product_attribute_values
+attribute_definitions ||--o{ product_attribute_values
+products ||--o{ product_price_rules
+products ||--|| product_stock
+businesses ||--o{ charge_definitions
+charge_definitions ||--o{ charge_tiers
+businesses ||--o{ suppliers
+businesses ||--o{ supply_receipts
+suppliers ||--o{ supply_receipts
+supply_receipts ||--|{ supply_receipt_items
+products ||--o{ supply_receipt_items
+businesses ||--o{ idempotency_requests
+users ||--o{ idempotency_requests
+businesses ||--o{ sales
+business_memberships ||--o{ sales
+idempotency_requests ||--o| sales
+sales ||--|{ sale_items
+products ||--o{ sale_items
+sale_items ||--o{ sale_item_attribute_values
+attribute_definitions ||--o{ sale_item_attribute_values
+sales ||--o{ sale_charges
+charge_definitions ||--o{ sale_charges
+businesses ||--o{ inventory_movements
+products ||--o{ inventory_movements
+business_memberships ||--o{ inventory_movements
+sales ||--o{ inventory_movements
+supply_receipts ||--o{ inventory_movements
+idempotency_requests ||--o{ inventory_movements
+businesses ||--o{ audit_events
+business_memberships ||--o{ audit_events
+businesses ||--o{ outbox_messages
+
+@enduml

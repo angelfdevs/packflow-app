@@ -1,658 +1,652 @@
-<br>**US-001 — Iniciar sesión** </br>
-Descripción:
-Como administrador, quiero iniciar sesión con mi correo y contraseña, para acceder de forma segura a la cuenta de mi negocio. </br>
-Criterios de aceptación
-<br>**Escenario 1:** Credenciales correctas</br>
-Dado que el administrador tiene una cuenta registrada.
-Cuando ingresa correctamente su correo y contraseña.
-Entonces el sistema debe permitirle acceder al Dashboard.
-<br>**Escenario 2:** Credenciales incorrectas</br>
-Dado que el administrador se encuentra en el formulario de inicio de sesión.
-Cuando ingresa credenciales incorrectas.
-Entonces el sistema debe mostrar un mensaje de error y no permitir el acceso.
-<br>**Escenario 3:** Campos incompletos</br>
-Dado que el administrador deja campos vacíos.
-Cuando intenta iniciar sesión.
-Entonces el sistema debe solicitar la información faltante.
-<br>**Reglas de negocio**</br>
-- Cada cuenta administradora será dueña de un único negocio y solo podrá existir una cuenta administradora por negocio.
-- Las cuentas serán provisionadas mediante un procedimiento administrativo controlado; no existirá registro público durante el alcance actual.
-- Las contraseñas deben almacenarse de forma segura.
-- El sistema no debe revelar si el correo o la contraseña son incorrectos; en su lugar, debe indicar que las credenciales de inicio de sesión son incorrectas.
+# Requisitos funcionales de Agilora
 
-<br>**US-002 — Cerrar sesión**</br>
-Descripción:
-Como administrador, quiero cerrar sesión, para proteger el acceso a la cuenta del negocio.
-Criterios de aceptación
-<br>**Escenario 1: Cierre de sesión exitoso**</br>
-Dado que el administrador tiene una sesión activa.
-Cuando selecciona la opción de cerrar sesión.
-Entonces el sistema debe finalizar la sesión y redirigirlo al inicio de sesión.
-<br>**Escenario 2: Acceso después de cerrar sesión**</br>
-Dado que el administrador cerró sesión.
-Cuando intenta acceder a un módulo protegido.
-Entonces el sistema debe solicitarle iniciar sesión nuevamente.
-<br>**Reglas de negocio**</br>
-- Una sesión cerrada no debe permitir acceder a información protegida.
-- El token de sesión debe invalidarse correctamente.
+Agilora es un SaaS multiempresa. Las historias se expresan desde el punto de vista del usuario del negocio y se implementan respetando tenant, rol, autorización, persistencia y auditoría.
 
-<br>**US-003 — Cambiar contraseña**</br>
-Descripción:
-Como administrador, quiero cambiar la contraseña de mi cuenta, para mantener seguro el acceso al negocio.
-Criterios de aceptación
-<br>**Escenario 1: Cambio exitoso**</br>
-Dado que el administrador ingresó su contraseña actual correctamente.
-Cuando registra y confirma una nueva contraseña válida.
-Entonces el sistema debe actualizar la contraseña.
-<br>**Escenario 2: Contraseña actual incorrecta**</br>
-Dado que el administrador ingresa una contraseña actual incorrecta.
-Cuando intenta guardar una nueva contraseña.
-Entonces el sistema debe rechazar la operación.
-<br>**Reglas de negocio**</br>
-- La nueva contraseña debe cumplir los requisitos mínimos de seguridad.
-- La contraseña debe almacenarse mediante un hash seguro.
-- La contraseña actual nunca debe mostrarse en pantalla.
+## US-001 — Iniciar sesión
 
-<br>**US-004 — Registrar producto**</br>
-Descripción:
-Como administrador, quiero registrar un producto con sus características y precios, para incorporarlo al catálogo del negocio y utilizarlo en consultas, cotizaciones y ventas.
-Criterios de aceptación
-<br>**Escenario 1: Registro exitoso sin stock inicial**</br>
-Dado que el administrador se encuentra en el formulario de productos.
-Cuando completa correctamente la categoría, nombre, medidas, material, precio minorista y precio mayorista.
-Entonces el sistema debe registrar el producto activo con stock cero.
-<br>**Escenario 2: Registro exitoso con stock inicial**</br>
-Dado que el administrador registra un producto e ingresa una cantidad inicial mayor que cero.
-Cuando confirma la operación.
-Entonces el sistema debe registrar el producto y generar un movimiento de ingreso inicial con la cantidad indicada.
-<br>**Escenario 3: Datos obligatorios incompletos**</br>
-Dado que el administrador deja campos obligatorios vacíos.
-Cuando intenta registrar el producto.
-Entonces el sistema debe mostrar los campos pendientes y rechazar la operación.
-<br>**Escenario 4: Datos inválidos**</br>
-Dado que el administrador ingresa precios negativos, cantidades inválidas o información incorrecta.
-Cuando intenta registrar el producto.
-Entonces el sistema debe mostrar un mensaje de validación y no guardar la información.
-<br>**Escenario 5: Producto activo duplicado**</br>
-Dado que ya existe un producto activo con la misma categoría, material, nombre y medidas dentro del negocio.
-Cuando el administrador intenta registrarlo nuevamente.
-Entonces el sistema debe informar el conflicto y evitar el duplicado.
-<br>**Reglas de negocio**</br>
-- El producto debe pertenecer a la cuenta del negocio autenticado.
-- El producto debe tener categoría, nombre, medidas, material, precio minorista y precio mayorista.
-- No podrán existir dos productos activos del mismo negocio con la misma categoría, material, nombre y medidas. Los precios no forman parte de la identidad del producto.
-- Los nombres de productos, categorías y materiales se almacenarán sin espacios externos y se compararán sin distinguir mayúsculas de minúsculas para evitar duplicados aparentes.
+**Código:** US-001
+**Título:** Iniciar sesión
+**Descripción:** Como usuario de un negocio, quiero iniciar sesión con mis credenciales para acceder únicamente a la información y operaciones autorizadas de mi negocio.
+
+### Criterios de aceptación
+
+#### Escenario 1: Credenciales válidas
+
+Dado que el usuario tiene una membresía activa. Cuando ingresa credenciales válidas, entonces el sistema inicia la sesión, obtiene su rol y negocio, y muestra la pantalla correspondiente.
+
+#### Escenario 2: Credenciales inválidas
+
+Dado que las credenciales no son válidas. Cuando intenta iniciar sesión, entonces el sistema rechaza el acceso sin revelar qué dato fue incorrecto.
+
+#### Escenario 3: Usuario bloqueado
+
+Dado que la membresía o usuario está bloqueado. Cuando intenta iniciar sesión, entonces el sistema rechaza el acceso.
+
+### Reglas de negocio
+
+- No existe registro público durante el primer release; las cuentas de negocio se provisionan mediante un procedimiento controlado.
+- El backend determina el negocio y rol de la sesión.
+- Los roles iniciales son `ADMIN` y `OPERATOR`.
+
+## US-002 — Cerrar sesión
+
+**Código:** US-002
+**Título:** Cerrar sesión
+**Descripción:** Como usuario autenticado, quiero cerrar sesión para proteger el acceso al negocio.
+
+### Criterios de aceptación
+
+#### Escenario 1: Cierre exitoso
+
+Dado que existe una sesión activa. Cuando selecciona cerrar sesión, entonces el backend revoca la sesión, limpia las cookies y el frontend redirige al inicio de sesión.
+
+#### Escenario 2: Acceso posterior
+
+Dado que la sesión fue revocada. Cuando intenta abrir un módulo protegido, entonces el sistema solicita autenticación nuevamente.
+
+### Reglas de negocio
+
+- Una sesión revocada no puede utilizarse para consultar ni modificar datos.
+- El cierre de sesión no elimina ventas, movimientos ni auditoría.
+
+## US-003 — Recuperar y restablecer contraseña
+
+**Código:** US-003
+**Título:** Recuperar y restablecer contraseña
+**Descripción:** Como usuario, quiero recuperar mi contraseña mediante un enlace de un solo uso para recuperar el acceso de forma segura.
+
+### Criterios de aceptación
+
+#### Escenario 1: Solicitud de recuperación
+
+Dado que el usuario ingresa un correo. Cuando solicita recuperar la contraseña, entonces el sistema devuelve una respuesta genérica y, si corresponde, envía un enlace.
+
+#### Escenario 2: Restablecimiento válido
+
+Dado que el token es válido y no utilizado. Cuando define una contraseña válida, entonces el sistema actualiza el hash, invalida el token y revoca sesiones anteriores.
+
+#### Escenario 3: Token inválido o usado
+
+Dado que el token expiró o ya fue utilizado. Cuando intenta restablecer la contraseña, entonces el sistema rechaza la operación.
+
+### Reglas de negocio
+
+- El token es de un solo uso, expira y se almacena únicamente mediante hash.
+- El sistema no revela si un correo está registrado.
+- Las contraseñas nunca se almacenan en texto plano.
+
+## US-004 — Consultar el contexto del negocio
+
+**Código:** US-004
+**Título:** Consultar negocio y rol
+**Descripción:** Como usuario autenticado, quiero conocer el negocio y rol de mi sesión para utilizar correctamente las funciones disponibles.
+
+### Criterios de aceptación
+
+#### Escenario 1: Sesión válida
+
+Dado que existe una sesión activa. Cuando el frontend consulta el contexto, entonces recibe el negocio, el usuario, el rol y el estado de la membresía.
+
+#### Escenario 2: Sesión inválida
+
+Dado que la sesión expiró. Cuando consulta el contexto, entonces recibe `401 Unauthorized` y debe autenticarse nuevamente.
+
+### Reglas de negocio
+
+- El contexto se obtiene del backend y no de valores confiados enviados por el frontend.
+- La información se limita al negocio de la sesión activa.
+
+## US-005 — Invitar operador
+
+**Código:** US-005
+**Título:** Invitar usuario al negocio
+**Descripción:** Como administrador, quiero invitar a un operador para que pueda trabajar en el mismo negocio con sus propias credenciales.
+
+### Criterios de aceptación
+
+#### Escenario 1: Invitación válida
+
+Dado que el administrador ingresa un correo válido. Cuando confirma la invitación, entonces el sistema crea una invitación de un solo uso y envía el enlace correspondiente.
+
+#### Escenario 2: Correo ya miembro
+
+Dado que el correo ya pertenece al negocio. Cuando el administrador intenta invitarlo, entonces el sistema rechaza el duplicado.
+
+#### Escenario 3: Aceptación
+
+Dado que el token de invitación es válido. Cuando el invitado define sus credenciales, entonces se crea o activa su membresía como `OPERATOR`.
+
+### Reglas de negocio
+
+- Solo `ADMIN` puede invitar usuarios.
+- Una invitación expira, es de un solo uso y no contiene contraseñas.
+- El administrador no puede invitar a otro administrador durante el alcance inicial.
+
+## US-006 — Administrar usuarios y permisos
+
+**Código:** US-006
+**Título:** Bloquear o reactivar operador
+**Descripción:** Como administrador, quiero bloquear o reactivar operadores para controlar inmediatamente su acceso.
+
+### Criterios de aceptación
+
+#### Escenario 1: Bloqueo
+
+Dado que un operador está activo. Cuando el administrador lo bloquea, entonces sus sesiones se revocan y las siguientes solicitudes reciben `403 Forbidden` o `401 Unauthorized` según corresponda.
+
+#### Escenario 2: Reactivación
+
+Dado que un operador está bloqueado. Cuando el administrador lo reactiva, entonces podrá iniciar sesión nuevamente.
+
+#### Escenario 3: Acceso directo no autorizado
+
+Dado que un operador conoce una URL administrativa. Cuando intenta acceder directamente, entonces el backend rechaza la operación aunque el frontend oculte el menú.
+
+### Reglas de negocio
+
+- Solo `ADMIN` puede administrar usuarios.
+- El administrador no puede bloquearse a sí mismo mediante esta operación.
+- La autorización se valida en backend.
+
+## US-007 — Configurar negocio
+
+**Código:** US-007
+**Título:** Configurar datos y preferencias
+**Descripción:** Como administrador, quiero configurar los datos del negocio, el IGV y las reglas comerciales que utilizarán sus operaciones.
+
+### Criterios de aceptación
+
+#### Escenario 1: Actualización válida
+
+Dado que el administrador modifica una configuración permitida. Cuando confirma, entonces el sistema valida, persiste y devuelve la nueva versión.
+
+#### Escenario 2: Concurrencia
+
+Dado que la configuración cambió desde otra sesión. Cuando se intenta guardar una versión antigua, entonces el sistema rechaza la actualización por conflicto.
+
+### Reglas de negocio
+
+- Solo `ADMIN` puede modificar configuración administrativa.
+- La tasa inicial del IGV será 18 % y podrá configurarse según el negocio.
+- Las ventas históricas conservan la configuración aplicada al confirmarse.
+
+## US-008 — Crear grupos de productos
+
+**Código:** US-008
+**Título:** Crear y consultar grupos
+**Descripción:** Como usuario autorizado, quiero crear grupos o categorías para organizar el catálogo de mi negocio.
+
+### Criterios de aceptación
+
+#### Escenario 1: Registro válido
+
+Dado que el nombre no existe en el negocio. Cuando confirma el grupo, entonces se registra y queda disponible para productos.
+
+#### Escenario 2: Nombre duplicado
+
+Dado que ya existe un grupo equivalente ignorando mayúsculas y espacios externos. Cuando intenta registrarlo, entonces el sistema rechaza el duplicado.
+
+### Reglas de negocio
+
+- Los grupos pertenecen a un único negocio.
+- La desactivación no debe romper el historial de productos.
+
+## US-009 — Definir atributos del catálogo
+
+**Código:** US-009
+**Título:** Crear atributos personalizados
+**Descripción:** Como administrador, quiero definir atributos personalizados para registrar productos de acuerdo con las necesidades de mi negocio.
+
+### Criterios de aceptación
+
+#### Escenario 1: Atributo válido
+
+Dado que el administrador ingresa nombre, tipo y obligatoriedad. Cuando confirma, entonces el atributo queda disponible para productos del negocio.
+
+#### Escenario 2: Valor incompatible
+
+Dado que un producto recibe un valor que no coincide con el tipo definido. Cuando intenta guardarlo, entonces el sistema rechaza la operación.
+
+### Reglas de negocio
+
+- Los tipos iniciales serán `TEXT`, `NUMBER`, `BOOLEAN` y `DATE`.
+- Los atributos pertenecen al negocio y no pueden utilizarse desde otro tenant.
+- Un cambio de definición no debe modificar silenciosamente valores históricos.
+
+## US-010 — Registrar y editar producto
+
+**Código:** US-010
+**Título:** Gestionar producto configurable
+**Descripción:** Como usuario autorizado, quiero registrar y editar un producto con sus grupos, atributos y reglas de precio.
+
+### Criterios de aceptación
+
+#### Escenario 1: Registro
+
+Dado que los datos cumplen las definiciones del negocio. Cuando confirma el producto, entonces se registra activo y se crea el stock inicial mediante un movimiento de ingreso si es mayor que cero.
+
+#### Escenario 2: Edición
+
+Dado que el producto existe. Cuando confirma cambios válidos, entonces se actualizan sus datos sin modificar directamente el stock.
+
+#### Escenario 3: Producto inactivo
+
+Dado que el producto está inactivo. Cuando se busca para una operación nueva, entonces no aparece como disponible.
+
+### Reglas de negocio
+
+- El producto pertenece al tenant de la sesión.
+- El nombre es obligatorio.
+- La edición no cambia ventas, abastecimientos ni movimientos históricos.
+- Los productos con historial se desactivan mediante borrado lógico.
+
+## US-011 — Configurar precios
+
+**Código:** US-011
+**Título:** Definir reglas de precio por cantidad
+**Descripción:** Como administrador, quiero definir precios y rangos de cantidad para que el backend aplique la regla correcta.
+
+### Criterios de aceptación
+
+#### Escenario 1: Rango válido
+
+Dado que un producto tiene rangos no superpuestos. Cuando el administrador los confirma, entonces quedan disponibles para futuras operaciones.
+
+#### Escenario 2: Rango superpuesto
+
+Dado que dos reglas se superponen o dejan una cantidad sin precio. Cuando intenta guardarlas, entonces el sistema rechaza la configuración.
+
+### Reglas de negocio
+
+- El precio aplicado se determina en backend según cantidad y reglas vigentes.
 - Los precios no pueden ser negativos.
-- Cada dimensión debe ser mayor que cero y no superar 1 000 cm.
-- El stock inicial no podrá superar 1 000 000 unidades.
-- El stock inicial no se modificará directamente en la entidad producto.
-- El stock inicial mayor que cero se registrará mediante un movimiento de ingreso inicial; si es cero, no se creará ningún movimiento.
-- Todo movimiento inicial debe guardar producto, cantidad, fecha y tipo de movimiento.
-- La edición del producto no debe modificar directamente el stock.
-- El producto se registrará activo por defecto.
-- El backend debe validar toda la información recibida.
+- Las ventas históricas conservan el precio aplicado al confirmarse.
 
-<br>**US-005 — Editar producto**</br>
-Descripción:
-Como administrador, quiero editar los datos de un producto, para mantener actualizada la información del catálogo.
-Criterios de aceptación
-<br>**Escenario 1: Edición exitosa**</br>
-Dado que el producto existe y está activo.
-Cuando el administrador modifica sus datos y confirma la operación.
-Entonces el sistema debe guardar los nuevos datos.
-<br>**Escenario 2: Cancelar edición**</br>
-Dado que el administrador modificó los datos de un producto.
-Cuando cancela la operación.
-Entonces el sistema no debe guardar los cambios.
-<br>**Escenario 3: Datos inválidos**</br>
-Dado que el administrador ingresa información inválida.
-Cuando intenta confirmar la edición.
-Entonces el sistema debe mostrar los errores y conservar los datos anteriores.
-<br>**Reglas de negocio**</br>
-- La edición de un producto debe requerir confirmación.
-- Modificar el precio no debe alterar las ventas anteriores.
-- El stock no debe modificarse directamente desde la edición del producto.
-- Los cambios de stock se realizarán mediante ingresos, ventas o ajustes manuales.
+## US-012 — Consultar stock
 
-<br>**US-006 — Activar o desactivar producto**</br>
-Descripción:
-Como administrador, quiero activar o desactivar productos, para controlar cuáles están disponibles en las operaciones del negocio.
-Criterios de aceptación
-<br>**Escenario 1: Desactivar producto**</br>
-Dado que el producto está activo.
-Cuando el administrador confirma su desactivación.
-Entonces el producto debe dejar de aparecer como disponible para nuevas cotizaciones y ventas.
-<br>**Escenario 2: Activar producto**</br>
-Dado que el producto está desactivado.
-Cuando el administrador confirma su activación.
-Entonces el producto debe volver a estar disponible.
-<br>**Escenario 3: Reactivación conflictiva**</br>
-Dado que existe otro producto activo con la misma categoría, material, nombre y medidas.
-Cuando el administrador intenta activar el producto desactivado.
-Entonces el sistema debe rechazar la activación e informar el conflicto.
-<br>**Reglas de negocio**</br>
-- La desactivación debe realizarse mediante borrado lógico.
-- Los productos desactivados no deben eliminarse físicamente.
-- Las ventas históricas relacionadas con el producto deben conservarse.
-- La activación debe volver a validar la unicidad de la identidad activa del producto.
+**Código:** US-012
+**Título:** Consultar inventario
+**Descripción:** Como usuario autorizado, quiero buscar productos y consultar su stock actual.
 
-<br>**US-007 — Consultar stock**</br>
-Descripción:
-Como administrador, quiero consultar el stock de mis productos, para responder rápidamente a las consultas de los clientes.
-Criterios de aceptación
-<br>**Escenario 1: Búsqueda exitosa**</br>
-Dado que existen productos registrados.
-Cuando el administrador busca por nombre, medida, categoría o material.
-Entonces el sistema debe mostrar los productos coincidentes y su stock actual.
-<br>**Escenario 2: Producto no encontrado**</br>
-Dado que no existe un producto coincidente.
-Cuando el administrador realiza una búsqueda.
-Entonces el sistema debe mostrar un mensaje indicando que no se encontraron resultados.
-<br>**Reglas de negocio**</br>
-- La consulta debe mostrar el stock actualizado.
-- Los productos desactivados no deben aparecer como disponibles.
-- La consulta de stock no debe modificar ningún dato.
+### Criterios de aceptación
 
-<br>**US-008 — Registrar ingreso de stock**</br>
-Descripción:
-Como administrador, quiero registrar el ingreso de nueva mercadería, para aumentar correctamente el stock de un producto.
-Criterios de aceptación
-<br>**Escenario 1: Ingreso exitoso**</br>
-Dado que el producto existe y está activo.
-Cuando el administrador ingresa una cantidad válida y confirma la operación.
-Entonces el sistema debe aumentar el stock y registrar el movimiento.
-<br>**Escenario 2: Cantidad inválida**</br>
-Dado que el administrador ingresa una cantidad igual o menor que cero.
-Cuando intenta confirmar el ingreso.
-Entonces el sistema debe mostrar un mensaje de error y no modificar el stock.
-<br>**Reglas de negocio**</br>
-- La cantidad ingresada debe ser mayor que cero.
-- La cantidad ingresada no podrá superar 1 000 000 unidades por operación.
-- Todo ingreso debe registrar fecha, cantidad y producto.
-- El stock debe actualizarse de forma segura.
+#### Escenario 1: Búsqueda
 
-<br>**US-009 — Consultar movimientos de inventario**</br>
-Descripción:
-Como administrador, quiero consultar los movimientos de inventario, para conocer cuándo y por qué cambió el stock.
-Criterios de aceptación
-<br>**Escenario 1: Consulta de movimientos**</br>
-Dado que existen movimientos registrados.
-Cuando el administrador accede al historial.
-Entonces el sistema debe mostrar producto, tipo de movimiento, cantidad y fecha.
-<br>**Escenario 2: Sin movimientos**</br>
-Dado que un producto no tiene movimientos registrados.
-Cuando el administrador consulta su historial.
-Entonces el sistema debe mostrar un mensaje informativo.
-<br>**Reglas de negocio**</br>
-- Los movimientos deben conservarse como historial.
-- Los movimientos principales serán ingresos de stock, salidas por ventas y ajustes manuales.
-- Un movimiento no debe modificarse después de ser registrado.
-- Los ajustes deben conservar el motivo registrado.
+Dado que existen productos. Cuando busca por nombre, grupo, atributo o medida registrada, entonces el sistema muestra coincidencias y stock actualizado.
 
-<br>**US-010 — Buscar y seleccionar producto para cotizar**</br>
-Descripción:
-Como administrador, quiero buscar y seleccionar un producto, para iniciar una cotización para un cliente.
-Criterios de aceptación
-<br>**Escenario 1: Selección exitosa**</br>
-Dado que existen productos activos.
-Cuando el administrador busca y selecciona un producto.
-Entonces el sistema debe mostrar su nombre, medida, material, precio minorista y precio mayorista.
-<br>**Escenario 2: Búsqueda sin resultados**</br>
-Dado que no existe un producto coincidente.
-Cuando el administrador realiza una búsqueda.
-Entonces el sistema debe mostrar un mensaje indicando que no se encontraron productos.
-<br>**Reglas de negocio**</br>
-- La búsqueda debe permitir utilizar nombre, medida, categoría o material.
-- Solo deben seleccionarse productos activos.
-- Seleccionar un producto no debe modificar el stock.
+#### Escenario 2: Bajo o agotado
 
-<br>**US-011 — Ingresar cantidad para cotizar**</br>
-Descripción:
-Como administrador, quiero ingresar la cantidad de productos solicitada para que el sistema aplique automáticamente el precio minorista o mayorista correspondiente.
-Criterios de aceptación:
-<br>**Escenario 1: Aplicar precio minorista**</br>
-Dado que seleccioné un producto.
-Cuando ingreso una cantidad entre 1 y 100 unidades. 
-Entonces el sistema debe aplicar el precio minorista.
-<br>**Escenario 2: Aplicar precio mayorista**</br>
-Dado que seleccioné un producto. 
-Cuando ingreso una cantidad igual o superior a 101 unidades. 
-Entonces el sistema debe aplicar el precio mayorista.
-<br>**Escenario 3: Cantidad inválida**</br>
-Dado que seleccioné un producto.
-Cuando ingreso una cantidad menor o igual a cero.
-Entonces el sistema debe mostrar un mensaje de validación y no permitir continuar.
-<br>**Reglas de negocio**</br>
-- De 1 a 100 unidades se aplicará el precio minorista.
-- Desde 101 unidades se aplicará el precio mayorista.
-- La cantidad debe ser un número entero positivo.
-- La cantidad no podrá superar 1 000 000 unidades por línea.
-- El precio aplicado debe obtenerse del producto seleccionado.
-- La cotización no modifica el stock.
+Dado que un producto tiene stock menor o igual a 15, entonces se identifica como bajo; si tiene cero, se identifica como agotado.
 
+### Reglas de negocio
 
-<br>**US-012 — Aplicar serigrafía**</br>
-Descripción:
-Como administrador, quiero aplicar serigrafía opcional a los productos para calcular correctamente el costo adicional según la cantidad de unidades y colores seleccionados.
-Criterios de aceptación:
-<br>**Escenario 1: Cotización sin serigrafía**</br>
-Dado que la serigrafía está desactivada.
-Cuando realizo una cotización
-Entonces el sistema no debe agregar ningún costo por serigrafía.
-<br>**Escenario 2: Cantidad insuficiente**</br>
-Dado que ingreso una cantidad menor a 20 unidades
-Cuando intento activar la serigrafía.
-Entonces el sistema debe impedirlo y mostrar un mensaje informativo.
-<br>**Escenario 3: Serigrafía entre 20 y 300 unidades**</br>
-Dado que ingreso entre 20 y 300 unidades. 
-Cuando selecciono uno o más colores. 
-Entonces el sistema debe aplicar S/45 por lote de 100 unidades y por color.
-<br>**Escenario 4: Serigrafía entre 301 y 500 unidades**</br>
-Dado que ingreso entre 301 y 500 unidades.
-Cuando selecciono uno o más colores.
-Entonces el sistema debe aplicar S/40 por lote de 100 unidades y por color.
-<br>**Escenario 5: Serigrafía desde 501 unidades**</br>
-Dado que ingreso 501 unidades o más.
-Cuando selecciono uno o más colores.
-Entonces el sistema debe aplicar S/30 por lote de 100 unidades y por color.
-<br>**Escenario 6: Cantidad con remanente**</br>
-Dado que ingreso 150 unidades y selecciono un color. 
-Entonces el sistema debe considerar dos lotes: 100 y 50 unidades, aplicando el costo de serigrafía a ambos lotes.
-<br>**Escenario 7: Cantidad de colores inválida**</br>
-Dado que activo la serigrafía.
-Cuando ingreso una cantidad de colores menor o igual a cero.
-Entonces el sistema debe mostrar un mensaje de validación.
-<br>**Escenario 8: Exceso de colores**</br>
-Dado que activo la serigrafía.
-Cuando ingreso más de 10 colores.
-Entonces el sistema debe rechazar la cantidad e informar el límite permitido.
-<br>**Reglas de negocio**</br>
-- La serigrafía es opcional.
-- Solo puede aplicarse desde 20 unidades.
-- Los lotes se calcularán mediante la fórmula: Lotes = REDONDEAR HACIA ARRIBA(cantidad / 100)
-- El costo se calculará mediante: Costo de serigrafía = lotes × colores × tarifa
-- De 20 a 300 unidades, la tarifa será S/45.
-- De 301 a 500 unidades, la tarifa será S/40.
-- Desde 501 unidades, la tarifa será S/30.
-- Un remanente también se considera un lote.
-- La cantidad de colores debe ser un número entero positivo.
-- La cantidad máxima de colores será 10 por línea de producto.
+- La consulta no modifica datos.
+- Solo se muestran datos del negocio autenticado.
+- El umbral de bajo stock es de 15 unidades en esta versión y se determina en backend; el frontend no puede cambiarlo.
 
-<br>**US-013 — Calcular cotización**</br>
-Descripción:
-Como administrador, quiero obtener el subtotal, IGV y total de una cotización con uno o varios productos, para informar correctamente el precio al cliente.
-Criterios de aceptación
-<br>**Escenario 1: Cálculo exitoso**</br>
-Dado que el administrador seleccionó uno o varios productos e ingresó una cantidad válida para cada línea.
-Cuando solicita el cálculo.
-Entonces el sistema debe mostrar el subtotal, IGV y total.
-<br>**Escenario 2: Cálculo con serigrafía**</br>
-Dado que el administrador activó la serigrafía.
-Cuando solicita el cálculo.
-Entonces el sistema debe incluir el recargo correspondiente.
-<br>**Escenario 3: Datos incompletos**</br>
-Dado que no se seleccionó ningún producto o falta la cantidad de una línea.
-Cuando el administrador intenta calcular.
-Entonces el sistema debe solicitar la información faltante.
-<br>**Reglas de negocio**</br>
-- Los importes de productos se calcularán usando el precio minorista o mayorista correspondiente.
-- La serigrafía se agregará al importe de cada línea cuando corresponda.
-- El descuento será opcional.
-- Solo podrá aplicarse un descuento por operación.
-- El descuento podrá ser porcentual o de monto fijo.
-- La cotización podrá contener uno o varios productos y mostrará un único subtotal, IGV y total.
-- Si se aplica un descuento, se mostrará su tipo, valor y monto aplicado; no se mostrará un segundo subtotal.
-- Las cotizaciones no se guardarán.
-- Las cotizaciones no modifican el stock.
+## US-013 — Registrar ingreso o abastecimiento
 
+**Código:** US-013
+**Título:** Aumentar stock
+**Descripción:** Como usuario autorizado, quiero registrar un ingreso o abastecimiento para aumentar el stock de forma trazable.
 
-<br>**US-014 — Registrar venta**</br>
-Descripción:
-Como administrador, quiero registrar una venta, para conservar un control de las operaciones realizadas por el negocio.
-Criterios de aceptación
-<br>**Escenario 1: Registro exitoso**</br>
-Dado que el administrador seleccionó uno o varios productos e ingresó una cantidad válida para cada línea.
-Cuando confirma la venta.
-Entonces el sistema debe registrar la venta y mostrar un mensaje de confirmación.
-<br>**Escenario 2: Datos incompletos**</br>
-Dado que falta seleccionar un producto o ingresar la cantidad de una línea.
-Cuando el administrador intenta confirmar la venta.
-Entonces el sistema debe mostrar los campos pendientes.
-<br>**Escenario 3: Venta cancelada**</br>
-Dado que el administrador está revisando los datos de la venta.
-Cuando cancela la operación.
-Entonces el sistema no debe registrar la venta ni modificar el stock.
-<br>**Escenario 4: Registrar venta con descuento porcentual**</br>
-Dado que ingreso un descuento porcentual válido. 
-Cuando confirmo la venta.
-Entonces el sistema debe calcular el descuento y guardar la venta con sus valores correspondientes.
-<br>**Escenario 5: Registrar venta con descuento fijo**</br>
-Dado que ingreso un descuento fijo válido.
-Cuando confirmo la venta.
-Entonces el sistema debe calcular el descuento y guardar la venta con sus valores correspondientes.
-<br>**Escenario 6: Ingresar dos tipos de descuento**</br>
-Dado que ingreso simultáneamente un descuento porcentual y uno fijo.
-Cuando intento confirmar la venta. 
-Entonces el sistema debe impedirlo y mostrar un mensaje de validación.
-<br>**Reglas de negocio**</br>
-- Solo se deben registrar ventas confirmadas.
-- La venta debe conservar todos sus productos, cantidades, precios, serigrafía, un único subtotal, IGV, total y fecha.
-- Una venta cancelada no debe generar movimientos de stock.
-- El descuento es opcional.
-- Solo se permite un tipo de descuento por venta.
-- La venta debe guardar el tipo, valor y monto real del descuento aplicado.
-- La venta confirmada debe disminuir el stock automáticamente.
+### Criterios de aceptación
 
-<br>**US-015 — Disminuir stock automáticamente por venta**</br>
-Descripción:
-Como administrador, quiero que el stock disminuya automáticamente al confirmar una venta, para evitar modificarlo manualmente.
-Criterios de aceptación
-<br>**Escenario 1: Stock suficiente**</br>
-Dado que el producto tiene stock suficiente.
-Cuando el administrador confirma una venta.
-Entonces el sistema debe registrar la venta y disminuir el stock correspondiente.
-<br>**Escenario 2: Stock insuficiente**</br>
-Dado que la cantidad solicitada supera el stock disponible.
-Cuando el administrador intenta confirmar la venta.
-Entonces el sistema debe rechazar la operación y mostrar un mensaje informativo.
-<br>**Reglas de negocio**</br>
+#### Escenario 1: Ingreso directo
+
+Dado que el producto existe. Cuando confirma una cantidad positiva, entonces se actualiza el stock y se registra un movimiento.
+
+#### Escenario 2: Abastecimiento con proveedor
+
+Dado que el usuario selecciona opcionalmente un proveedor y varios productos. Cuando confirma, entonces se guarda el abastecimiento y sus ingresos de stock en una transacción.
+
+### Reglas de negocio
+
+- La cantidad debe ser positiva y no superar el límite de la API.
+- El proveedor es opcional.
+- Un movimiento confirmado es inmutable.
+
+## US-014 — Ajustar stock
+
+**Código:** US-014
+**Título:** Ajustar stock por motivo
+**Descripción:** Como usuario autorizado, quiero aumentar o disminuir stock por una corrección operativa.
+
+### Criterios de aceptación
+
+#### Escenario 1: Disminución justificada
+
+Dado que existe pérdida, daño o corrección. Cuando confirma una disminución con motivo obligatorio, entonces el backend valida stock suficiente y registra el movimiento.
+
+#### Escenario 2: Aumento por corrección
+
+Dado que se necesita corregir el stock. Cuando confirma un aumento, entonces el sistema registra la razón y actualiza el stock.
+
+#### Escenario 3: Stock insuficiente
+
+Dado que la disminución supera el stock disponible. Cuando confirma, entonces toda la operación es rechazada.
+
+### Reglas de negocio
+
 - El stock nunca puede ser negativo.
-- La venta y la disminución de stock deben realizarse como una operación segura.
-- Si no se puede actualizar el stock, la venta no debe registrarse.
-- La disminución debe generar un movimiento de salida.
+- Los ajustes no sustituyen una venta ni un abastecimiento.
+- El movimiento conserva actor, fecha, delta y motivo.
 
-<br>**US-016 — Consultar historial de ventas**</br>
-Descripción:
-Como administrador, quiero consultar las ventas registradas, para controlar las operaciones realizadas por el negocio.
-Criterios de aceptación
-<br>**Escenario 1: Historial con ventas**</br>
-Dado que existen ventas confirmadas.
-Cuando el administrador accede al historial.
-Entonces el sistema debe mostrar las ventas registradas.
-<br>**Escenario 2: Visualizar detalle**</br>
-Dado que el administrador observa una venta registrada.
-Cuando selecciona la venta.
-Entonces el sistema debe mostrar sus productos, cantidades, precios, serigrafía, subtotal, IGV y total.
-<br>**Escenario 3: Historial vacío**</br>
-Dado que no existen ventas registradas.
-Cuando el administrador accede al historial.
-Entonces el sistema debe mostrar un mensaje informativo.
-<br>**Reglas de negocio**</br>
-- Solo deben mostrarse ventas confirmadas.
-- Las ventas históricas deben conservar sus precios y totales originales.
-- Una modificación posterior del precio del producto no debe alterar ventas anteriores.
-- El historial debe mostrar el descuento aplicado, si existiera.
-- Debe indicar si el descuento fue porcentual o fijo.
-- Debe mostrar un único subtotal final, IGV y total de la venta.
-- Debe conservar los valores utilizados al momento de registrar la venta.
+## US-015 — Consultar movimientos
 
-<br>**US-017 — Configurar IGV y serigrafía**</br>
-Descripción:
-Como administrador, quiero configurar la tasa del IGV y las tarifas de serigrafía para que los cálculos de cotizaciones y ventas se adapten a las reglas comerciales del negocio.
-Criterios de aceptación:
-<br>**Escenario 1: Configurar IGV**</br>
-Dado que accedo a configuración. 
-Cuando ingreso una tasa de IGV válida. 
-Entonces el sistema debe guardar la nueva tasa.
-<br>**Escenario 2: Configurar tarifas de serigrafía**</br>
-Dado que accedo a configuración.
-Cuando registro las tarifas correspondientes.
-Entonces el sistema debe guardar:
-De 20 a 300 unidades: S/45.
-De 301 a 500 unidades: S/40.
-Desde 501 unidades: S/30.
-<br>**Escenario 3: Configurar valores inválidos**</br>
-Dado que ingreso una tasa o tarifa inválida. 
-Cuando intento guardar. 
-Entonces el sistema debe mostrar un mensaje de validación.
-<br>**Reglas de negocio**</br>
-- El IGV tendrá inicialmente un valor de 18 %.
-- La serigrafía tendrá un mínimo de 20 unidades.
-- Las tarifas se aplicarán por lote de 100 unidades y por color.
-- El administrador podrá modificar las tarifas.
-- La configuración será utilizada tanto por cotizaciones como por ventas.
+**Código:** US-015
+**Título:** Consultar historial de inventario
+**Descripción:** Como usuario autorizado, quiero consultar movimientos para conocer la trazabilidad del stock.
 
-<br>**US-018 — Configurar apariencia de la aplicación**</br>
-Descripción:
-Como administrador, quiero configurar el tema visual y el tamaño de fuente, para utilizar la aplicación de forma cómoda y accesible.
-Criterios de aceptación
-<br>**Escenario 1: Cambiar tema**</br>
-Dado que el administrador se encuentra en configuración.
-Cuando selecciona el tema claro u oscuro.
-Entonces la interfaz debe actualizarse visualmente.
-<br>**Escenario 2: Cambiar tamaño de fuente**</br>
-Dado que el administrador selecciona un tamaño de fuente.
-Cuando confirma la preferencia.
-Entonces la aplicación debe utilizar el tamaño seleccionado.
-<br>**Escenario 3: Mantener preferencias**</br>
-Dado que el administrador configuró sus preferencias.
-Cuando cierra y vuelve a abrir la aplicación.
-Entonces el sistema debe conservarlas.
-<br>**Reglas de negocio**</br>
-- Las preferencias corresponden únicamente a la cuenta del negocio.
-- El cambio de apariencia no debe afectar los datos ni las operaciones del negocio.
+### Criterios de aceptación
 
-<br>**US-019 — Consultar resumen del negocio**</br>
-Descripción:
-Como administrador, quiero visualizar un resumen del negocio, para conocer rápidamente el estado del inventario y las ventas.
-Criterios de aceptación
-<br>**Escenario 1: Dashboard con información**</br>
-Dado que existen productos, movimientos o ventas registradas.
-Cuando el administrador accede al Dashboard.
-Entonces el sistema debe mostrar los principales indicadores del negocio.
-<br>**Escenario 2: Dashboard sin información**</br>
-Dado que aún no existen productos ni ventas.
-Cuando el administrador accede al Dashboard.
-Entonces el sistema debe mostrar un estado vacío con indicaciones para comenzar.
-<br>**Reglas de negocio**</br>
-- El Dashboard debe mostrar información actualizada.
-- Los indicadores deben pertenecer únicamente a la cuenta del negocio.
-- El Dashboard no debe modificar información.
-- Un producto se considerará con bajo stock cuando su stock actual sea menor o igual a 15 unidades.
+#### Escenario 1: Historial
 
-<br>**US-020 — Registrar categoría**</br>
-Descripción:
-Como administrador, quiero registrar una categoría, para organizar los productos del negocio.
-Criterios de aceptación
-<br>**Escenario 1: Registro exitoso**</br>
-Dado que el administrador se encuentra en el formulario de categorías.
-Cuando ingresa un nombre válido y confirma el registro.
-Entonces el sistema debe guardar la categoría.
-<br>**Escenario 2: Categoría duplicada**</br>
-Dado que ya existe una categoría con el mismo nombre.
-Cuando el administrador intenta registrarla nuevamente.
-Entonces el sistema debe mostrar un mensaje de error y no duplicarla.
-<br>**Reglas de negocio**</br>
-- El nombre de la categoría es obligatorio.
-- No pueden existir categorías duplicadas dentro del mismo negocio.
-- La comparación del nombre ignorará espacios externos y diferencias entre mayúsculas y minúsculas.
-- La categoría debe pertenecer a la cuenta del negocio.
+Dado que existen movimientos. Cuando consulta el historial, entonces observa producto, tipo, cantidad, stock anterior, stock resultante, actor, fecha y motivo cuando corresponda.
 
-<br>**US-021 — Registrar material**</br>
-Descripción:
-Como administrador, quiero registrar un material, para asociarlo a los productos y facilitar su búsqueda y organización.
-Criterios de aceptación
-<br>**Escenario 1: Registro exitoso**</br>
-Dado que el administrador se encuentra en el formulario de materiales.
-Cuando ingresa un nombre válido y confirma el registro.
-Entonces el sistema debe guardar el material.
-<br>**Escenario 2: Material duplicado**</br>
-Dado que ya existe un material con el mismo nombre.
-Cuando el administrador intenta registrarlo nuevamente.
-Entonces el sistema debe mostrar un mensaje de error y no duplicarlo.
-<br>**Reglas de negocio**</br>
-- El nombre del material es obligatorio.
-- No pueden existir materiales duplicados dentro del mismo negocio.
-- La comparación del nombre ignorará espacios externos y diferencias entre mayúsculas y minúsculas.
-- El material debe pertenecer a la cuenta del negocio.
+#### Escenario 2: Paginación
 
-<br>**US-022 — Ajustar stock**</br>
-Descripción:
-Como administrador, quiero ajustar el stock por pérdida, daño o corrección, para mantener actualizado el inventario real del negocio.
-Criterios de aceptación
-<br>**Escenario 1: Ajuste exitoso**</br>
-Dado que el producto existe.
-Cuando el administrador selecciona el tipo de ajuste, ingresa una cantidad y registra el motivo.
-Entonces el sistema debe actualizar el stock y guardar el movimiento.
-<br>**Escenario 2: Stock insuficiente**</br>
-Dado que el ajuste disminuye el stock por debajo de cero.
-Cuando el administrador intenta confirmarlo.
-Entonces el sistema debe rechazar la operación.
-<br>**Escenario 3: Motivo incompleto**</br>
-Dado que el administrador no selecciona un motivo.
-Cuando intenta confirmar el ajuste.
-Entonces el sistema debe solicitar la información faltante.
-<br>**Reglas de negocio**</br>
-- Los motivos permitidos serán pérdida, daño y corrección.
-- La pérdida y el daño disminuirán el stock.
-- La corrección podrá aumentar o disminuir el stock.
-- La cantidad de ajuste no podrá superar 1 000 000 unidades por operación.
-- Todo ajuste debe registrar producto, cantidad, motivo, fecha, stock anterior y stock posterior.
-- El stock nunca puede ser negativo.
+Dado que existen muchos movimientos. Cuando consulta una página, entonces recibe únicamente la cantidad solicitada y metadatos de paginación.
 
-<br>**US-023 — Aplicar descuento**</br>
-Descripción:
-Como administrador, quiero aplicar un descuento opcional a una cotización o venta para ofrecer condiciones comerciales especiales a un cliente.
-Criterios de aceptación:
-<br>**Escenario 1: Operación sin descuento**</br>
-Dado que no ingreso ningún descuento.
-Cuando calculo una cotización o venta.
-Entonces el sistema debe mantener el importe original.
-<br>**Escenario 2: Descuento porcentual**</br>
-Dado que selecciono el tipo porcentual.
-Cuando ingreso un porcentaje válido.
-Entonces el sistema debe calcular y mostrar el monto descontado.
-<br>**Escenario 3: Descuento fijo**</br>
-Dado que selecciono el tipo fijo.
-Cuando ingreso un monto válido.
-Entonces el sistema debe calcular y mostrar el descuento aplicado.
-<br>**Escenario 4: Descuento superior al importe**</br>
-Dado que ingreso un descuento fijo mayor al importe de la operación.
-Cuando intento continuar. 
-Entonces el sistema debe impedirlo.
-<br>**Escenario 5: Dos descuentos simultáneos**</br>
-Dado que ingreso un descuento porcentual y uno fijo.
-Cuando intento continuar.
-Entonces el sistema debe impedirlo.
-<br>**Reglas de negocio**</br>
-- El descuento es opcional.
-- Solo se permite un descuento por operación.
-- El descuento puede ser porcentual o fijo.
-- El porcentaje debe estar entre 0 % y 100 %.
-- El descuento fijo no puede ser negativo ni superar el importe permitido.
-- Las cotizaciones no guardan el descuento.
-- Las ventas deben guardar el tipo, valor y monto del descuento.
-- La operación debe mostrar un único subtotal después de aplicar el descuento, cuando corresponda.
+### Reglas de negocio
 
-<br>**US-024 — Solicitar recuperación de contraseña**</br>
-Descripción:
-Como administrador, quiero solicitar la recuperación de mi contraseña mediante mi correo electrónico, para volver a acceder a la cuenta de mi negocio si olvidé mis credenciales.
-Criterios de aceptación
-<br>**Escenario 1: Correo registrado**</br>
-Dado que el administrador se encuentra en el formulario de recuperación de contraseña.
-Cuando ingresa un correo electrónico registrado y solicita la recuperación.
-Entonces el sistema debe mostrar un mensaje genérico e iniciar el envío de un enlace de recuperación.
-<br>**Escenario 2: Correo no registrado**</br>
-Dado que el administrador ingresa un correo electrónico que no pertenece a una cuenta registrada.
-Cuando solicita la recuperación.
-Entonces el sistema debe mostrar el mismo mensaje genérico y no debe revelar si el correo existe.
-<br>**Escenario 3: Correo inválido o incompleto**</br>
-Dado que el administrador ingresa un correo vacío o con formato inválido.
-Cuando intenta solicitar la recuperación.
-Entonces el sistema debe mostrar un mensaje de validación y no debe iniciar el proceso.
-<br>**Escenario 4: Solicitudes excesivas**</br>
-Dado que se realizan varias solicitudes de recuperación en un periodo corto.
-Cuando el administrador intenta solicitar otra recuperación.
-Entonces el sistema debe limitar temporalmente la operación y mostrar un mensaje genérico.
-<br>**Reglas de negocio**</br>
-- El sistema no debe revelar si un correo está registrado.
-- El enlace de recuperación debe enviarse únicamente por correo electrónico.
-- El token debe ser aleatorio, de un solo uso y tener una expiración limitada.
-- El token no debe almacenarse en texto plano ni registrarse en logs.
-- El enlace debe utilizar HTTPS.
-- El sistema debe limitar las solicitudes repetitivas.
-- El correo no debe contener la contraseña actual.
-- Una nueva solicitud podrá invalidar tokens anteriores.
+- Los movimientos no se eliminan ni editan desde operaciones normales.
+- Las ventas canceladas generan movimientos de reversión, no modificaciones al movimiento original.
 
-<br>**US-025 — Restablecer contraseña**</br>
-Descripción:
-Como administrador, quiero establecer una nueva contraseña utilizando un enlace válido de recuperación, para recuperar el acceso seguro a la cuenta de mi negocio.
-Criterios de aceptación
-<br>**Escenario 1: Restablecimiento exitoso**</br>
-Dado que el administrador posee un enlace de recuperación válido y vigente.
-Cuando ingresa una nueva contraseña válida y la confirma correctamente.
-Entonces el sistema debe actualizar la contraseña, invalidar el token y mostrar un mensaje de confirmación.
-<br>**Escenario 2: Token inválido o expirado**</br>
-Dado que el enlace de recuperación es inválido, fue utilizado o expiró.
-Cuando el administrador intenta establecer una nueva contraseña.
-Entonces el sistema debe rechazar la operación y solicitar una nueva recuperación.
-<br>**Escenario 3: Contraseña no válida**</br>
-Dado que el administrador ingresa una contraseña que no cumple los requisitos de seguridad.
-Cuando intenta confirmar el cambio.
-Entonces el sistema debe mostrar los requisitos incumplidos y no actualizar la contraseña.
-<br>**Escenario 4: Contraseñas diferentes**</br>
-Dado que el administrador ingresa dos contraseñas diferentes.
-Cuando intenta confirmar el restablecimiento.
-Entonces el sistema debe mostrar un mensaje de validación y no actualizar la contraseña.
-<br>**Escenario 5: Uso repetido del token**</br>
-Dado que el token ya fue utilizado correctamente.
-Cuando el administrador intenta utilizarlo nuevamente.
-Entonces el sistema debe rechazar la operación.
-<br>**Reglas de negocio**</br>
-- El token solo podrá utilizarse una vez.
-- El token debe expirar después de un periodo definido.
-- La nueva contraseña debe almacenarse mediante un hash seguro.
-- La contraseña nunca debe enviarse en respuestas de la API ni registrarse en logs.
-- Después de restablecer la contraseña, las sesiones activas anteriores deben revocarse.
-- El administrador deberá iniciar sesión nuevamente después de restablecer la contraseña.
-- El sistema no debe mostrar información técnica del token.
+## US-016 — Gestionar proveedores
 
-<br>**US-026 — Registrar una operación con múltiples productos**</br>
-Descripción:
-Como administrador, quiero agregar varios productos a una cotización o venta, para calcular o registrar una operación completa solicitada por el cliente.
-Criterios de aceptación
-<br>**Escenario 1: Agregar varios productos**</br>
-Dado que el administrador se encuentra en el formulario de cotización o venta.
-Cuando selecciona varios productos activos e ingresa una cantidad para cada uno.
-Entonces el sistema debe mostrar cada producto como una línea independiente de la operación.
-<br>**Escenario 2: Aplicar precios por producto**</br>
-Dado que la operación contiene varios productos.
-Cuando se calcula la operación.
-Entonces el sistema debe aplicar el precio minorista o mayorista según la cantidad de cada producto.
-<br>**Escenario 3: Cotización con múltiples productos**</br>
-Dado que el administrador agregó varios productos a una cotización.
-Cuando solicita el cálculo.
-Entonces el sistema debe mostrar un único subtotal, el descuento aplicado, el IGV y el total de toda la operación sin modificar el stock ni guardar la cotización.
-<br>**Escenario 4: Venta con stock suficiente**</br>
-Dado que todos los productos tienen stock suficiente.
-Cuando el administrador confirma la venta.
-Entonces el sistema debe guardar la venta, registrar sus detalles y disminuir el stock de todos los productos correspondientes.
-<br>**Escenario 5: Stock insuficiente en un producto**</br>
-Dado que uno de los productos no tiene stock suficiente.
-Cuando el administrador intenta confirmar la venta.
-Entonces el sistema debe rechazar toda la operación y no modificar ningún producto ni registrar parcialmente la venta.
-<br>**Escenario 6: Producto inactivo**</br>
-Dado que uno de los productos seleccionados está desactivado.
-Cuando el administrador intenta continuar con la cotización o venta.
-Entonces el sistema debe impedir su selección o solicitar que sea reemplazado por un producto activo.
-<br>**Escenario 7: Cancelar operación**</br>
-Dado que el administrador agregó varios productos.
-Cuando cancela la cotización o venta antes de confirmarla.
-Entonces el sistema no debe guardar la operación ni modificar el stock.
-<br>**Reglas de negocio**</br>
-- Una operación debe contener al menos un producto.
-- Una operación podrá contener como máximo 20 productos diferentes.
-- Cada producto debe aparecer una sola vez dentro de la operación.
-- Cada línea debe tener una cantidad entera mayor que cero.
-- La cantidad máxima será de 1 000 000 unidades por línea.
-- El precio minorista o mayorista se determinará por la cantidad de cada línea.
-- La serigrafía se calculará por cada línea de producto y no se mezclarán cantidades de productos diferentes.
-- Solo se podrán seleccionar productos activos.
-- Una cotización no se guardará ni modificará el stock.
-- Una venta confirmada guardará todos sus detalles.
-- La venta y todos sus movimientos de inventario deben ejecutarse dentro de una única transacción.
-- Si un producto no tiene stock suficiente, toda la venta debe rechazarse.
-- El descuento será único para toda la operación.
-- El descuento se aplicará antes del IGV.
-- La operación mostrará un único subtotal, calculado después de aplicar el descuento.
-- El backend debe recalcular todos los importes y no confiar en los valores enviados por el frontend.
+**Código:** US-016
+**Título:** Crear y administrar proveedores
+**Descripción:** Como usuario autorizado, quiero registrar proveedores para asociarlos opcionalmente a abastecimientos.
+
+### Criterios de aceptación
+
+#### Escenario 1: Crear proveedor
+
+Dado que los datos son válidos. Cuando confirma, entonces el proveedor queda disponible para el negocio.
+
+#### Escenario 2: Desactivar proveedor
+
+Dado que el proveedor tiene historial. Cuando se desactiva, entonces no aparece para nuevos abastecimientos, pero su historial permanece.
+
+### Reglas de negocio
+
+- El proveedor pertenece a un solo negocio.
+- La información de contacto debe ser mínima y protegida.
+- Desactivar un proveedor no elimina abastecimientos históricos.
+
+## US-017 — Consultar abastecimientos
+
+**Código:** US-017
+**Título:** Consultar abastecimientos
+**Descripción:** Como usuario autorizado, quiero consultar abastecimientos para controlar los ingresos de mercadería y proveedores.
+
+### Criterios de aceptación
+
+#### Escenario 1: Consulta
+
+Dado que existen abastecimientos. Cuando el usuario autorizado filtra por período o proveedor, entonces recibe los registros correspondientes.
+
+#### Escenario 2: Detalle
+
+Dado que existe un abastecimiento. Cuando lo selecciona, entonces observa sus productos, cantidades, proveedor opcional y fecha.
+
+### Reglas de negocio
+
+- Los usuarios autorizados pueden consultar abastecimientos operativos; los reportes administrativos agregados quedan restringidos a `ADMIN`.
+- Los abastecimientos confirmados no se eliminan físicamente.
+
+## US-018 — Calcular vista previa de operación
+
+**Código:** US-018
+**Título:** Calcular operación comercial
+**Descripción:** Como usuario autorizado, quiero ingresar uno o varios productos y obtener una vista previa para informar el importe al cliente.
+
+### Criterios de aceptación
+
+#### Escenario 1: Varios productos
+
+Dado que agrego productos activos. Cuando solicito calcular, entonces el backend devuelve líneas, un único subtotal, descuento, IGV y total.
+
+#### Escenario 2: Datos modificados
+
+Dado que existe un resultado mostrado. Cuando cambio una entrada, entonces el resultado se marca como desactualizado y debo calcular nuevamente.
+
+#### Escenario 3: Operación inválida
+
+Dado que existen líneas repetidas, cantidades inválidas o productos inactivos. Cuando calculo, entonces el backend rechaza la vista previa.
+
+### Reglas de negocio
+
+- La vista previa no se guarda ni modifica stock.
+- El backend obtiene precios y reglas vigentes.
+- Una operación admite como máximo 20 productos diferentes.
+
+## US-019 — Aplicar costos adicionales y descuentos
+
+**Código:** US-019
+**Título:** Aplicar condiciones comerciales opcionales
+**Descripción:** Como usuario autorizado, quiero aplicar costos adicionales y un descuento para representar las condiciones acordadas con el cliente.
+
+### Criterios de aceptación
+
+#### Escenario 1: Costo adicional
+
+Dado que existe un costo activo aplicable. Cuando lo selecciono y calculo, entonces el backend aplica su regla según alcance, cantidad y multiplicador.
+
+#### Escenario 2: Descuento porcentual
+
+Dado que ingreso un porcentaje válido. Cuando calculo, entonces el descuento se aplica antes del IGV y se muestra su tipo, valor y monto.
+
+#### Escenario 3: Descuento fijo
+
+Dado que ingreso un importe fijo válido. Cuando calculo, entonces el descuento se aplica antes del IGV sin crear un segundo subtotal.
+
+### Reglas de negocio
+
+- Solo puede existir un tipo de descuento por operación.
+- El descuento no puede generar un subtotal negativo.
+- Los costos adicionales se obtienen de la configuración del negocio.
+- La serigrafía se modela como un costo adicional con rangos, lotes y colores.
+
+## US-020 — Confirmar venta
+
+**Código:** US-020
+**Título:** Registrar venta desde la operación
+**Descripción:** Como usuario autorizado, quiero confirmar una operación calculada para registrar una venta y actualizar el inventario.
+
+### Criterios de aceptación
+
+#### Escenario 1: Venta válida
+
+Dado que la operación fue calculada. Cuando confirmo la venta, entonces el backend recalcula, guarda venta y detalles, registra movimientos de salida y devuelve la confirmación.
+
+#### Escenario 2: Stock insuficiente
+
+Dado que el stock cambió desde el cálculo. Cuando confirmo, entonces el backend rechaza toda la operación sin guardar una venta parcial.
+
+#### Escenario 3: Reintento
+
+Dado que una solicitud se repite con la misma clave de idempotencia y contenido. Cuando llega al backend, entonces devuelve el resultado original sin duplicar la venta.
+
+### Reglas de negocio
+
+- La persistencia, cálculo definitivo y descuento de stock forman una única transacción.
+- El frontend no puede enviar valores definitivos de confianza.
+- La venta guarda una instantánea de los valores aplicados.
+
+## US-021 — Consultar ventas
+
+**Código:** US-021
+**Título:** Consultar historial y detalle de ventas
+**Descripción:** Como usuario autorizado, quiero consultar ventas confirmadas y canceladas para controlar las operaciones del negocio.
+
+### Criterios de aceptación
+
+#### Escenario 1: Historial
+
+Dado que existen ventas. Cuando consulto el historial, entonces recibo paginación, estado, fecha, descripción, importe y usuario que registró la operación.
+
+#### Escenario 2: Detalle
+
+Dado que selecciono una venta. Cuando consulto el detalle, entonces observo productos, cantidades, costos adicionales, descuentos, subtotal, IGV y total históricos.
+
+### Reglas de negocio
+
+- Los precios y reglas actuales no modifican ventas históricas.
+- La información se limita al negocio de la sesión.
+
+## US-022 — Cancelar venta
+
+**Código:** US-022
+**Título:** Cancelar una venta confirmada
+**Descripción:** Como administrador, quiero cancelar una venta indicando el motivo para corregir una operación y restituir el stock cuando corresponda.
+
+### Criterios de aceptación
+
+#### Escenario 1: Cancelación válida
+
+Dado que la venta está confirmada. Cuando el administrador ingresa un motivo y confirma, entonces la venta cambia a cancelada y se registra la reversión de inventario.
+
+#### Escenario 2: Venta ya cancelada
+
+Dado que la venta ya está cancelada. Cuando se intenta cancelarla nuevamente, entonces el backend rechaza la operación sin duplicar stock.
+
+### Reglas de negocio
+
+- Solo `ADMIN` puede cancelar ventas en el primer release.
+- La venta original no se elimina.
+- La reversión se registra como un nuevo movimiento, con actor, fecha y motivo.
+
+## US-023 — Consultar dashboard
+
+**Código:** US-023
+**Título:** Visualizar resumen del negocio
+**Descripción:** Como administrador, quiero consultar indicadores y gráficos para conocer el estado del negocio.
+
+### Criterios de aceptación
+
+#### Escenario 1: Período
+
+Dado que el administrador selecciona hoy, últimos siete días, último mes, todo el período o un rango válido. Cuando actualiza el dashboard, entonces los indicadores respetan el período.
+
+#### Escenario 2: Resumen
+
+Entonces el dashboard muestra ventas, cantidad de operaciones, productos activos, productos agotados, productos con bajo stock, movimientos recientes y gráficos útiles.
+
+#### Escenario 3: Usuario no administrador
+
+Dado que un operador consulta el dashboard. Cuando solicita los datos, entonces el backend rechaza el acceso.
+
+### Reglas de negocio
+
+- El dashboard muestra resúmenes y enlaces; no debe cargar todos los registros.
+- Unidades vendidas globales no son un indicador obligatorio de la primera versión.
+
+## US-024 — Generar reportes
+
+**Código:** US-024
+**Título:** Generar reportes operativos
+**Descripción:** Como administrador, quiero generar reportes filtrados para analizar ventas, inventario, productos y abastecimientos.
+
+### Criterios de aceptación
+
+#### Escenario 1: Reporte válido
+
+Dado que selecciono un tipo y período válido. Cuando genero el reporte, entonces el sistema muestra resultados del negocio autenticado.
+
+#### Escenario 2: Exportación
+
+Dado que existe un reporte. Cuando solicito exportarlo, entonces el sistema entrega un archivo CSV o una respuesta estructurada sin exponer datos de otros negocios.
+
+### Reglas de negocio
+
+- Solo `ADMIN` puede generar reportes administrativos.
+- El período y zona horaria deben quedar registrados en la solicitud de reporte.
+- Los reportes iniciales no reemplazan contabilidad ni facturación electrónica.
+
+## US-025 — Ver actualizaciones de otros usuarios
+
+**Código:** US-025
+**Título:** Sincronizar cambios del negocio
+**Descripción:** Como usuario autorizado, quiero ver reflejados los cambios relevantes realizados por otro usuario del mismo negocio.
+
+### Criterios de aceptación
+
+#### Escenario 1: Cambio confirmado
+
+Dado que un usuario confirma una venta, abastecimiento o ajuste. Cuando otro usuario tiene abierta la aplicación, entonces recibe una señal de actualización o puede refrescar los datos sin consultar otro negocio.
+
+#### Escenario 2: Notificación no disponible
+
+Dado que el canal de tiempo real falla. Cuando existe un cambio confirmado, entonces los datos permanecen guardados y el frontend puede reconciliarse mediante una nueva consulta.
+
+### Reglas de negocio
+
+- PostgreSQL es la fuente de verdad.
+- Las notificaciones se publican después del commit.
+- No se confirma una operación únicamente porque se envió una notificación.
+
+## US-026 — Auditar operaciones
+
+**Código:** US-026
+**Título:** Consultar trazabilidad administrativa
+**Descripción:** Como administrador, quiero consultar eventos relevantes para conocer quién realizó cambios importantes.
+
+### Criterios de aceptación
+
+#### Escenario 1: Evento registrado
+
+Dado que se confirma, cancela o modifica una operación administrativa. Cuando finaliza correctamente, entonces se registra actor, tenant, acción, entidad, fecha, resultado y trace ID.
+
+#### Escenario 2: Datos sensibles
+
+Dado que existe información sensible en una solicitud. Cuando se registra auditoría, entonces los secretos, contraseñas y tokens son excluidos o anonimizados.
+
+### Reglas de negocio
+
+- Los eventos de auditoría no se eliminan desde la aplicación.
+- Solo `ADMIN` puede consultar auditoría visible.
+
+## US-027 — Gestionar apariencia
+
+**Código:** US-027
+**Título:** Configurar tema y tamaño de fuente
+**Descripción:** Como usuario autenticado, quiero configurar mi tema y tamaño de fuente para utilizar Agilora cómodamente.
+
+### Criterios de aceptación
+
+#### Escenario 1: Tema
+
+Dado que el usuario cambia el switch de tema. Cuando confirma, entonces la preferencia se persiste para ese usuario y se aplica en su interfaz.
+
+#### Escenario 2: Tamaño de fuente
+
+Dado que selecciona un tamaño permitido. Cuando confirma, entonces la aplicación aplica y conserva la preferencia.
+
+### Reglas de negocio
+
+- La preferencia visual pertenece al usuario y no modifica datos del negocio.
+- La caché local solo puede conservar preferencias no sensibles.
+
+## US-028 — Mantener historial de datos
+
+**Código:** US-028
+**Título:** Conservar información confirmada
+**Descripción:** Como responsable del negocio, quiero que cada operación confirmada quede almacenada para conservar trazabilidad y control.
+
+### Criterios de aceptación
+
+#### Escenario 1: Persistencia confirmada
+
+Dado que una operación cambia el estado del negocio. Cuando el backend confirma el commit, entonces quedan almacenados sus datos, actor, fecha y efectos relacionados.
+
+#### Escenario 2: Falla de persistencia
+
+Dado que ocurre una falla antes del commit. Cuando el backend responde, entonces informa error y no muestra la operación como confirmada.
+
+### Reglas de negocio
+
+- Las consultas de lectura no crean operaciones de negocio.
+- Las vistas previas no se almacenan.
+- Las ventas, cancelaciones, abastecimientos, ingresos, ajustes, usuarios y configuraciones confirmadas sí se almacenan.

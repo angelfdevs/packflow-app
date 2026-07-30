@@ -1,473 +1,286 @@
-<br>**RNF-001 — Seguridad de contraseñas**</br>
-Descripción:
-El sistema debe proteger las contraseñas de la cuenta administradora.
-Criterios de aceptación
-<br>**Escenario 1: Almacenamiento seguro**</br>
-Dado que el administrador registra o cambia su contraseña.
-Cuando el sistema guarda la información.
-Entonces la contraseña no debe almacenarse en texto plano.
-<br>**Escenario 2: Protección de la contraseña**</br>
-Dado que existe una contraseña registrada.
-Cuando se consulta la información de la cuenta.
-Entonces la contraseña no debe mostrarse.
-<br>**Restricciones técnicas**</br>
-- Se debe utilizar un algoritmo seguro de hash.
-- El backend debe utilizar `PasswordHasher` de ASP.NET Core Identity y no una implementación criptográfica propia.
-- Las contraseñas no deben almacenarse en logs.
-- La contraseña no debe enviarse en respuestas de la API.
+# Requisitos no funcionales de Agilora
 
-<br>**RNF-002 — Persistencia y protección de la sesión**</br>
-Descripción:
-La sesión del administrador debe permanecer activa mientras utilice la aplicación. Si no existe interacción durante 15 minutos, la sesión debe expirar automáticamente por seguridad. No tendrá expiración absoluta.
-Criterios de aceptación
-<br>**Escenario 1: Sesión persistente**</br>
-Dado que el administrador inició sesión correctamente.
-Cuando continúa utilizando la aplicación.
-Entonces la sesión debe permanecer activa mientras exista interacción y no debe cerrarse automáticamente durante el uso normal.
-<br>**Escenario 2: Sesión activa durante una operación**</br>
-Dado que el administrador está completando una venta.
-Cuando transcurren 15 minutos sin interacción.
-Entonces el sistema debe expirar la sesión por seguridad, sin perder la información ingresada en el formulario. La sesión también podrá finalizar por cierre de sesión, revocación de seguridad o indisponibilidad del proveedor.
-<br>**Escenario 3: Sesión persistente durante una cotización o venta**</br>
-Dado que el administrador está completando una cotización o venta.
-Cuando transcurren 15 minutos sin interacción.
-Entonces el sistema debe expirar la sesión por seguridad, sin perder la información ingresada en el formulario. La sesión también podrá finalizar por cierre de sesión, revocación de seguridad o indisponibilidad del proveedor.
-<br>**Escenario 4: Revocación por seguridad**</br>
-Dado que la cuenta fue desactivada, la contraseña fue modificada o se detectó una situación de seguridad.
-Cuando el sistema intenta validar la sesión.
-Entonces puede invalidar la sesión y solicitar un nuevo inicio de sesión.
-<br>**Restricciones técnicas**</br>
-- La sesión debe expirar automáticamente después de 15 minutos sin interacción.
-- La actividad normal del administrador debe reiniciar el contador de inactividad.
-- No debe existir un botón “Mantener sesión activa” ni un heartbeat automático para evitar la expiración.
-- Para efectos del contador del servidor, se considerará interacción una solicitud autenticada procesada por el backend, como consultar información o guardar una operación.
-- Los eventos locales del navegador, como escribir en un formulario o mover el cursor sin realizar una solicitud, no reiniciarán el contador de inactividad.
-- El frontend podrá mostrar un aviso informativo antes de la expiración, pero no podrá extender la sesión sin actividad del administrador.
-- El backend debe validar la expiración utilizando la última actividad registrada en la sesión; no debe depender únicamente del reloj del frontend.
-- La sesión debe renovarse de forma segura sin interrumpir al usuario.
-- El access token debe permanecer únicamente en memoria del frontend.
-- El refresh token debe almacenarse en una cookie `HttpOnly`, `Secure` y `SameSite=None`.
-- Cuando el frontend y el backend utilicen orígenes distintos, el frontend debe obtener el token CSRF mediante el endpoint público `GET /api/v1/auth/csrf`, conservarlo únicamente en memoria y enviarlo como `X-CSRF-TOKEN`. No debe depender de leer la cookie `XSRF-TOKEN` desde `document.cookie`.
-- El refresh token debe rotarse después de cada renovación.
-- Si se detecta la reutilización de un refresh token ya rotado, el sistema debe revocar la familia de tokens de la sesión y exigir un nuevo inicio de sesión.
-- Cada refresh token debe estar asociado a una sesión mediante `session_id`, que identificará la familia de tokens. El `session_id` no sustituye al secreto del refresh token.
-- Cada refresh token emitido debe conservarse en una tabla histórica mediante un hash único, junto con sus fechas de emisión, uso, revocación y eventual reemplazo. La tabla de sesiones representa la familia de tokens, no un único token.
-- La sesión tendrá una expiración por inactividad de 15 minutos y no tendrá expiración absoluta. El refresh token se rotará y podrá revocarse por cierre de sesión, cambio de contraseña, recuperación de contraseña, desactivación de cuenta o una situación de seguridad.
-- El access token tendrá una duración objetivo de 15 minutos.
-- El token de recuperación de contraseña tendrá una duración de 30 minutos y será de un solo uso.
-- Después de cerrar sesión, la sesión anterior no debe permitir acceder a módulos protegidos.
-- La sesión podrá revocarse por cambio de contraseña, recuperación de contraseña, desactivación de cuenta o una situación de seguridad.
-- La información de formularios importantes debe conservarse temporalmente ante una interrupción de red o expiración de sesión.
-- El sistema debe limitar temporalmente los intentos fallidos consecutivos de inicio de sesión.
+Estos requisitos describen cómo debe comportarse Agilora en aspectos como seguridad, rendimiento, disponibilidad, mantenimiento y calidad. Las reglas de negocio concretas se encuentran en `functional-requirements.md`.
 
-<br>**RNF-003 — Separación de información por negocio**</br>
-Descripción:
-La información de cada negocio debe permanecer aislada de cualquier otra cuenta.
-Criterios de aceptación
-<br>**Escenario 1: Consulta de información propia**</br>
-Dado que el administrador inició sesión.
-Cuando consulta productos, ventas o movimientos.
-Entonces el sistema debe mostrar únicamente información de su negocio.
-<br>**Escenario 2: Acceso a información externa**</br>
-Dado que una cuenta intenta acceder a un recurso de otro negocio.
-Cuando realiza la solicitud.
-Entonces el sistema debe rechazarla.
-<br>**Restricciones técnicas**</br>
-- Cada cuenta administradora debe representar a un negocio.
-- Los productos, ventas, movimientos y configuraciones deben asociarse a una cuenta.
-- El backend debe verificar la propiedad de cada recurso.
-- Nunca se debe confiar únicamente en el identificador enviado por el frontend.
+## RNF-001 — Seguridad de contraseñas
 
-<br>**RNF-004 — Protección de secretos**</br>
-Descripción:
-Las credenciales, claves y configuraciones sensibles deben protegerse durante el desarrollo y el despliegue.
-Criterios de aceptación
-<br>**Escenario 1: Ejecución en producción**</br>
-Dado que la aplicación se encuentra desplegada.
-Cuando el backend se conecta a la base de datos.
-Entonces debe utilizar variables de entorno o un gestor de secretos.
-<br>**Escenario 2: Repositorio**</br>
-Dado que el código fuente se encuentra almacenado en Git.
-Cuando se revisan los archivos versionados.
-Entonces no deben existir contraseñas ni claves reales.
-<br>**Restricciones técnicas**</br>
-- Los archivos .env no deben subirse al repositorio.
-- Debe existir un archivo de ejemplo sin valores reales.
-- La aplicación debe utilizar HTTPS en producción.
-- Los secretos no deben almacenarse en logs.
+### Descripción
 
-<br>**RNF-005 — Validación de datos**</br>
-Descripción:
-La aplicación debe validar toda la información ingresada por el administrador.
-Criterios de aceptación
-<br>**Escenario 1: Datos inválidos**</br>
-Dado que el administrador ingresa datos fuera del formato permitido.
-Cuando intenta guardar la información.
-Entonces el sistema debe mostrar un mensaje de validación y rechazar la operación.
-<br>**Escenario 2: Datos incompletos**</br>
-Dado que existen campos obligatorios vacíos.
-Cuando el administrador intenta confirmar la operación.
-Entonces el sistema debe indicar los campos pendientes.
-<br>**Restricciones técnicas**</br>
-- La validación debe realizarse en frontend y backend.
-- Las consultas a la base de datos deben utilizar parámetros seguros.
-- Los errores internos no deben mostrarse al usuario.
-- Los precios, cantidades, medidas y porcentajes deben validar sus rangos permitidos.
-- Cada operación podrá contener como máximo 20 productos diferentes.
-- Cada línea podrá contener como máximo 1 000 000 unidades y 10 colores de serigrafía.
-- Cada dimensión del producto tendrá un máximo de 1 000 cm.
-- El cuerpo máximo de una solicitud será de 256 KB.
-- `pageSize` tendrá un máximo de 100 registros y un valor predeterminado de 20.
+Agilora debe proteger las contraseñas de todos sus usuarios.
 
-<br>**RNF-006 — Integridad del inventario**</br>
-Descripción:
-Las operaciones de ingreso, venta y ajuste deben mantener el stock consistente.
-Criterios de aceptación
-<br>**Escenario 1: Venta con stock suficiente**</br>
-Dado que el producto tiene stock suficiente.
-Cuando el administrador confirma una venta.
-Entonces el sistema debe registrar la venta y disminuir el stock correctamente.
-<br>**Escenario 2: Venta con stock insuficiente**</br>
-Dado que la cantidad solicitada supera el stock disponible.
-Cuando el administrador intenta confirmar la venta.
-Entonces el sistema debe rechazar la operación y no modificar el stock.
-<br>**Restricciones técnicas**</br>
-- La venta, el movimiento de salida y la disminución del stock deben ejecutarse como una sola operación.
-- El sistema nunca debe permitir stock negativo.
-- El backend debe verificar el stock al confirmar la venta.
-- Una misma solicitud de venta no debe registrarse dos veces si se reenvía accidentalmente.
-- Las operaciones de inventario deben ejecutarse mediante transacciones.
-- Para los indicadores del Dashboard, un producto se considerará con bajo stock cuando su stock actual sea menor o igual a 15 unidades.
+### Criterios de aceptación
 
-<br>**RNF-007 — Precisión y consistencia de cálculos monetarios**</br>
-Descripción:
-Los cálculos de precios, serigrafía, el único subtotal de la operación, IGV y total deben ser exactos y consistentes.
-Criterios de aceptación
-<br>**Escenario 1: Cálculo consistente**</br>
-Dado que el administrador selecciona un producto y una cantidad.
-Cuando realiza una cotización o venta.
-Entonces el frontend y el backend deben obtener el mismo resultado.
-<br>**Escenario 2: Redondeo**</br>
-Dado que el sistema calcula importes monetarios.
-Cuando muestra los resultados.
-Entonces debe utilizar dos decimales.
-<br>**Restricciones técnicas**</br>
-- De 1 a 100 unidades se debe aplicar el precio minorista.
-- Desde 101 unidades se debe aplicar el precio mayorista.
-- La serigrafía solo debe habilitarse desde 20 unidades.
-- Los lotes deben calcularse mediante ceil(cantidad / 100).
-- La tarifa de serigrafía debe seleccionarse según la cantidad de cada línea de producto: 20–300: S/45, 301–500: S/40, 501 en adelante: S/30.
-- El costo de serigrafía debe calcularse por lote y por color.
-- El descuento debe validarse antes de calcular el resultado final.
-- Solo puede existir un tipo de descuento por operación.
-- El resultado debe exponer un único subtotal después de aplicar el descuento, cuando corresponda.
-- Cuando exista descuento, debe informar su tipo, valor y monto aplicado sin crear otro subtotal.
-- El frontend y backend deben utilizar la misma fórmula.
-- Los importes deben manejarse con precisión decimal y redondearse a dos decimales.
+- Las contraseñas no se almacenan ni se muestran en texto plano.
+- El cambio y la recuperación de contraseña requieren validaciones de seguridad.
+- Las contraseñas se procesan con el mecanismo estándar seguro de ASP.NET Core.
+- Los logs, respuestas y errores no contienen contraseñas.
 
-<br>**RNF-008 — Trazabilidad de operaciones**</br>
-Descripción:
-El sistema debe conservar información suficiente sobre las operaciones que modifican el inventario y las ventas realizadas.
-Criterios de aceptación
-<br>**Escenario 1: Movimiento registrado**</br>
-Dado que se registra un ingreso, venta o ajuste.
-Cuando la operación finaliza correctamente.
-Entonces el sistema debe guardar producto, cantidad, tipo, fecha y motivo cuando corresponda.
-<br>**Escenario 2: Consulta histórica**</br>
-Dado que existen movimientos registrados.
-Cuando el administrador consulta el historial.
-Entonces debe visualizar la información de cada movimiento.
-<br>**Restricciones técnicas**</br>
-- Los movimientos y ventas confirmadas no deben eliminarse físicamente.
-- Los registros históricos no deben modificarse desde operaciones comunes.
-- Los productos desactivados deben conservar sus relaciones históricas.
-- Los ajustes deben conservar el motivo registrado.
+## RNF-002 — Sesiones seguras
 
-<br>**RNF-009 — Rendimiento**</br>
-Descripción:
-Las operaciones frecuentes deben responder rápidamente durante el uso normal de la aplicación.
-Criterios de aceptación
-<br>**Escenario 1: Búsqueda de productos**</br>
-Dado que existen productos registrados.
-Cuando el administrador realiza una búsqueda.
-Entonces los resultados deberían mostrarse en aproximadamente dos segundos bajo condiciones normales.
-<br>**Escenario 2: Cálculo de operación**</br>
-Dado que el administrador completa los datos de una cotización o venta.
-Cuando solicita el cálculo.
-Entonces el subtotal, el IGV, el total, el descuento y el costo de serigrafía deben mostrarse en un máximo aproximado de dos segundos bajo condiciones normales de operación.
-<br>**Restricciones técnicas**</br>
-- Las consultas deben estar optimizadas.
-- Las búsquedas deben utilizar filtros adecuados.
-- No deben cargarse datos innecesarios en cada pantalla.
-- Las listas extensas deben utilizar paginación o carga progresiva cuando sea necesario.
-- Las búsquedas, cálculos de cotizaciones y registros de ventas deben responder en un máximo aproximado de dos segundos bajo condiciones normales.
-- El tiempo de respuesta debe medirse considerando frontend, backend y base de datos.
-- El tiempo de respuesta no debe considerar periodos de mantenimiento programado, interrupciones de servicios externos o fallas de infraestructura.
+### Descripción
 
-<br>**RNF-010 — Manejo de errores**</br>
-Descripción:
-La aplicación debe informar claramente cuando una operación no puede completarse.
-Criterios de aceptación
-<br>**Escenario 1: Error controlado**</br>
-Dado que ocurre un error durante una operación.
-Cuando el sistema procesa la solicitud.
-Entonces debe mostrar un mensaje comprensible para el administrador.
-<br>**Escenario 2: Error interno**</br>
-Dado que ocurre una falla interna del servidor.
-Cuando el sistema responde al usuario.
-Entonces no debe mostrar detalles técnicos sensibles.
-<br>**Restricciones técnicas**</br>
-- Los errores deben registrarse internamente.
-- Las respuestas de error deben utilizar códigos HTTP adecuados.
-- La aplicación no debe mostrar trazas técnicas al usuario.
-- Los errores de una operación no deben dejar datos parcialmente guardados.
+La sesión debe permanecer disponible mientras el usuario utilice la aplicación y debe cerrarse después de 15 minutos sin solicitudes autenticadas procesadas por el backend.
 
-<br>**RNF-011 — Copias de seguridad y recuperación**</br>
-Descripción:
-La información de productos, inventario, ventas y configuraciones debe contar con mecanismos de respaldo.
-Criterios de aceptación
-<br>**Escenario 1: Copia de seguridad**</br>
-Dado que la aplicación se encuentra en producción.
-Cuando llega el periodo configurado para el respaldo.
-Entonces el sistema debe generar una copia de seguridad válida.
-<br>**Escenario 2: Restauración**</br>
-Dado que ocurre una pérdida o corrupción de datos.
-Cuando se ejecuta el procedimiento de recuperación.
-Entonces la información debe poder restaurarse desde una copia válida.
-<br>**Restricciones técnicas**</br>
-- Las copias deben realizarse como mínimo diariamente.
-- Los respaldos deben conservarse durante al menos siete días.
-- Debe utilizarse recuperación punto en el tiempo cuando el plan contratado lo permita.
-- Debe existir un respaldo lógico independiente con retención mínima de siete días.
-- Debe existir un procedimiento documentado y probado de restauración.
-- El RTO objetivo será de una hora.
-- El RPO objetivo será de 15 minutos.
+### Criterios de aceptación
 
-<br>**RNF-012 — Diseño responsive**</br>
-Descripción:
-La aplicación debe poder utilizarse correctamente desde computadoras, tablets y teléfonos.
-Criterios de aceptación
-<br>**Escenario 1: Pantalla grande**</br>
-Dado que el administrador utiliza una computadora.
-Cuando accede a cualquier módulo.
-Entonces la interfaz debe mostrar correctamente sus elementos.
-<br>**Escenario 2: Pantalla pequeña**</br>
-Dado que el administrador utiliza un teléfono o tablet.
-Cuando accede a cualquier módulo.
-Entonces la interfaz debe adaptarse sin perder funcionalidad.
-<br>**Restricciones técnicas**</br>
-- La interfaz debe utilizar diseño responsive.
-- Los botones y formularios deben ser utilizables en pantallas táctiles.
-- Las tablas deben adaptarse o permitir desplazamiento horizontal.
-- Las acciones principales deben permanecer disponibles en pantallas pequeñas.
+- La sesión no tiene expiración absoluta durante el alcance actual.
+- El usuario puede cerrar sesión voluntariamente.
+- El backend controla la expiración mediante la última actividad registrada.
+- No existe un botón “Mantener sesión activa” ni un heartbeat automático.
+- El refresh token se rota y puede revocarse.
+- Si la sesión expira mientras se completa una operación, el formulario puede conservarse temporalmente en memoria hasta la reautenticación.
 
-<br>**RNF-013 — Accesibilidad y preferencias visuales**</br>
-Descripción:
-La aplicación debe facilitar una interacción cómoda y accesible para el administrador.
-Criterios de aceptación
-<br>**Escenario 1: Tema visual**</br>
-Dado que el administrador selecciona el tema claro u oscuro.
-Cuando confirma la preferencia.
-Entonces la interfaz debe actualizarse correctamente.
-<br>**Escenario 2: Tamaño de fuente**</br>
-Dado que el administrador modifica el tamaño de fuente.
-Cuando guarda la preferencia.
-Entonces la aplicación debe conservarla.
-<br>**Restricciones técnicas**</br>
-- Los controles principales deben tener etiquetas claras.
-- La interfaz debe mantener contraste suficiente.
-- Los errores no deben comunicarse únicamente mediante colores.
-- Los elementos principales deben poder utilizarse mediante teclado.
-- Las preferencias visuales no deben modificar los datos del negocio.
+## RNF-003 — Aislamiento entre negocios
 
-<br>**RNF-014 — Mantenibilidad**</br>
-Descripción:
-El código debe organizarse de manera que pueda mantenerse, probarse y ampliarse.
-Criterios de aceptación
-<br>**Escenario 1: Separación de responsabilidades**</br>
-Dado que se agrega una nueva funcionalidad.
-Cuando se implementa en el sistema.
-Entonces debe ubicarse en el módulo y capa correspondiente.
-<br>**Escenario 2: Modificación de un módulo**</br>
-Dado que se modifica un módulo.
-Cuando se ejecuta la aplicación.
-Entonces los demás módulos no deben verse afectados innecesariamente.
-<br>**Restricciones técnicas**</br>
-- El backend debe organizarse mediante capas o módulos.
-- Las reglas de negocio deben estar en el backend.
-- Las migraciones deben mantenerse versionadas.
-- Las decisiones técnicas importantes deben documentarse.
-- Debe evitarse duplicar reglas de cálculo entre frontend y backend.
-- Las operaciones de actualización deben utilizar control de concurrencia mediante `If-Match` y ETags.
-- Los recursos mutables utilizarán una versión entera para generar ETags deterministas.
-- Las operaciones persistentes de negocio que puedan repetirse por reintentos de red deben utilizar `Idempotency-Key` para evitar duplicados. Las operaciones `PUT` y `PATCH` combinarán esta clave con `If-Match` y ETags. Los endpoints de autenticación utilizarán sus propios controles de un solo uso, rotación y revocación.
-- Los límites de solicitudes deben aplicarse por cuenta e IP y mantenerse consistentes entre instancias mediante un almacén distribuido o protección perimetral.
+### Descripción
 
-<br>**RNF-015 — Pruebas**</br>
-Descripción:
-Las reglas críticas de PackFlow deben verificarse mediante pruebas automatizadas y manuales.
-Criterios de aceptación
-<br>**Escenario 1: Pruebas de precios minoristas y mayoristas**</br>
-Dado que existen productos con precio minorista y mayorista.
-Cuando se prueban cantidades de 1, 100 y 101 unidades.
-Entonces el sistema debe aplicar correctamente el precio minorista de 1 a 100 unidades y el precio mayorista desde 101 unidades.
-<br>**Escenario 2: Pruebas del límite mínimo de serigrafía**</br>
-Dado que la serigrafía requiere una cantidad mínima.
-Cuando se prueban cantidades de 19 y 20 unidades.
-Entonces la serigrafía debe estar deshabilitada para 19 unidades y habilitada para 20 unidades.
-<br>**Escenario 3: Pruebas de tarifas de serigrafía**</br>
-Dado que existen diferentes rangos de tarifas.
-Cuando se prueban cantidades de 300, 301, 500 y 501 unidades.
-Entonces el sistema debe aplicar S/45, S/40, S/40 y S/30 respectivamente por lote y color.
-<br>**Escenario 4: Pruebas de cálculo por lotes**</br>
-Dado que la serigrafía se calcula por lotes de 100 unidades.
-Cuando se prueban cantidades de 100, 150 y 200 unidades.
-Entonces el sistema debe considerar 1, 2 y 2 lotes respectivamente.
-<br>**Escenario 5: Pruebas de colores de serigrafía**</br>
-Dado que la serigrafía puede tener uno o más colores.
-Cuando se seleccionan uno, dos o tres colores.
-Entonces el sistema debe multiplicar la tarifa por la cantidad de colores seleccionados.
-<br>**Escenario 6: Pruebas de descuentos**</br>
-Dado que una cotización o venta puede tener un descuento.
-Cuando se aplica un descuento porcentual o fijo válido.
-Entonces el sistema debe calcular correctamente el importe descontado.
-<br>**Escenario 7: Pruebas de descuentos incompatibles**</br>
-Dado que solo se permite un tipo de descuento.
-Cuando se ingresan simultáneamente un descuento porcentual y uno fijo.
-Entonces el sistema debe rechazar la operación.
-<br>**Escenario 8: Pruebas de inventario**</br>
-Dado que existen ingresos, ventas y ajustes manuales.
-Cuando se ejecutan las operaciones.
-Entonces el stock debe actualizarse correctamente y nunca ser negativo.
-<br>**Escenario 9: Prueba de cotización**</br>
-Dado que el administrador genera una cotización.
-Cuando se calcula el resultado.
-Entonces el sistema debe mostrar el subtotal, IGV, total, descuento y serigrafía sin guardar la cotización ni modificar el stock.
-<br>**Escenario 10: Prueba de venta**</br>
-Dado que el administrador registra una venta.
-Cuando confirma la operación.
-Entonces la venta debe guardarse y el stock debe disminuir correctamente.
-<br>**Restricciones técnicas**</br>
-- Las reglas de precios, descuentos, IGV, serigrafía e inventario deben contar con pruebas unitarias.
-- Los flujos de cotización y venta deben contar con pruebas de integración.
-- Las historias de usuario deben verificarse mediante sus criterios de aceptación.
-- Deben probarse los límites de cada regla de negocio.
-- Deben probarse los escenarios exitosos y los escenarios de error.
-- Las pruebas deben ejecutarse antes de cada despliegue a producción.
-- Las pruebas del frontend y backend deben utilizar resultados consistentes.
-- Deben realizarse pruebas para evitar que una venta genere stock negativo.
-- Deben probarse solicitudes repetidas con la misma clave de idempotencia.
-- Deben probarse conflictos de concurrencia mediante `If-Match` y ETags.
-- Deben probarse aislamiento entre cuentas de negocio.
-- Deben probarse cantidades de 19, 20, 100, 101, 150, 200, 300, 301, 500 y 501 unidades.
-- Deben probarse los límites de 20 productos por operación, 21 productos, 10 colores, 11 colores, 1 000 cm y 1 000.01 cm.
-- Debe probarse la clasificación de stock bajo con valores de 14, 15 y 16 unidades.
+Los datos de un negocio nunca deben quedar disponibles para otro negocio.
 
-<br>**RNF-016 — Documentación técnica**</br>
-Descripción:
-El sistema debe contar con documentación suficiente para facilitar su desarrollo, despliegue y mantenimiento.
-Criterios de aceptación
-<br>**Escenario 1: Documentación de la API**</br>
-Dado que existe una funcionalidad disponible en el backend.
-Cuando se consulta la documentación técnica.
-Entonces debe encontrarse su endpoint, parámetros y respuestas.
-<br>**Escenario 2: Ejecución del proyecto**</br>
-Dado que un desarrollador obtiene el código fuente.
-Cuando sigue la documentación del proyecto.
-Entonces debe poder ejecutar la aplicación localmente.
-<br>**Restricciones técnicas**</br>
-- La API debe documentarse mediante OpenAPI/Swagger.
-- Las variables de entorno deben documentarse.
-- El proceso de despliegue debe documentarse.
-- La documentación debe mantenerse junto con el código.
-- Las instrucciones deben mantenerse actualizadas.
+### Criterios de aceptación
 
-<br>**RNF-017 — Configuración regional**</br>
-Descripción:
-La aplicación debe utilizar formatos adecuados para el contexto del negocio.
-Criterios de aceptación
-<br>**Escenario 1: Valores monetarios**</br>
-Dado que el sistema muestra precios o totales.
-Cuando el administrador consulta la información.
-Entonces los importes deben mostrarse en soles peruanos.
-<br>**Escenario 2: Fechas y horarios**</br>
-Dado que el sistema registra una venta o movimiento.
-Cuando muestra la fecha y hora.
-Entonces debe utilizar la zona horaria fija `America/Lima`.
-<br>**Restricciones técnicas**</br>
-- La moneda principal será el sol peruano.
-- La interfaz utilizará el idioma español.
-- Las fechas utilizarán la zona horaria `America/Lima`.
+- Toda solicitud protegida se relaciona con el tenant de la sesión.
+- El backend no confía en un `businessId` enviado por el frontend.
+- Una consulta o modificación con un identificador de otro negocio es rechazada.
+- Las claves foráneas y restricciones de PostgreSQL impiden referencias cruzadas.
+- Existen pruebas contra acceso directo, IDOR y filtración de datos entre tenants.
 
-<br>**RNF-018 — Monitoreo y registros**</br>
-Descripción:
-El sistema debe permitir detectar errores y revisar el estado de la aplicación en producción.
-Criterios de aceptación
-<br>**Escenario 1: Estado completo de la aplicación**</br>
-Dado que PackFlow se encuentra desplegado.
-Cuando el monitor externo verifica la aplicación.
-Entonces debe comprobar que el frontend sea accesible, que el backend responda y que la base de datos se encuentre disponible.
-<br>**Escenario 2: Error de aplicación**</br>
-Dado que ocurre un error inesperado.
-Cuando el sistema procesa la operación.
-Entonces debe registrar información suficiente para investigarlo sin incluir datos sensibles.
-<br>**Escenario 3: Detección de indisponibilidad**</br>
-Dado que uno de los componentes esenciales de PackFlow deja de responder.
-Cuando el monitor externo realiza una comprobación.
-Entonces el sistema debe registrar la incidencia y generar una alerta.
-<br>**Restricciones técnicas**</br>
-- El backend debe contar con un endpoint de health check.
-- El health check debe comprobar la conexión con la base de datos.
-- Deben existir los endpoints `/health/live` y `/health/ready`.
-- El frontend debe ser verificable mediante una solicitud externa.
-- Debe existir un monitor externo que compruebe periódicamente el frontend y backend.
-- Los logs deben incluir fecha, nivel, operación y contexto del error.
-- Los logs no deben incluir contraseñas, tokens ni secretos.
-- Deben existir mecanismos para consultar errores y eventos de producción.
-- La aplicación debe considerarse parcialmente no disponible si el frontend, backend o base de datos no responde.
-- El sistema debe generar alertas ante fallas críticas.
-- La medición de disponibilidad debe realizarse mediante un servicio externo.
-- Los despliegues deben utilizar health checks y apagado controlado.
+## RNF-004 — Autorización por rol
 
-<br>**RNF-019 — Privacidad de la información**</br>
-Descripción:
-La información real del negocio debe mantenerse privada y no debe exponerse en el código fuente, repositorios públicos, logs ni demostraciones.
-Criterios de aceptación
-<br>**Escenario 1: Datos de producción**</br>
-Dado que existen productos, ventas y movimientos reales.
-Cuando se publica documentación o código del proyecto.
-Entonces no deben incluirse datos reales del negocio.
-<br>**Escenario 2: Demostración pública**</br>
-Dado que se crea una versión pública para el portafolio.
-Cuando se configura la demostración.
-Entonces debe utilizar datos ficticios y credenciales de demostración.
-<br>**Restricciones técnicas**</br>
-- No se deben almacenar datos reales en el repositorio público.
-- Los logs no deben contener información sensible.
-- La base de datos de demostración debe estar separada de producción.
-- Las credenciales reales nunca deben compartirse.
-- Los secretos deben eliminarse inmediatamente si son expuestos accidentalmente.
+### Descripción
 
-<br>**RNF-020 — Disponibilidad de la aplicación**</br>
-Descripción:
-PackFlow tendrá como objetivo operativo una disponibilidad mensual del 99.9 % en el perfil de despliegue de alta disponibilidad, sujeta al proveedor de despliegue, el plan contratado, el SLA, el monitoreo y las pruebas de recuperación.
-Criterios de aceptación
-<br>**Escenario 1: Aplicación disponible**</br>
-Dado que el administrador intenta acceder a PackFlow.
-Cuando el frontend, backend y base de datos están operativos.
-Entonces la aplicación debe permitir el acceso y uso de sus funciones principales.
-<br>**Escenario 2: Interrupción del servicio**</br>
-Dado que ocurre una interrupción en la aplicación.
-Cuando el sistema de monitoreo detecta la falla.
-Entonces debe registrar el incidente y notificarlo para iniciar su recuperación.
-<br>**Restricciones técnicas**</br>
-- La aplicación tendrá como objetivo operativo una disponibilidad mensual del 99.9 % en el perfil de despliegue de alta disponibilidad, sujeta al proveedor de despliegue, el plan contratado, el SLA, el monitoreo y las pruebas de recuperación.
-- La medición debe considerar el funcionamiento completo del frontend, backend y base de datos.
-- La aplicación no debe considerarse disponible si el frontend carga, pero la API o la base de datos no responden.
-- Los despliegues deben minimizar la interrupción del servicio.
-- El perfil de despliegue de alta disponibilidad debe utilizar como mínimo dos instancias stateless del backend.
-- El perfil de despliegue de alta disponibilidad debe utilizar PostgreSQL con alta disponibilidad y respaldos administrados en el plan contratado.
-- El perfil inicial podrá utilizar una instancia stateless y una base de datos administrada sin nodo standby; durante esta etapa no se garantizará formalmente el 99.9 %.
-- El monitoreo debe comprobar frontend, backend y base de datos.
-- La aplicación debe considerarse no disponible si cualquiera de sus componentes esenciales no responde.
-- La medición debe realizarse mediante un monitor externo.
+Las funciones administrativas y operativas deben estar separadas mediante autorización en el backend.
+
+### Criterios de aceptación
+
+- `ADMIN` puede utilizar las funciones administrativas y operativas.
+- `OPERATOR` puede realizar las tareas operativas permitidas.
+- `OPERATOR` no puede gestionar usuarios, configuración administrativa, dashboard ni reportes administrativos.
+- Ocultar un botón en el frontend no reemplaza la comprobación del backend.
+- Un usuario bloqueado no puede seguir utilizando sesiones anteriores.
+
+## RNF-005 — Validación de entradas
+
+### Descripción
+
+El sistema debe validar la información recibida antes de procesarla o persistirla.
+
+### Criterios de aceptación
+
+- Se validan campos obligatorios, formatos, longitudes y rangos.
+- Se rechazan cantidades, importes, descuentos y atributos incompatibles.
+- Se limita el tamaño de solicitudes y búsquedas.
+- El backend repite todas las validaciones importantes aunque el frontend ya las haya realizado.
+- Las consultas utilizan parámetros seguros y no concatenan SQL recibido del usuario.
+
+## RNF-006 — Persistencia e integridad de operaciones
+
+### Descripción
+
+Toda operación confirmada que cambie el estado del negocio debe quedar guardada de forma completa y consistente.
+
+### Criterios de aceptación
+
+- La venta, abastecimiento, ingreso, ajuste, cancelación, cambio de usuario o configuración se guarda dentro de una transacción cuando corresponde.
+- La respuesta exitosa se envía después del `commit`.
+- Si falla la persistencia, el sistema no muestra la operación como confirmada.
+- No se guardan ventas o movimientos parcialmente.
+- Las cotizaciones preliminares no se guardan ni modifican stock.
+
+## RNF-007 — Integridad del inventario
+
+### Descripción
+
+El stock debe mantenerse correcto aunque existan reintentos o usuarios operando al mismo tiempo.
+
+### Criterios de aceptación
+
+- El stock nunca queda por debajo de cero.
+- La venta y su salida de inventario se confirman juntas.
+- Una cancelación genera una reversión, no modifica el movimiento original.
+- Las operaciones utilizan transacciones y control de concurrencia.
+- Se prueban ventas simultáneas del mismo producto.
+
+## RNF-008 — Cálculos monetarios confiables
+
+### Descripción
+
+Los importes mostrados al usuario deben provenir del cálculo del backend y conservar precisión decimal.
+
+### Criterios de aceptación
+
+- El frontend no es la autoridad para precios, costos adicionales, descuentos, IGV ni totales.
+- El backend recalcula la vista previa y la venta.
+- El descuento se aplica antes del IGV.
+- Se muestra un solo subtotal, además del descuento aplicado, IGV y total.
+- Los importes se almacenan con precisión decimal y se muestran con dos decimales.
+- Se prueban límites, redondeos y combinaciones de costos.
+
+## RNF-009 — Idempotencia y concurrencia
+
+### Descripción
+
+Una solicitud repetida o una edición basada en datos antiguos no debe duplicar operaciones ni sobrescribir cambios sin aviso.
+
+### Criterios de aceptación
+
+- Las operaciones persistentes usan `Idempotency-Key`.
+- Repetir la misma clave con el mismo contenido devuelve el resultado original.
+- Reutilizar la clave con otro contenido genera conflicto.
+- Las actualizaciones utilizan `If-Match` y ETags.
+- Las solicitudes concurrentes se rechazan o resuelven de forma explícita.
+
+## RNF-010 — Rendimiento
+
+### Descripción
+
+Agilora debe responder con rapidez durante el uso normal de varios negocios.
+
+### Criterios de aceptación
+
+- Las búsquedas, vistas previas y consultas frecuentes deben medirse con percentiles, no solo con un promedio.
+- Como objetivo inicial, el P95 de las operaciones frecuentes será de hasta dos segundos bajo una carga previamente definida.
+- Las listas usarán paginación y filtros.
+- Los reportes grandes no deben bloquear las solicitudes normales.
+- Se medirá el rendimiento considerando frontend, backend y base de datos.
+
+## RNF-011 — Manejo de errores
+
+### Descripción
+
+Los errores deben ser claros para el usuario y útiles para el equipo sin revelar información interna.
+
+### Criterios de aceptación
+
+- La API utiliza `ProblemDetails` y códigos HTTP adecuados.
+- La interfaz muestra mensajes comprensibles en español.
+- No se muestran SQL, stack traces, rutas internas ni secretos.
+- Un error no deja datos guardados a medias.
+- Los errores incluyen un `traceId` para poder investigarlos.
+
+## RNF-012 — Auditoría y trazabilidad
+
+### Descripción
+
+Agilora debe conservar quién hizo cambios importantes y qué resultado tuvo cada operación.
+
+### Criterios de aceptación
+
+- Se registran actor, negocio, acción, entidad, fecha, resultado y `traceId`.
+- Se registran ventas, cancelaciones, ingresos, ajustes, abastecimientos, cambios de configuración y cambios de acceso.
+- Los movimientos y eventos de auditoría no se editan desde la aplicación.
+- No se registran contraseñas, tokens ni secretos.
+
+## RNF-013 — Copias de seguridad y recuperación
+
+### Descripción
+
+La información de los negocios debe poder recuperarse después de una falla.
+
+### Criterios de aceptación
+
+- Se realizan respaldos administrados y respaldos lógicos independientes.
+- Se conserva como mínimo una política de retención definida para producción.
+- Existe recuperación punto en el tiempo cuando el plan lo permite.
+- La restauración se prueba periódicamente.
+- El RTO objetivo inicial es de una hora y el RPO objetivo es de 15 minutos, sujetos al proveedor y al plan contratado.
+
+## RNF-014 — Disponibilidad
+
+### Descripción
+
+Agilora debe estar disponible tanto como sea posible, considerando frontend, backend, base de datos y servicios esenciales.
+
+### Criterios de aceptación
+
+- El perfil inicial se considera `best effort` y no garantiza formalmente 99.9 %.
+- El objetivo de 99.9 % mensual solo aplica al perfil de alta disponibilidad con redundancia y monitoreo probado.
+- La aplicación no se considera disponible si carga el frontend pero no funciona la API o la base de datos.
+- Los despliegues utilizan health checks, apagado controlado y rollback.
+- Se registra el tiempo real de disponibilidad mediante monitoreo externo.
+
+## RNF-015 — Monitoreo y registros
+
+### Descripción
+
+El equipo debe poder detectar fallas y revisar qué ocurrió en producción.
+
+### Criterios de aceptación
+
+- Existen `/health/live` y `/health/ready`.
+- El endpoint de readiness comprueba las dependencias necesarias.
+- Un monitor externo verifica frontend y backend.
+- Los logs estructurados incluyen fecha, nivel, operación y contexto.
+- Existen alertas ante errores críticos, saturación o indisponibilidad.
+- Los logs no contienen datos sensibles.
+
+## RNF-016 — Accesibilidad y experiencia de uso
+
+### Descripción
+
+La interfaz debe poder utilizarse cómodamente desde computadoras, tablets y teléfonos.
+
+### Criterios de aceptación
+
+- Las funciones principales funcionan en pantallas pequeñas.
+- Los botones y formularios son utilizables con teclado y pantalla táctil.
+- Los controles tienen etiquetas claras.
+- Los errores no dependen únicamente del color.
+- El contraste, foco visible y navegación por teclado se prueban antes del release.
+
+## RNF-017 — Mantenibilidad
+
+### Descripción
+
+El código y la documentación deben permitir que Agilora crezca sin convertirse en un sistema difícil de modificar.
+
+### Criterios de aceptación
+
+- Cada bounded context mantiene responsabilidades claras.
+- Las reglas de negocio no se duplican innecesariamente entre frontend y backend.
+- Las migraciones y decisiones técnicas están versionadas.
+- La API, ERD, diagramas y requisitos se actualizan junto con cambios relevantes.
+- Las dependencias se mantienen en versiones soportadas por los proveedores.
+
+## RNF-018 — Pruebas y calidad
+
+### Descripción
+
+Las reglas críticas deben validarse automáticamente antes de entregar un incremento.
+
+### Criterios de aceptación
+
+- Existen pruebas unitarias para precios, descuentos, costos adicionales, IGV, stock e idempotencia.
+- Existen pruebas de integración con PostgreSQL.
+- Existen pruebas de contrato contra OpenAPI.
+- Existen pruebas E2E para login, roles, catálogo, inventario, venta y cancelación.
+- Se prueban errores, límites, tenants y concurrencia.
+- Lint, formato, build y pruebas se ejecutan en CI antes de desplegar.
+
+## RNF-019 — Privacidad y protección de información
+
+### Descripción
+
+Agilora debe tratar los datos de los negocios y de sus usuarios con el menor alcance necesario.
+
+### Criterios de aceptación
+
+- No se utilizan datos reales en repositorios, fixtures ni demostraciones públicas.
+- El sistema informa finalidades, conservación, proveedores y derechos de los titulares.
+- Los datos de una descripción de venta se limitan a lo necesario.
+- Existe un procedimiento para atender solicitudes de acceso, rectificación, cancelación y oposición.
+- La política de privacidad y el acuerdo SaaS se revisan legalmente antes del lanzamiento comercial.
+
+## RNF-020 — Despliegue seguro
+
+### Descripción
+
+Los ambientes y despliegues deben reducir el riesgo de exponer información o publicar cambios incompletos.
+
+### Criterios de aceptación
+
+- Development, QA, staging y production usan configuraciones y datos separados.
+- Los secretos se administran fuera del repositorio.
+- Las imágenes Docker y dependencias se escanean en CI.
+- Las migraciones se ejecutan de forma controlada.
+- Swagger queda protegido o deshabilitado públicamente en producción.
+- Solo se publica una versión que superó los controles definidos en la Definition of Done.

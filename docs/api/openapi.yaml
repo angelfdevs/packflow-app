@@ -1,125 +1,96 @@
 openapi: 3.1.0
 info:
-  title: PackFlow API
-  version: 1.0.0
-  description: Contrato HTTP de PackFlow.
+  title: Agilora API
+  version: 2.0.0
+  description: Contrato HTTP de la plataforma SaaS Agilora.
   license:
-    name: Uso privado de PackFlow
-    url: https://github.com/angelfdevs/packflow-app
+    name: Uso autorizado de Agilora
 servers:
-  - url: https://api.packflow.example/api/v1
+  - url: https://api.agilora.example/api/v1
 security:
   - bearerAuth: []
 tags:
   - name: Authentication
-    description: Autenticación, sesiones y recuperación de contraseña.
+    description: Inicio, cierre, renovación y recuperación de sesiones.
   - name: Account
-    description: Cuenta y configuración del negocio.
+    description: Datos del negocio y preferencias personales del usuario.
+  - name: Settings
+    description: IGV y reglas comerciales del negocio.
+  - name: Users
+    description: Membresías, invitaciones y estados de usuarios.
   - name: Catalog
-    description: Categorías, materiales y productos.
+    description: Grupos, atributos, productos, precios y costos adicionales.
   - name: Inventory
-    description: Stock, ingresos, ajustes y movimientos.
-  - name: Quotes
-    description: Simulaciones temporales de cotizaciones.
-  - name: Sales
-    description: Ventas confirmadas.
+    description: Stock, movimientos, ajustes e ingresos.
+  - name: Supply
+    description: Proveedores y abastecimientos.
+  - name: Commercial Operations
+    description: Vistas previas, ventas y cancelaciones.
   - name: Dashboard
-    description: Resumen operativo del negocio.
+    description: Indicadores resumidos del negocio.
+  - name: Reports
+    description: Reportes y auditoría administrativa.
   - name: Health
-    description: Estado del servicio y dependencias.
+    description: Estado del proceso y sus dependencias.
 paths:
   /auth/login:
     post:
-      summary: POST /auth/login
-      operationId: postauthLogin1
       tags: [Authentication]
       security: []
+      summary: Iniciar sesión
+      operationId: login
       requestBody:
         required: true
         content:
           application/json:
             schema: { $ref: '#/components/schemas/LoginRequest' }
       responses:
-        '200':
-          description: Sesión iniciada. El servidor establece las cookies pf_refresh y XSRF-TOKEN.
-          headers:
-            Set-Cookie:
-              description: Cookies HttpOnly de refresh y token CSRF no sensible.
-              schema: { type: string }
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/LoginResponse' }
-        '400': { $ref: '#/components/responses/BadRequest' }
+        '200': { description: Sesión iniciada, content: { application/json: { schema: { $ref: '#/components/schemas/LoginResponse' } } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
   /auth/csrf:
     get:
-      summary: GET /auth/csrf
-      operationId: getauthCsrf2
       tags: [Authentication]
       security: []
-      description: Genera o recupera un token CSRF no sensible para que el frontend lo envíe en el encabezado X-CSRF-TOKEN. El token solo se conserva en memoria del frontend y la cookie XSRF-TOKEN no es una credencial.
+      summary: Obtener token CSRF
+      operationId: getCsrf
       responses:
-        '200':
-          description: Token CSRF emitido. El servidor establece o renueva la cookie XSRF-TOKEN.
-          headers:
-            Set-Cookie:
-              description: Cookie XSRF-TOKEN no sensible.
-              schema: { type: string }
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/CsrfTokenResponse' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '200': { description: Token CSRF emitido, content: { application/json: { schema: { $ref: '#/components/schemas/CsrfResponse' } } } }
   /auth/refresh:
     post:
-      summary: POST /auth/refresh
-      operationId: postauthRefresh2
       tags: [Authentication]
-      security:
-        - refreshCookie: []
-          csrfToken: []
-      description: La sesión expira después de 15 minutos sin interacción y no tiene expiración absoluta. El refresh token rota, está asociado a una sesión mediante session_id y puede revocarse.
+      security: [{ refreshCookie: [], csrfToken: [] }]
+      summary: Renovar sesión
+      operationId: refreshSession
+      parameters: [{ $ref: '#/components/parameters/CsrfHeader' }]
       responses:
-        '200':
-          description: Access token renovado. El servidor rota pf_refresh, establece XSRF-TOKEN y devuelve el nuevo token CSRF no sensible.
-          headers:
-            Set-Cookie:
-              description: Cookies rotadas de refresh y token CSRF no sensible.
-              schema: { type: string }
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/AccessTokenResponse' }
+        '200': { description: Access token renovado, content: { application/json: { schema: { $ref: '#/components/schemas/AccessTokenResponse' } } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
   /auth/me:
     get:
-      summary: GET /auth/me
-      operationId: getauthMe3
       tags: [Authentication]
+      summary: Consultar contexto de sesión
+      operationId: getCurrentContext
       responses:
-        '200': { description: Cuenta autenticada, content: { application/json: { schema: { $ref: '#/components/schemas/AccountIdentity' } } } }
+        '200': { description: "Usuario, rol y negocio", content: { application/json: { schema: { $ref: '#/components/schemas/SessionContext' } } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
   /auth/logout:
     post:
-      summary: POST /auth/logout
-      operationId: postauthLogout4
       tags: [Authentication]
-      security:
-        - bearerAuth: []
-          refreshCookie: []
-          csrfToken: []
+      summary: Cerrar sesión
+      operationId: logout
+      security: [{ bearerAuth: [], refreshCookie: [], csrfToken: [] }]
+      parameters: [{ $ref: '#/components/parameters/CsrfHeader' }]
       responses:
         '204': { description: Sesión revocada }
         '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
   /auth/password/change:
     post:
-      summary: POST /auth/password/change
-      operationId: postauthPasswordChange5
       tags: [Authentication]
+      summary: Cambiar contraseña
+      operationId: changePassword
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
       requestBody:
         required: true
         content:
@@ -128,107 +99,171 @@ paths:
       responses:
         '204': { description: Contraseña actualizada y sesiones revocadas }
         '400': { $ref: '#/components/responses/BadRequest' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
   /auth/password/forgot:
     post:
-      summary: POST /auth/password/forgot
-      operationId: postauthPasswordForgot6
       tags: [Authentication]
       security: []
+      summary: Solicitar recuperación de contraseña
+      operationId: requestPasswordRecovery
       requestBody:
         required: true
         content:
           application/json:
             schema: { $ref: '#/components/schemas/PasswordForgotRequest' }
       responses:
-        '202':
-          description: Respuesta genérica para evitar enumeración de cuentas
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/PasswordRecoveryAccepted' }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '202': { description: Respuesta genérica, content: { application/json: { schema: { $ref: '#/components/schemas/MessageResponse' } } } }
   /auth/password/reset:
     post:
-      summary: POST /auth/password/reset
-      operationId: postauthPasswordReset7
       tags: [Authentication]
       security: []
+      summary: Restablecer contraseña
+      operationId: resetPassword
       requestBody:
         required: true
         content:
           application/json:
             schema: { $ref: '#/components/schemas/PasswordResetRequest' }
       responses:
-        '204': { description: Contraseña restablecida y sesiones revocadas }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '204': { description: Contraseña restablecida }
   /account:
     get:
-      summary: GET /account
-      operationId: getaccount8
       tags: [Account]
+      summary: Consultar datos del negocio
+      operationId: getAccount
+      description: Solo ADMIN.
       responses:
-        '200': { description: Datos del negocio, content: { application/json: { schema: { $ref: '#/components/schemas/Account' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '200': { description: Datos del negocio, content: { application/json: { schema: { $ref: '#/components/schemas/BusinessAccount' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
     patch:
-      summary: PATCH /account
-      operationId: patchaccount9
       tags: [Account]
+      summary: Actualizar datos del negocio
+      operationId: updateAccount
+      description: Solo ADMIN. Requiere control optimista de concurrencia.
       parameters:
-        - { $ref: '#/components/parameters/IfMatch' }
         - { $ref: '#/components/parameters/IdempotencyKey' }
+        - { $ref: '#/components/parameters/IfMatch' }
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/AccountPatchRequest' }
+            schema: { $ref: '#/components/schemas/BusinessAccountUpdate' }
       responses:
-        '200': { description: Cuenta actualizada, content: { application/json: { schema: { $ref: '#/components/schemas/Account' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
+        '200': { description: Datos actualizados, content: { application/json: { schema: { $ref: '#/components/schemas/BusinessAccount' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '409': { $ref: '#/components/responses/Conflict' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
   /settings:
     get:
-      summary: GET /settings
-      operationId: getsettings10
-      tags: [Account]
+      tags: [Settings]
+      summary: Consultar configuración del negocio
+      operationId: getSettings
       responses:
-        '200': { description: Configuración, content: { application/json: { schema: { $ref: '#/components/schemas/Settings' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '200': { description: Configuración vigente, content: { application/json: { schema: { $ref: '#/components/schemas/BusinessSettings' } } } }
     patch:
-      summary: PATCH /settings
-      operationId: patchsettings11
-      tags: [Account]
+      tags: [Settings]
+      summary: Actualizar configuración del negocio
+      operationId: updateSettings
+      description: Solo ADMIN. Requiere control optimista de concurrencia.
       parameters:
-        - { $ref: '#/components/parameters/IfMatch' }
         - { $ref: '#/components/parameters/IdempotencyKey' }
+        - { $ref: '#/components/parameters/IfMatch' }
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/SettingsPatchRequest' }
+            schema: { $ref: '#/components/schemas/BusinessSettingsUpdate' }
       responses:
-        '200': { description: Configuración actualizada, content: { application/json: { schema: { $ref: '#/components/schemas/Settings' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
+        '200': { description: Configuración actualizada, content: { application/json: { schema: { $ref: '#/components/schemas/BusinessSettings' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '409': { $ref: '#/components/responses/Conflict' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
-  /categories:
+  /me/preferences:
     get:
-      summary: GET /categories
-      operationId: getcategories12
-      tags: [Catalog]
+      tags: [Account]
+      summary: Consultar preferencias visuales
+      operationId: getUserPreferences
       responses:
-        '200': { description: Categorías, content: { application/json: { schema: { $ref: '#/components/schemas/CategoryPage' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '200': { description: Preferencias del usuario, content: { application/json: { schema: { $ref: '#/components/schemas/UserPreferences' } } } }
+    patch:
+      tags: [Account]
+      summary: Actualizar preferencias visuales
+      operationId: updateUserPreferences
+      parameters: [{ $ref: '#/components/parameters/IfMatch' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserPreferencesUpdate' }
+      responses:
+        '200': { description: Preferencias actualizadas, content: { application/json: { schema: { $ref: '#/components/schemas/UserPreferences' } } } }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /users:
+    get:
+      tags: [Users]
+      summary: Listar miembros del negocio
+      operationId: listUsers
+      description: Solo ADMIN.
+      parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }]
+      responses:
+        '200': { description: Miembros, content: { application/json: { schema: { $ref: '#/components/schemas/UserPage' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /users/invitations:
     post:
-      summary: POST /categories
-      operationId: postcategories13
+      tags: [Users]
+      summary: Invitar operador
+      operationId: inviteOperator
+      description: Solo ADMIN.
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InvitationRequest' }
+      responses:
+        '201': { description: Invitación creada, content: { application/json: { schema: { $ref: '#/components/schemas/Invitation' } } } }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /users/invitations/accept:
+    post:
+      tags: [Users]
+      security: []
+      summary: Aceptar invitación
+      operationId: acceptInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AcceptInvitationRequest' }
+      responses:
+        '204': { description: Membresía activada }
+  /users/{userId}/status:
+    patch:
+      tags: [Users]
+      summary: Bloquear o reactivar usuario
+      operationId: updateUserStatus
+      description: Solo ADMIN.
+      parameters:
+        - { $ref: '#/components/parameters/UserId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserStatusRequest' }
+      responses:
+        '204': { description: Estado actualizado }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /groups:
+    get:
       tags: [Catalog]
+      summary: Listar grupos
+      operationId: listGroups
+      parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }, { $ref: '#/components/parameters/Search' }]
+      responses:
+        '200': { description: Grupos, content: { application/json: { schema: { $ref: '#/components/schemas/GroupPage' } } } }
+    post:
+      tags: [Catalog]
+      summary: Crear grupo
+      operationId: createGroup
       parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
       requestBody:
         required: true
@@ -236,366 +271,388 @@ paths:
           application/json:
             schema: { $ref: '#/components/schemas/NameRequest' }
       responses:
-        '201': { description: Categoría creada, content: { application/json: { schema: { $ref: '#/components/schemas/Category' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '409': { $ref: '#/components/responses/Conflict' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
-  /materials:
+        '201': { description: Grupo creado, content: { application/json: { schema: { $ref: '#/components/schemas/Group' } } } }
+  /attribute-definitions:
     get:
-      summary: GET /materials
-      operationId: getmaterials14
       tags: [Catalog]
+      summary: Listar atributos personalizados
+      operationId: listAttributeDefinitions
       responses:
-        '200': { description: Materiales, content: { application/json: { schema: { $ref: '#/components/schemas/MaterialPage' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '200': { description: Atributos, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AttributeDefinition' } } } } }
     post:
-      summary: POST /materials
-      operationId: postmaterials15
       tags: [Catalog]
+      summary: Crear atributo personalizado
+      operationId: createAttributeDefinition
+      description: Solo ADMIN.
       parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/NameRequest' }
+            schema: { $ref: '#/components/schemas/AttributeDefinitionRequest' }
       responses:
-        '201': { description: Material creado, content: { application/json: { schema: { $ref: '#/components/schemas/Material' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '409': { $ref: '#/components/responses/Conflict' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '201': { description: Atributo creado, content: { application/json: { schema: { $ref: '#/components/schemas/AttributeDefinition' } } } }
   /products:
     get:
-      summary: GET /products
-      operationId: getproducts16
       tags: [Catalog]
-      parameters:
-        - { $ref: '#/components/parameters/Search' }
-        - { $ref: '#/components/parameters/CategoryId' }
-        - { $ref: '#/components/parameters/MaterialId' }
-        - { $ref: '#/components/parameters/Active' }
-        - { $ref: '#/components/parameters/Page' }
-        - { $ref: '#/components/parameters/PageSize' }
+      summary: Listar y buscar productos
+      operationId: listProducts
+      parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }, { $ref: '#/components/parameters/Search' }, { $ref: '#/components/parameters/Active' }]
       responses:
         '200': { description: Productos, content: { application/json: { schema: { $ref: '#/components/schemas/ProductPage' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
     post:
-      summary: POST /products
-      operationId: postproducts17
       tags: [Catalog]
+      summary: Crear producto
+      operationId: createProduct
       parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ProductCreateRequest' }
+            schema: { $ref: '#/components/schemas/ProductRequest' }
       responses:
         '201': { description: Producto creado, content: { application/json: { schema: { $ref: '#/components/schemas/Product' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
         '409': { $ref: '#/components/responses/Conflict' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
   /products/{productId}:
-    parameters: [{ $ref: '#/components/parameters/ProductId' }]
     get:
-      summary: GET /products/{productId}
-      operationId: getproductsProductId18
       tags: [Catalog]
+      summary: Consultar producto
+      operationId: getProduct
+      parameters: [{ $ref: '#/components/parameters/ProductId' }]
       responses:
         '200': { description: Producto, content: { application/json: { schema: { $ref: '#/components/schemas/Product' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
     put:
-      summary: PUT /products/{productId}
-      operationId: putproductsProductId19
       tags: [Catalog]
-      parameters:
-        - { $ref: '#/components/parameters/IfMatch' }
-        - { $ref: '#/components/parameters/IdempotencyKey' }
+      summary: Editar producto
+      operationId: updateProduct
+      parameters: [{ $ref: '#/components/parameters/ProductId' }, { $ref: '#/components/parameters/IdempotencyKey' }, { $ref: '#/components/parameters/IfMatch' }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ProductUpdateRequest' }
+            schema: { $ref: '#/components/schemas/ProductRequest' }
       responses:
         '200': { description: Producto actualizado, content: { application/json: { schema: { $ref: '#/components/schemas/Product' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
   /products/{productId}/status:
-    parameters: [{ $ref: '#/components/parameters/ProductId' }]
     patch:
-      summary: PATCH /products/{productId}/status
-      operationId: patchproductsProductIdStatus20
       tags: [Catalog]
-      parameters:
-        - { $ref: '#/components/parameters/IfMatch' }
-        - { $ref: '#/components/parameters/IdempotencyKey' }
+      summary: Activar o desactivar producto
+      operationId: updateProductStatus
+      parameters: [{ $ref: '#/components/parameters/ProductId' }, { $ref: '#/components/parameters/IdempotencyKey' }, { $ref: '#/components/parameters/IfMatch' }]
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              type: object
-              required: [active]
-              properties:
-                active: { type: boolean }
+            schema: { $ref: '#/components/schemas/ActiveRequest' }
       responses:
-        '200': { description: Estado actualizado, content: { application/json: { schema: { $ref: '#/components/schemas/Product' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        '204': { description: Estado actualizado }
+  /products/{productId}/price-rules:
+    get:
+      tags: [Catalog]
+      summary: Consultar reglas de precio
+      operationId: listPriceRules
+      parameters: [{ $ref: '#/components/parameters/ProductId' }]
+      responses:
+        '200': { description: Reglas, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/PriceRule' } } } } }
+    put:
+      tags: [Catalog]
+      summary: Reemplazar reglas de precio
+      operationId: replacePriceRules
+      description: Solo ADMIN.
+      parameters: [{ $ref: '#/components/parameters/ProductId' }, { $ref: '#/components/parameters/IdempotencyKey' }, { $ref: '#/components/parameters/IfMatch' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: array, minItems: 1, items: { $ref: '#/components/schemas/PriceRuleRequest' } }
+      responses:
+        '200': { description: Reglas actualizadas, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/PriceRule' } } } } }
+  /charge-definitions:
+    get:
+      tags: [Catalog]
+      summary: Listar costos adicionales
+      operationId: listChargeDefinitions
+      responses:
+        '200': { description: Costos, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/ChargeDefinition' } } } } }
+    post:
+      tags: [Catalog]
+      summary: Crear costo adicional
+      operationId: createChargeDefinition
+      description: Solo ADMIN.
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChargeDefinitionRequest' }
+      responses:
+        '201': { description: Costo creado, content: { application/json: { schema: { $ref: '#/components/schemas/ChargeDefinition' } } } }
+  /charge-definitions/{chargeId}:
+    put:
+      tags: [Catalog]
+      summary: Editar costo adicional
+      operationId: updateChargeDefinition
+      description: Solo ADMIN. Requiere control optimista de concurrencia.
+      parameters:
+        - { $ref: '#/components/parameters/ChargeId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChargeDefinitionRequest' }
+      responses:
+        '200': { description: Costo actualizado, content: { application/json: { schema: { $ref: '#/components/schemas/ChargeDefinition' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '409': { $ref: '#/components/responses/Conflict' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
   /inventory/stock:
     get:
-      summary: GET /inventory/stock
-      operationId: getinventoryStock21
       tags: [Inventory]
-      parameters:
-        - { $ref: '#/components/parameters/Search' }
-        - { $ref: '#/components/parameters/CategoryId' }
-        - { $ref: '#/components/parameters/MaterialId' }
-        - { $ref: '#/components/parameters/Active' }
-        - { $ref: '#/components/parameters/Page' }
-        - { $ref: '#/components/parameters/PageSize' }
+      summary: Consultar stock
+      operationId: listStock
+      parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }, { $ref: '#/components/parameters/Search' }]
       responses:
         '200': { description: Stock, content: { application/json: { schema: { $ref: '#/components/schemas/StockPage' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
   /inventory/receipts:
     post:
-      summary: POST /inventory/receipts
-      operationId: postinventoryReceipts22
       tags: [Inventory]
+      summary: Registrar ingreso directo
+      operationId: createReceipt
       parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/StockReceiptRequest' }
+            schema: { $ref: '#/components/schemas/ReceiptRequest' }
       responses:
-        '201': { description: Ingreso registrado, content: { application/json: { schema: { $ref: '#/components/schemas/StockMovementResult' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
+        '201': { description: Ingreso confirmado, content: { application/json: { schema: { $ref: '#/components/schemas/InventoryMovement' } } } }
         '409': { $ref: '#/components/responses/Conflict' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
   /inventory/adjustments:
     post:
-      summary: POST /inventory/adjustments
-      operationId: postinventoryAdjustments23
       tags: [Inventory]
+      summary: Ajustar stock
+      operationId: createAdjustment
       parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/StockAdjustmentRequest' }
+            schema: { $ref: '#/components/schemas/AdjustmentRequest' }
       responses:
-        '201': { description: Ajuste registrado, content: { application/json: { schema: { $ref: '#/components/schemas/StockMovementResult' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
+        '201': { description: Ajuste confirmado, content: { application/json: { schema: { $ref: '#/components/schemas/InventoryMovement' } } } }
         '409': { $ref: '#/components/responses/Conflict' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
   /inventory/movements:
     get:
-      summary: GET /inventory/movements
-      operationId: getinventoryMovements24
       tags: [Inventory]
-      parameters:
-        - { $ref: '#/components/parameters/MovementProductId' }
-        - { $ref: '#/components/parameters/MovementType' }
-        - { $ref: '#/components/parameters/FromDate' }
-        - { $ref: '#/components/parameters/ToDate' }
-        - { $ref: '#/components/parameters/Page' }
-        - { $ref: '#/components/parameters/PageSize' }
+      summary: Consultar movimientos
+      operationId: listMovements
+      parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }, { $ref: '#/components/parameters/From' }, { $ref: '#/components/parameters/To' }]
       responses:
         '200': { description: Movimientos, content: { application/json: { schema: { $ref: '#/components/schemas/MovementPage' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
-  /quotes/preview:
-    post:
-      summary: POST /quotes/preview
-      operationId: postquotesPreview25
-      tags: [Quotes]
-      description: No guarda la cotización ni modifica el stock. El backend calcula todos los valores.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/OperationRequest' }
-      responses:
-        '200': { description: Resultado calculado, content: { application/json: { schema: { $ref: '#/components/schemas/OperationResult' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '422': { $ref: '#/components/responses/UnprocessableEntity' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
-  /sales:
+  /suppliers:
     get:
-      summary: GET /sales
-      operationId: getsales26
-      tags: [Sales]
-      parameters:
-        - { $ref: '#/components/parameters/FromDate' }
-        - { $ref: '#/components/parameters/ToDate' }
-        - { $ref: '#/components/parameters/Page' }
-        - { $ref: '#/components/parameters/PageSize' }
+      tags: [Supply]
+      summary: Listar proveedores
+      operationId: listSuppliers
+      parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }, { $ref: '#/components/parameters/Search' }]
       responses:
-        '200': { description: Ventas, content: { application/json: { schema: { $ref: '#/components/schemas/SalePage' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '200': { description: Proveedores, content: { application/json: { schema: { $ref: '#/components/schemas/SupplierPage' } } } }
     post:
-      summary: POST /sales
-      operationId: postsales27
-      tags: [Sales]
+      tags: [Supply]
+      summary: Crear proveedor
+      operationId: createSupplier
       parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
       requestBody:
         required: true
         content:
           application/json:
+            schema: { $ref: '#/components/schemas/SupplierRequest' }
+      responses:
+        '201': { description: Proveedor creado, content: { application/json: { schema: { $ref: '#/components/schemas/Supplier' } } } }
+  /suppliers/{supplierId}/status:
+    patch:
+      tags: [Supply]
+      summary: Activar o desactivar proveedor
+      operationId: updateSupplierStatus
+      parameters: [{ $ref: '#/components/parameters/SupplierId' }, { $ref: '#/components/parameters/IdempotencyKey' }, { $ref: '#/components/parameters/IfMatch' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ActiveRequest' }
+      responses:
+        '204': { description: Estado actualizado }
+  /supplies:
+    get:
+      tags: [Supply]
+      summary: Listar abastecimientos
+      operationId: listSupplies
+      parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }, { $ref: '#/components/parameters/From' }, { $ref: '#/components/parameters/To' }]
+      responses:
+        '200': { description: Abastecimientos, content: { application/json: { schema: { $ref: '#/components/schemas/SupplyPage' } } } }
+    post:
+      tags: [Supply]
+      summary: Confirmar abastecimiento
+      operationId: createSupply
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SupplyRequest' }
+      responses:
+        '201': { description: Abastecimiento confirmado, content: { application/json: { schema: { $ref: '#/components/schemas/Supply' } } } }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /supplies/{supplyId}:
+    get:
+      tags: [Supply]
+      summary: Consultar abastecimiento
+      operationId: getSupply
+      parameters: [{ $ref: '#/components/parameters/SupplyId' }]
+      responses:
+        '200': { description: Abastecimiento, content: { application/json: { schema: { $ref: '#/components/schemas/Supply' } } } }
+  /commercial-operations/preview:
+    post:
+      tags: [Commercial Operations]
+      summary: Calcular vista previa
+      operationId: previewOperation
+      requestBody:
+        required: true
+        content:
+          application/json:
             schema: { $ref: '#/components/schemas/OperationRequest' }
       responses:
-        '201': { description: Venta confirmada, content: { application/json: { schema: { $ref: '#/components/schemas/Sale' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '409': { $ref: '#/components/responses/Conflict' }
+        '200': { description: Resultado no persistente, content: { application/json: { schema: { $ref: '#/components/schemas/OperationPreview' } } } }
         '422': { $ref: '#/components/responses/UnprocessableEntity' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
-  /sales/{saleId}:
-    parameters:
-      - name: saleId
-        in: path
-        required: true
-        schema: { type: string, format: uuid }
+  /sales:
     get:
-      summary: GET /sales/{saleId}
-      operationId: getsalesSaleId28
-      tags: [Sales]
+      tags: [Commercial Operations]
+      summary: Listar ventas
+      operationId: listSales
+      parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }, { $ref: '#/components/parameters/From' }, { $ref: '#/components/parameters/To' }]
       responses:
-        '200': { description: Venta confirmada, content: { application/json: { schema: { $ref: '#/components/schemas/Sale' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '200': { description: Ventas, content: { application/json: { schema: { $ref: '#/components/schemas/SalePage' } } } }
+    post:
+      tags: [Commercial Operations]
+      summary: Confirmar venta
+      operationId: createSale
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SaleRequest' }
+      responses:
+        '201': { description: Venta confirmada, content: { application/json: { schema: { $ref: '#/components/schemas/Sale' } } } }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /sales/{saleId}:
+    get:
+      tags: [Commercial Operations]
+      summary: Consultar venta
+      operationId: getSale
+      parameters: [{ $ref: '#/components/parameters/SaleId' }]
+      responses:
+        '200': { description: Venta, content: { application/json: { schema: { $ref: '#/components/schemas/Sale' } } } }
+  /sales/{saleId}/cancel:
+    post:
+      tags: [Commercial Operations]
+      summary: Cancelar venta
+      operationId: cancelSale
+      description: Solo ADMIN. Conserva la venta y registra una reversión de inventario.
+      parameters: [{ $ref: '#/components/parameters/SaleId' }, { $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CancellationRequest' }
+      responses:
+        '200': { description: Venta cancelada, content: { application/json: { schema: { $ref: '#/components/schemas/Sale' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
   /dashboard/summary:
     get:
-      summary: GET /dashboard/summary
-      operationId: getdashboardSummary29
       tags: [Dashboard]
+      summary: Consultar dashboard
+      operationId: getDashboardSummary
+      description: Solo ADMIN.
+      parameters: [{ $ref: '#/components/parameters/Period' }, { $ref: '#/components/parameters/From' }, { $ref: '#/components/parameters/To' }]
       responses:
-        '200': { description: Indicadores del negocio, content: { application/json: { schema: { $ref: '#/components/schemas/DashboardSummary' } } } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '200': { description: Resumen, content: { application/json: { schema: { $ref: '#/components/schemas/DashboardSummary' } } } }
+  /reports/{reportType}:
+    get:
+      tags: [Reports]
+      summary: Generar reporte
+      operationId: getReport
+      description: Solo ADMIN. Formatos iniciales JSON y CSV.
+      parameters:
+        - { name: reportType, in: path, required: true, schema: { type: string, enum: [SALES, INVENTORY, PRODUCTS, SUPPLIES] } }
+        - { $ref: '#/components/parameters/Period' }
+        - { $ref: '#/components/parameters/From' }
+        - { $ref: '#/components/parameters/To' }
+        - { name: format, in: query, schema: { type: string, enum: [JSON, CSV], default: JSON } }
+      responses:
+        '200': { description: Reporte generado }
+  /audit-events:
+    get:
+      tags: [Reports]
+      summary: Consultar auditoría
+      operationId: listAuditEvents
+      description: Solo ADMIN.
+      parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }, { $ref: '#/components/parameters/From' }, { $ref: '#/components/parameters/To' }]
+      responses:
+        '200': { description: Eventos, content: { application/json: { schema: { $ref: '#/components/schemas/AuditEventPage' } } } }
   /health/live:
-    servers:
-      - url: https://api.packflow.example
     get:
-      summary: GET /health/live
-      operationId: gethealthLive30
       tags: [Health]
       security: []
+      summary: Estado del proceso
+      operationId: getLiveHealth
       responses:
-        '200': { description: Proceso disponible }
+        '200': { description: Proceso activo }
   /health/ready:
-    servers:
-      - url: https://api.packflow.example
     get:
-      summary: GET /health/ready
-      operationId: gethealthReady31
       tags: [Health]
       security: []
+      summary: Estado de dependencias
+      operationId: getReadyHealth
       responses:
-        '200': { description: Backend y PostgreSQL disponibles }
-        '503':
-          description: Dependencia no disponible
-          content:
-            application/problem+json:
-              schema: { $ref: '#/components/schemas/ProblemDetails' }
+        '200': { description: Dependencias disponibles }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
-    refreshCookie: { type: apiKey, in: cookie, name: pf_refresh }
-    csrfToken:
-      type: apiKey
-      in: header
-      name: X-CSRF-TOKEN
-      description: Debe coincidir con el valor no sensible de la cookie XSRF-TOKEN.
+    refreshCookie: { type: apiKey, in: cookie, name: agilora_refresh }
+    csrfToken: { type: apiKey, in: header, name: X-CSRF-TOKEN }
   parameters:
-    IdempotencyKey:
-      name: Idempotency-Key
-      in: header
-      required: true
-      schema: { type: string, minLength: 16, maxLength: 100 }
-    IfMatch:
-      name: If-Match
-      in: header
-      required: true
-      description: ETag de la versión actual del recurso, por ejemplo `"v12"`.
-      schema: { type: string, minLength: 3, maxLength: 100 }
-    ProductId:
-      name: productId
-      in: path
-      required: true
-      schema: { type: string, format: uuid }
-    MovementProductId:
-      name: productId
-      in: query
-      schema: { type: string, format: uuid }
-    MovementType:
-      name: movementType
-      in: query
-      schema: { type: string, enum: [INITIAL_RECEIPT, RECEIPT, SALE_OUT, LOSS, DAMAGE, CORRECTION] }
-    FromDate:
-      name: from
-      in: query
-      schema: { type: string, format: date-time }
-    ToDate:
-      name: to
-      in: query
-      schema: { type: string, format: date-time }
-    Search: { name: search, in: query, schema: { type: string, maxLength: 100 } }
-    CategoryId: { name: categoryId, in: query, schema: { type: string, format: uuid } }
-    MaterialId: { name: materialId, in: query, schema: { type: string, format: uuid } }
-    Active: { name: active, in: query, schema: { type: boolean } }
+    IdempotencyKey: { name: Idempotency-Key, in: header, required: true, schema: { type: string, minLength: 16, maxLength: 100 } }
+    IfMatch: { name: If-Match, in: header, required: true, schema: { type: string, minLength: 3, maxLength: 100 } }
+    CsrfHeader: { name: X-CSRF-TOKEN, in: header, required: true, schema: { type: string, minLength: 32, maxLength: 512 } }
     Page: { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
     PageSize: { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+    Search: { name: search, in: query, schema: { type: string, maxLength: 100 } }
+    Active: { name: active, in: query, schema: { type: boolean } }
+    From: { name: from, in: query, schema: { type: string, format: date-time } }
+    To: { name: to, in: query, schema: { type: string, format: date-time } }
+    Period: { name: period, in: query, schema: { type: string, enum: [TODAY, LAST_7_DAYS, LAST_MONTH, ALL] } }
+    UserId: { name: userId, in: path, required: true, schema: { type: string, format: uuid } }
+    ProductId: { name: productId, in: path, required: true, schema: { type: string, format: uuid } }
+    SupplierId: { name: supplierId, in: path, required: true, schema: { type: string, format: uuid } }
+    SupplyId: { name: supplyId, in: path, required: true, schema: { type: string, format: uuid } }
+    SaleId: { name: saleId, in: path, required: true, schema: { type: string, format: uuid } }
+    ChargeId: { name: chargeId, in: path, required: true, schema: { type: string, format: uuid } }
   responses:
-    BadRequest:
-      description: Solicitud inválida
-      content:
-        application/problem+json:
-          schema: { $ref: '#/components/schemas/ProblemDetails' }
-    Unauthorized:
-      description: Autenticación ausente o inválida
-      content:
-        application/problem+json:
-          schema: { $ref: '#/components/schemas/ProblemDetails' }
-    Forbidden:
-      description: Operación no autorizada o CSRF inválido
-      content:
-        application/problem+json:
-          schema: { $ref: '#/components/schemas/ProblemDetails' }
-    NotFound:
-      description: Recurso no encontrado
-      content:
-        application/problem+json:
-          schema: { $ref: '#/components/schemas/ProblemDetails' }
-    Conflict:
-      description: Conflicto, duplicado, concurrencia o stock insuficiente
-      content:
-        application/problem+json:
-          schema: { $ref: '#/components/schemas/ProblemDetails' }
-    UnprocessableEntity:
-      description: Regla de negocio inválida
-      content:
-        application/problem+json:
-          schema: { $ref: '#/components/schemas/ProblemDetails' }
-    TooManyRequests:
-      description: Límite de solicitudes excedido
-      headers:
-        Retry-After:
-          description: Segundos mínimos antes de reintentar.
-          schema: { type: integer, minimum: 1 }
-      content:
-        application/problem+json:
-          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    BadRequest: { description: Solicitud inválida, content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' } } } }
+    Unauthorized: { description: Sesión ausente o inválida, content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' } } } }
+    Forbidden: { description: Operación no autorizada, content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' } } } }
+    NotFound: { description: Recurso no encontrado, content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' } } } }
+    Conflict: { description: "Conflicto, stock insuficiente, duplicado o concurrencia", content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' } } } }
+    UnprocessableEntity: { description: Regla de negocio inválida, content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' } } } }
+    TooManyRequests: { description: Rate limit excedido, content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' } } } }
+    ServiceUnavailable: { description: Dependencia no disponible, content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' } } } }
   schemas:
+    DecimalAmount: { type: string, pattern: '^[0-9]{1,10}([.][0-9]{1,2})?$' }
     LoginRequest:
       type: object
       required: [email, password]
@@ -604,11 +661,11 @@ components:
         password: { type: string, format: password, minLength: 12, maxLength: 128 }
     LoginResponse:
       type: object
-      required: [accessToken, expiresIn, account, csrfToken]
+      required: [accessToken, expiresIn, context, csrfToken]
       properties:
         accessToken: { type: string }
         expiresIn: { type: integer, example: 900 }
-        account: { $ref: '#/components/schemas/AccountIdentity' }
+        context: { $ref: '#/components/schemas/SessionContext' }
         csrfToken: { type: string, minLength: 32, maxLength: 512 }
     AccessTokenResponse:
       type: object
@@ -617,33 +674,63 @@ components:
         accessToken: { type: string }
         expiresIn: { type: integer, example: 900 }
         csrfToken: { type: string, minLength: 32, maxLength: 512 }
-    CsrfTokenResponse:
+    CsrfResponse:
       type: object
       required: [csrfToken]
       properties:
         csrfToken: { type: string, minLength: 32, maxLength: 512 }
-    AccountIdentity:
+    MessageResponse:
       type: object
-      required: [businessAccountId, businessName, email]
+      required: [message]
+      properties: { message: { type: string } }
+    SessionContext:
+      type: object
+      required: [userId, businessId, businessName, email, role, membershipStatus]
       properties:
-        businessAccountId: { type: string, format: uuid }
+        userId: { type: string, format: uuid }
+        businessId: { type: string, format: uuid }
         businessName: { type: string, maxLength: 150 }
         email: { type: string, format: email, maxLength: 254 }
-    Account:
-      allOf:
-        - $ref: '#/components/schemas/AccountIdentity'
-        - type: object
-          required: [accountStatus, version, updatedAt]
-          properties:
-            accountStatus: { type: string, enum: [ACTIVE, SUSPENDED, DISABLED] }
-            version: { type: integer, format: int64, minimum: 1 }
-            updatedAt: { type: string, format: date-time }
-    AccountPatchRequest:
+        role: { type: string, enum: [ADMIN, OPERATOR] }
+        membershipStatus: { type: string, enum: [ACTIVE, BLOCKED, INVITED] }
+    BusinessAccount:
+      type: object
+      required: [businessId, businessName, contactEmail, version]
+      properties:
+        businessId: { type: string, format: uuid }
+        businessName: { type: string, minLength: 1, maxLength: 150 }
+        contactEmail: { type: string, format: email, maxLength: 254 }
+        version: { type: integer, format: int64 }
+    BusinessAccountUpdate:
       type: object
       minProperties: 1
       properties:
         businessName: { type: string, minLength: 1, maxLength: 150 }
-        email: { type: string, format: email, maxLength: 254 }
+        contactEmail: { type: string, format: email, maxLength: 254 }
+    BusinessSettings:
+      type: object
+      required: [igvRate, version]
+      properties:
+        igvRate: { type: number, minimum: 0, maximum: 1, example: 0.18 }
+        version: { type: integer, format: int64 }
+    BusinessSettingsUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        igvRate: { type: number, minimum: 0, maximum: 1 }
+    UserPreferences:
+      type: object
+      required: [theme, fontSize, version]
+      properties:
+        theme: { type: string, enum: [LIGHT, DARK] }
+        fontSize: { type: string, enum: [SMALL, MEDIUM, LARGE] }
+        version: { type: integer, format: int64 }
+    UserPreferencesUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        theme: { type: string, enum: [LIGHT, DARK] }
+        fontSize: { type: string, enum: [SMALL, MEDIUM, LARGE] }
     ChangePasswordRequest:
       type: object
       required: [currentPassword, newPassword, confirmPassword]
@@ -654,13 +741,7 @@ components:
     PasswordForgotRequest:
       type: object
       required: [email]
-      properties:
-        email: { type: string, format: email, maxLength: 254 }
-    PasswordRecoveryAccepted:
-      type: object
-      required: [message]
-      properties:
-        message: { type: string, example: "Si el correo está registrado, recibirás instrucciones para recuperar tu contraseña." }
+      properties: { email: { type: string, format: email, maxLength: 254 } }
     PasswordResetRequest:
       type: object
       required: [token, newPassword, confirmPassword]
@@ -668,347 +749,375 @@ components:
         token: { type: string, minLength: 32, maxLength: 512 }
         newPassword: { type: string, format: password, minLength: 12, maxLength: 128 }
         confirmPassword: { type: string, format: password, minLength: 12, maxLength: 128 }
+    User:
+      type: object
+      required: [userId, email, role, status, version]
+      properties:
+        userId: { type: string, format: uuid }
+        email: { type: string, format: email, maxLength: 254 }
+        role: { type: string, enum: [ADMIN, OPERATOR] }
+        status: { type: string, enum: [ACTIVE, BLOCKED, INVITED] }
+        version: { type: integer, format: int64 }
+    UserPage:
+      type: object
+      required: [items, page, pageSize, totalItems]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/User' } }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, maximum: 100 }
+        totalItems: { type: integer, minimum: 0 }
+    InvitationRequest:
+      type: object
+      required: [email]
+      properties: { email: { type: string, format: email, maxLength: 254 } }
+    Invitation:
+      type: object
+      required: [invitationId, email, role, expiresAt]
+      properties:
+        invitationId: { type: string, format: uuid }
+        email: { type: string, format: email }
+        role: { type: string, enum: [OPERATOR] }
+        expiresAt: { type: string, format: date-time }
+    AcceptInvitationRequest:
+      type: object
+      required: [token, password, confirmPassword]
+      properties:
+        token: { type: string, minLength: 32, maxLength: 512 }
+        password: { type: string, format: password, minLength: 12, maxLength: 128 }
+        confirmPassword: { type: string, format: password, minLength: 12, maxLength: 128 }
+    UserStatusRequest:
+      type: object
+      required: [status]
+      properties: { status: { type: string, enum: [ACTIVE, BLOCKED] } }
     NameRequest:
       type: object
       required: [name]
-      properties:
-        name: { type: string, minLength: 1, maxLength: 100 }
-    Category:
+      properties: { name: { type: string, minLength: 1, maxLength: 100 } }
+    Group:
       type: object
-      required: [categoryId, name]
+      required: [groupId, name, active]
       properties:
-        categoryId: { type: string, format: uuid }
-        name: { type: string, minLength: 1, maxLength: 100 }
-    CategoryPage:
-      type: object
-      required: [items, page, pageSize, totalItems]
-      properties:
-        items: { type: array, items: { $ref: '#/components/schemas/Category' } }
-        page: { type: integer, minimum: 1 }
-        pageSize: { type: integer, minimum: 1, maximum: 100 }
-        totalItems: { type: integer, minimum: 0 }
-    Material:
-      type: object
-      required: [materialId, name]
-      properties:
-        materialId: { type: string, format: uuid }
-        name: { type: string, minLength: 1, maxLength: 100 }
-    MaterialPage:
+        groupId: { type: string, format: uuid }
+        name: { type: string, maxLength: 100 }
+        active: { type: boolean }
+    GroupPage:
       type: object
       required: [items, page, pageSize, totalItems]
       properties:
-        items: { type: array, items: { $ref: '#/components/schemas/Material' } }
+        items: { type: array, items: { $ref: '#/components/schemas/Group' } }
         page: { type: integer, minimum: 1 }
-        pageSize: { type: integer, minimum: 1, maximum: 100 }
+        pageSize: { type: integer, maximum: 100 }
         totalItems: { type: integer, minimum: 0 }
-    Dimensions:
+    AttributeDefinitionRequest:
       type: object
-      required: [lengthCm, widthCm, heightCm]
+      required: [name, dataType, required]
       properties:
-        lengthCm: { type: number, exclusiveMinimum: 0, maximum: 1000 }
-        widthCm: { type: number, exclusiveMinimum: 0, maximum: 1000 }
-        heightCm: { type: number, exclusiveMinimum: 0, maximum: 1000 }
-    DecimalAmount:
-      type: string
-      pattern: '^[0-9]{1,10}([.][0-9]{1,2})?$'
-    ProductCreateRequest:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        dataType: { type: string, enum: [TEXT, NUMBER, BOOLEAN, DATE] }
+        required: { type: boolean }
+        searchable: { type: boolean, default: false }
+    AttributeDefinition:
+      allOf:
+        - $ref: '#/components/schemas/AttributeDefinitionRequest'
+        - type: object
+          required: [attributeDefinitionId, active]
+          properties:
+            attributeDefinitionId: { type: string, format: uuid }
+            active: { type: boolean }
+    ProductAttribute:
       type: object
-      required: [categoryId, materialId, name, dimensions, retailPrice, wholesalePrice]
+      required: [attributeDefinitionId, value]
       properties:
-        categoryId: { type: string, format: uuid }
-        materialId: { type: string, format: uuid }
+        attributeDefinitionId: { type: string, format: uuid }
+        value: { type: [string, number, boolean] }
+    ProductRequest:
+      type: object
+      required: [groupId, name, attributes, priceRules]
+      properties:
+        groupId: { type: string, format: uuid }
         name: { type: string, minLength: 1, maxLength: 150 }
-        dimensions: { $ref: '#/components/schemas/Dimensions' }
-        retailPrice: { $ref: '#/components/schemas/DecimalAmount' }
-        wholesalePrice: { $ref: '#/components/schemas/DecimalAmount' }
+        attributes: { type: array, items: { $ref: '#/components/schemas/ProductAttribute' } }
+        priceRules: { type: array, minItems: 1, items: { $ref: '#/components/schemas/PriceRuleRequest' } }
         initialStock: { type: integer, minimum: 0, maximum: 1000000, default: 0 }
-    ProductUpdateRequest:
-      type: object
-      required: [categoryId, materialId, name, dimensions, retailPrice, wholesalePrice]
-      properties:
-        categoryId: { type: string, format: uuid }
-        materialId: { type: string, format: uuid }
-        name: { type: string, minLength: 1, maxLength: 150 }
-        dimensions: { $ref: '#/components/schemas/Dimensions' }
-        retailPrice: { $ref: '#/components/schemas/DecimalAmount' }
-        wholesalePrice: { $ref: '#/components/schemas/DecimalAmount' }
     Product:
       allOf:
-        - $ref: '#/components/schemas/ProductUpdateRequest'
+        - $ref: '#/components/schemas/ProductRequest'
         - type: object
           required: [productId, currentStock, active, version, updatedAt]
           properties:
             productId: { type: string, format: uuid }
             currentStock: { type: integer, minimum: 0 }
             active: { type: boolean }
-            version: { type: integer, format: int64, minimum: 1 }
+            version: { type: integer, format: int64 }
             updatedAt: { type: string, format: date-time }
-    SerigraphyTier:
-      type: object
-      required: [from, ratePerColor]
-      properties:
-        from: { type: integer, minimum: 20 }
-        to: { type: [integer, 'null'], minimum: 20 }
-        ratePerColor: { $ref: '#/components/schemas/DecimalAmount' }
-      description: Rango de cantidad y tarifa por color y lote de 100 unidades.
-    Settings:
-      type: object
-      required: [igvRate, minimumScreenPrintingQuantity, screenPrintingTiers, theme, fontSize, version]
-      properties:
-        igvRate: { type: number, minimum: 0, maximum: 1, example: 0.18 }
-        minimumScreenPrintingQuantity: { type: integer, minimum: 20, maximum: 20, default: 20, readOnly: true }
-        screenPrintingTiers:
-          type: array
-          minItems: 3
-          maxItems: 3
-          items:
-              $ref: '#/components/schemas/SerigraphyTier'
-        theme: { type: string, enum: [LIGHT, DARK] }
-        fontSize: { type: string, enum: [SMALL, MEDIUM, LARGE] }
-        version: { type: integer, format: int64, minimum: 1 }
-    SettingsPatchRequest:
-      type: object
-      minProperties: 1
-      properties:
-        igvRate: { type: number, minimum: 0, maximum: 1 }
-        screenPrintingTiers:
-          type: array
-          minItems: 3
-          maxItems: 3
-          items: { $ref: '#/components/schemas/SerigraphyTier' }
-          description: El backend debe aceptar únicamente los rangos fijos 20..300, 301..500 y 501..NULL; el frontend solo permite modificar sus tarifas.
-        theme: { type: string, enum: [LIGHT, DARK] }
-        fontSize: { type: string, enum: [SMALL, MEDIUM, LARGE] }
-    StockReceiptRequest:
-      type: object
-      required: [productId, quantity]
-      properties:
-        productId: { type: string, format: uuid }
-        quantity: { type: integer, minimum: 1, maximum: 1000000 }
-        reason: { type: string, maxLength: 255, description: Motivo opcional para documentar un ingreso de mercadería. }
-    StockAdjustmentRequest:
-      type: object
-      required: [productId, adjustmentType, direction, quantity, reason]
-      properties:
-        productId: { type: string, format: uuid }
-        adjustmentType: { type: string, enum: [LOSS, DAMAGE, CORRECTION] }
-        direction: { type: string, enum: [INCREASE, DECREASE] }
-        quantity: { type: integer, minimum: 1, maximum: 1000000 }
-        reason: { type: string, minLength: 1, maxLength: 255 }
-      oneOf:
-        - title: Pérdida
-          properties:
-            adjustmentType: { type: string, enum: [LOSS] }
-            direction: { type: string, enum: [DECREASE] }
-        - title: Daño
-          properties:
-            adjustmentType: { type: string, enum: [DAMAGE] }
-            direction: { type: string, enum: [DECREASE] }
-        - title: Corrección
-          properties:
-            adjustmentType: { type: string, enum: [CORRECTION] }
-            direction: { type: string, enum: [INCREASE, DECREASE] }
-    DiscountRequest:
-      type: object
-      required: [type, value]
-      properties:
-        type: { type: string, enum: [PERCENTAGE, FIXED] }
-        value: { $ref: '#/components/schemas/DecimalAmount' }
-    OperationLineRequest:
-      type: object
-      required: [productId, quantity]
-      properties:
-        productId: { type: string, format: uuid }
-        quantity: { type: integer, minimum: 1, maximum: 1000000 }
-        screenPrinting:
-          type: object
-          required: [enabled]
-          properties:
-            enabled: { type: boolean }
-            colors:
-              type: integer
-              minimum: 0
-              maximum: 10
-              default: 0
-              description: Debe ser cero cuando la serigrafía está deshabilitada y positivo cuando está habilitada.
-      description: Cada producto debe aparecer una sola vez dentro de la operación.
-    OperationRequest:
-      type: object
-      required: [items]
-      properties:
-        items:
-          type: array
-          minItems: 1
-          maxItems: 20
-          items: { $ref: '#/components/schemas/OperationLineRequest' }
-        discount: { $ref: '#/components/schemas/DiscountRequest' }
-        description: { type: string, maxLength: 1000, description: Información opcional de una venta, como datos de contacto o referencias del cliente. }
-      description: El backend debe rechazar productId repetidos y recalcular todos los importes.
-    OperationLineResult:
-      type: object
-      required: [productId, productName, dimensions, quantity, unitPrice, priceType, productAmount, lineAmount]
-      properties:
-        productId: { type: string, format: uuid }
-        productName: { type: string, maxLength: 150 }
-        categoryName: { type: string, maxLength: 100 }
-        materialName: { type: string, maxLength: 100 }
-        dimensions: { $ref: '#/components/schemas/Dimensions' }
-        quantity: { type: integer, minimum: 1 }
-        unitPrice: { $ref: '#/components/schemas/DecimalAmount' }
-        priceType: { type: string, enum: [RETAIL, WHOLESALE] }
-        productAmount: { $ref: '#/components/schemas/DecimalAmount', description: 'Importe de las unidades de la línea, sin serigrafía.' }
-        screenPrinting:
-          type: object
-          required: [enabled, colors, lots, ratePerColor, amount]
-          properties:
-            enabled: { type: boolean }
-            colors: { type: integer, minimum: 0 }
-            lots: { type: integer, minimum: 0 }
-            ratePerColor: { $ref: '#/components/schemas/DecimalAmount' }
-            amount: { $ref: '#/components/schemas/DecimalAmount' }
-        lineAmount: { $ref: '#/components/schemas/DecimalAmount', description: 'Importe de la línea, incluyendo serigrafía cuando corresponda.' }
-    DiscountResult:
-      type: object
-      description: Tipo, valor y monto real del descuento aplicado a la operación.
-      required: [type, value, amount]
-      properties:
-        type: { type: string, enum: [PERCENTAGE, FIXED] }
-        value: { $ref: '#/components/schemas/DecimalAmount' }
-        amount: { $ref: '#/components/schemas/DecimalAmount' }
-    OperationResult:
-      type: object
-      description: Resultado con un único subtotal después del descuento, IGV y total.
-      required: [items, subtotal, igvRate, igv, total, currency]
-      properties:
-        items: { type: array, minItems: 1, items: { $ref: '#/components/schemas/OperationLineResult' } }
-        discount: { $ref: '#/components/schemas/DiscountResult' }
-        subtotal: { $ref: '#/components/schemas/DecimalAmount', description: 'Único subtotal de la operación, después de aplicar el descuento cuando exista.' }
-        igvRate: { type: number, minimum: 0, maximum: 1 }
-        igv: { $ref: '#/components/schemas/DecimalAmount' }
-        total: { $ref: '#/components/schemas/DecimalAmount' }
-        currency: { type: string, enum: [PEN] }
-    Sale:
-      allOf:
-        - $ref: '#/components/schemas/OperationResult'
-        - type: object
-          required: [saleId, status, createdAt]
-          properties:
-            saleId: { type: string, format: uuid }
-            status: { type: string, enum: [CONFIRMED] }
-            description: { type: string, maxLength: 1000 }
-            createdAt: { type: string, format: date-time }
-    StockMovementResult:
-      type: object
-      required: [movementId, productId, movementType, quantityDelta, previousStock, resultingStock, createdAt]
-      properties:
-        movementId: { type: string, format: uuid }
-        productId: { type: string, format: uuid }
-        movementType: { type: string, enum: [INITIAL_RECEIPT, RECEIPT, SALE_OUT, LOSS, DAMAGE, CORRECTION] }
-        quantityDelta: { type: integer, description: Diferencia aplicada al stock; las salidas utilizan valores negativos. }
-        previousStock: { type: integer, minimum: 0 }
-        resultingStock: { type: integer, minimum: 0 }
-        reason: { type: string, maxLength: 255 }
-        createdAt: { type: string, format: date-time }
-    StockItem:
-      type: object
-      required: [productId, name, dimensions, currentStock, active]
-      properties:
-        productId: { type: string, format: uuid }
-        name: { type: string, maxLength: 150 }
-        categoryId: { type: string, format: uuid }
-        materialId: { type: string, format: uuid }
-        categoryName: { type: string, maxLength: 100 }
-        materialName: { type: string, maxLength: 100 }
-        dimensions: { $ref: '#/components/schemas/Dimensions' }
-        currentStock: { type: integer, minimum: 0 }
-        active: { type: boolean }
-    StockPage:
-      type: object
-      required: [items, page, pageSize, totalItems]
-      properties:
-        items: { type: array, items: { $ref: '#/components/schemas/StockItem' } }
-        page: { type: integer, minimum: 1 }
-        pageSize: { type: integer, minimum: 1, maximum: 100 }
-        totalItems: { type: integer, minimum: 0 }
-    InventoryMovement:
-      allOf:
-        - $ref: '#/components/schemas/StockMovementResult'
-        - type: object
-          properties:
-            saleId: { type: string, format: uuid }
-            productName: { type: string, maxLength: 150 }
-            dimensions: { $ref: '#/components/schemas/Dimensions' }
-    MovementPage:
-      type: object
-      required: [items, page, pageSize, totalItems]
-      properties:
-        items: { type: array, items: { $ref: '#/components/schemas/InventoryMovement' } }
-        page: { type: integer, minimum: 1 }
-        pageSize: { type: integer, minimum: 1, maximum: 100 }
-        totalItems: { type: integer, minimum: 0 }
     ProductPage:
       type: object
       required: [items, page, pageSize, totalItems]
       properties:
         items: { type: array, items: { $ref: '#/components/schemas/Product' } }
         page: { type: integer, minimum: 1 }
-        pageSize: { type: integer, minimum: 1, maximum: 100 }
+        pageSize: { type: integer, maximum: 100 }
         totalItems: { type: integer, minimum: 0 }
+    PriceRuleRequest:
+      type: object
+      required: [minimumQuantity, unitPrice]
+      properties:
+        minimumQuantity: { type: integer, minimum: 1, maximum: 1000000 }
+        maximumQuantity: { type: [integer, 'null'], minimum: 1, maximum: 1000000 }
+        unitPrice: { $ref: '#/components/schemas/DecimalAmount' }
+    PriceRule:
+      allOf:
+        - $ref: '#/components/schemas/PriceRuleRequest'
+        - type: object
+          required: [priceRuleId]
+          properties: { priceRuleId: { type: string, format: uuid } }
+    ChargeTier:
+      type: object
+      required: [minimumQuantity, amount]
+      properties:
+        minimumQuantity: { type: integer, minimum: 1 }
+        maximumQuantity: { type: [integer, 'null'], minimum: 1 }
+        amount: { $ref: '#/components/schemas/DecimalAmount' }
+    ChargeDefinitionRequest:
+      type: object
+      required: [name, chargeKind, scope, multiplierKind, tiers]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        chargeKind: { type: string, enum: [FIXED, PERCENTAGE] }
+        scope: { type: string, enum: [LINE, OPERATION] }
+        multiplierKind: { type: string, enum: [NONE, LOTS, COLORS] }
+        lotSize: { type: [integer, 'null'], minimum: 1, maximum: 1000000 }
+        maxMultiplier: { type: [integer, 'null'], minimum: 1, maximum: 100 }
+        tiers: { type: array, minItems: 1, items: { $ref: '#/components/schemas/ChargeTier' } }
+    ChargeDefinition:
+      allOf:
+        - $ref: '#/components/schemas/ChargeDefinitionRequest'
+        - type: object
+          required: [chargeDefinitionId, active, version]
+          properties:
+            chargeDefinitionId: { type: string, format: uuid }
+            active: { type: boolean }
+            version: { type: integer, format: int64 }
+    ActiveRequest:
+      type: object
+      required: [active]
+      properties: { active: { type: boolean } }
+    ReceiptRequest:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId: { type: string, format: uuid }
+        quantity: { type: integer, minimum: 1, maximum: 1000000 }
+        note: { type: string, maxLength: 255 }
+    AdjustmentRequest:
+      type: object
+      required: [productId, direction, quantity, reason]
+      properties:
+        productId: { type: string, format: uuid }
+        direction: { type: string, enum: [INCREASE, DECREASE] }
+        quantity: { type: integer, minimum: 1, maximum: 1000000 }
+        reason: { type: string, minLength: 1, maxLength: 255 }
+    SupplierRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 150 }
+        taxId: { type: string, maxLength: 30 }
+        phone: { type: string, maxLength: 50 }
+        email: { type: string, format: email, maxLength: 254 }
+        address: { type: string, maxLength: 255 }
+    Supplier:
+      allOf:
+        - $ref: '#/components/schemas/SupplierRequest'
+        - type: object
+          required: [supplierId, active, version]
+          properties:
+            supplierId: { type: string, format: uuid }
+            active: { type: boolean }
+            version: { type: integer, format: int64 }
+    SupplierPage:
+      type: object
+      required: [items, page, pageSize, totalItems]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Supplier' } }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, maximum: 100 }
+        totalItems: { type: integer, minimum: 0 }
+    SupplyItemRequest:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId: { type: string, format: uuid }
+        quantity: { type: integer, minimum: 1, maximum: 1000000 }
+    SupplyRequest:
+      type: object
+      required: [items]
+      properties:
+        supplierId: { type: [string, 'null'], format: uuid }
+        note: { type: string, maxLength: 255 }
+        items: { type: array, minItems: 1, maxItems: 20, items: { $ref: '#/components/schemas/SupplyItemRequest' } }
+    Supply:
+      allOf:
+        - $ref: '#/components/schemas/SupplyRequest'
+        - type: object
+          required: [supplyId, status, createdAt]
+          properties:
+            supplyId: { type: string, format: uuid }
+            status: { type: string, enum: [CONFIRMED] }
+            createdAt: { type: string, format: date-time }
+    SupplyPage:
+      type: object
+      required: [items, page, pageSize, totalItems]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Supply' } }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, maximum: 100 }
+        totalItems: { type: integer, minimum: 0 }
+    DiscountRequest:
+      type: object
+      required: [type, value]
+      properties:
+        type: { type: string, enum: [PERCENTAGE, FIXED] }
+        value: { $ref: '#/components/schemas/DecimalAmount' }
+    OperationChargeRequest:
+      type: object
+      required: [chargeDefinitionId]
+      properties:
+        chargeDefinitionId: { type: string, format: uuid }
+        multiplier: { type: integer, minimum: 1, maximum: 100 }
+    OperationLineRequest:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId: { type: string, format: uuid }
+        quantity: { type: integer, minimum: 1, maximum: 1000000 }
+        charges: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/OperationChargeRequest' } }
+    OperationRequest:
+      type: object
+      required: [items]
+      properties:
+        description: { type: string, maxLength: 2000 }
+        items: { type: array, minItems: 1, maxItems: 20, items: { $ref: '#/components/schemas/OperationLineRequest' } }
+        charges: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/OperationChargeRequest' } }
+        discount: { $ref: '#/components/schemas/DiscountRequest' }
+    OperationLineResult:
+      type: object
+      required: [productId, quantity, unitPrice, productAmount, lineAmount]
+      properties:
+        productId: { type: string, format: uuid }
+        quantity: { type: integer, minimum: 1 }
+        unitPrice: { $ref: '#/components/schemas/DecimalAmount' }
+        productAmount: { $ref: '#/components/schemas/DecimalAmount' }
+        chargesAmount: { $ref: '#/components/schemas/DecimalAmount' }
+        lineAmount: { $ref: '#/components/schemas/DecimalAmount' }
+    DiscountResult:
+      type: object
+      required: [type, value, amount]
+      properties:
+        type: { type: string, enum: [PERCENTAGE, FIXED] }
+        value: { $ref: '#/components/schemas/DecimalAmount' }
+        amount: { $ref: '#/components/schemas/DecimalAmount' }
+    OperationPreview:
+      type: object
+      required: [items, subtotal, igvRate, igv, total, currency]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/OperationLineResult' } }
+        chargesAmount: { $ref: '#/components/schemas/DecimalAmount' }
+        discount: { $ref: '#/components/schemas/DiscountResult' }
+        subtotal: { $ref: '#/components/schemas/DecimalAmount' }
+        igvRate: { type: number, minimum: 0, maximum: 1 }
+        igv: { $ref: '#/components/schemas/DecimalAmount' }
+        total: { $ref: '#/components/schemas/DecimalAmount' }
+        currency: { type: string, enum: [PEN] }
+    SaleRequest:
+      allOf:
+        - $ref: '#/components/schemas/OperationRequest'
+    Sale:
+      allOf:
+        - $ref: '#/components/schemas/OperationPreview'
+        - type: object
+          required: [saleId, status, createdAt]
+          properties:
+            saleId: { type: string, format: uuid }
+            status: { type: string, enum: [CONFIRMED, CANCELLED] }
+            createdAt: { type: string, format: date-time }
+            cancelledAt: { type: [string, 'null'], format: date-time }
+            cancellationReason: { type: [string, 'null'], maxLength: 255 }
     SalePage:
       type: object
       required: [items, page, pageSize, totalItems]
       properties:
         items: { type: array, items: { $ref: '#/components/schemas/Sale' } }
         page: { type: integer, minimum: 1 }
-        pageSize: { type: integer, minimum: 1, maximum: 100 }
+        pageSize: { type: integer, maximum: 100 }
         totalItems: { type: integer, minimum: 0 }
-    DashboardSummary:
+    CancellationRequest:
       type: object
-      required: [activeProducts, lowStockProducts, lowStockThreshold, lowStockItems, recentSales, recentMovements]
-      properties:
-        activeProducts: { type: integer, minimum: 0 }
-        lowStockProducts: { type: integer, minimum: 0 }
-        lowStockThreshold: { type: integer, minimum: 0, example: 15 }
-        lowStockItems:
-          type: array
-          maxItems: 100
-          items: { $ref: '#/components/schemas/DashboardStockItem' }
-        recentSales:
-          type: array
-          maxItems: 10
-          items: { $ref: '#/components/schemas/DashboardRecentSale' }
-        recentMovements:
-          type: array
-          maxItems: 10
-          items: { $ref: '#/components/schemas/DashboardRecentMovement' }
-    DashboardStockItem:
+      required: [reason]
+      properties: { reason: { type: string, minLength: 1, maxLength: 255 } }
+    InventoryMovement:
       type: object
-      required: [productId, name, currentStock]
-      properties:
-        productId: { type: string, format: uuid }
-        name: { type: string, maxLength: 150 }
-        currentStock: { type: integer, minimum: 0 }
-    DashboardRecentSale:
-      type: object
-      required: [saleId, total, createdAt]
-      properties:
-        saleId: { type: string, format: uuid }
-        total: { $ref: '#/components/schemas/DecimalAmount' }
-        createdAt: { type: string, format: date-time }
-    DashboardRecentMovement:
-      type: object
-      required: [movementId, productId, movementType, quantityDelta, createdAt]
+      required: [movementId, productId, movementType, quantityDelta, previousStock, resultingStock, createdAt]
       properties:
         movementId: { type: string, format: uuid }
         productId: { type: string, format: uuid }
-        productName: { type: string, maxLength: 150 }
-        dimensions: { $ref: '#/components/schemas/Dimensions' }
-        movementType: { type: string, enum: [INITIAL_RECEIPT, RECEIPT, SALE_OUT, LOSS, DAMAGE, CORRECTION] }
+        movementType: { type: string, enum: [INITIAL_RECEIPT, RECEIPT, SUPPLY_RECEIPT, SALE_OUT, SALE_REVERSAL, ADJUSTMENT] }
         quantityDelta: { type: integer, not: { const: 0 } }
+        previousStock: { type: integer, minimum: 0 }
+        resultingStock: { type: integer, minimum: 0 }
+        reason: { type: [string, 'null'], maxLength: 255 }
         createdAt: { type: string, format: date-time }
+    StockPage:
+      type: object
+      required: [items, page, pageSize, totalItems]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Product' } }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, maximum: 100 }
+        totalItems: { type: integer, minimum: 0 }
+    MovementPage:
+      type: object
+      required: [items, page, pageSize, totalItems]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/InventoryMovement' } }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, maximum: 100 }
+        totalItems: { type: integer, minimum: 0 }
+    DashboardSummary:
+      type: object
+      required: [period, activeProducts, lowStockProducts, outOfStockProducts, recentSales, recentMovements]
+      properties:
+        period: { type: string }
+        activeProducts: { type: integer, minimum: 0 }
+        lowStockProducts: { type: integer, minimum: 0 }
+        outOfStockProducts: { type: integer, minimum: 0 }
+        salesAmount: { $ref: '#/components/schemas/DecimalAmount' }
+        salesCount: { type: integer, minimum: 0 }
+        recentSales: { type: array, maxItems: 10, items: { $ref: '#/components/schemas/Sale' } }
+        recentMovements: { type: array, maxItems: 10, items: { $ref: '#/components/schemas/InventoryMovement' } }
+    AuditEvent:
+      type: object
+      required: [auditEventId, action, entityType, occurredAt, outcome, traceId]
+      properties:
+        auditEventId: { type: string, format: uuid }
+        actorUserId: { type: [string, 'null'], format: uuid }
+        action: { type: string }
+        entityType: { type: string }
+        entityId: { type: [string, 'null'] }
+        occurredAt: { type: string, format: date-time }
+        outcome: { type: string, enum: [SUCCESS, FAILURE] }
+        traceId: { type: string }
+    AuditEventPage:
+      type: object
+      required: [items, page, pageSize, totalItems]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/AuditEvent' } }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, maximum: 100 }
+        totalItems: { type: integer, minimum: 0 }
     ProblemDetails:
       type: object
-      required: [type, title, status, errorCode, traceId]
+      required: [type, title, status, traceId]
       properties:
         type: { type: string, format: uri }
         title: { type: string }

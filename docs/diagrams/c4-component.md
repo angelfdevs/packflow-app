@@ -1,147 +1,136 @@
-Diagrama C4 Component
-```dsl
-workspace "PackFlow - C4 Component" "Diagrama de componentes del Backend API de PackFlow." {
+workspace "Agilora - C4 Component" "Componentes principales del Backend API de Agilora." {
 
     !identifiers hierarchical
 
     model {
-        administrador = person "Administrador" "Administra productos, inventario, cotizaciones, ventas y configuración."
+        administrador = person "Administrador" "Administra el negocio y realiza operaciones diarias."
+        operador = person "Operador" "Realiza las operaciones autorizadas del negocio."
 
-        packflow = softwareSystem "PackFlow" "Aplicación web para administrar productos, inventario, cotizaciones y ventas." {
+        agilora = softwareSystem "Agilora" "SaaS multiempresa para gestionar catálogo, inventario, abastecimientos y operaciones comerciales." {
+            frontend = container "Aplicación web" "Interfaz para administración y operación." "Vue 3, JavaScript, Vite, CoreUI"
 
-            frontend = container "Aplicación web" "Interfaz para administrar productos, inventario, cotizaciones, ventas y configuración." "Vue.js, JavaScript"
-
-            backend = container "Backend API" "Expone los endpoints REST y contiene las reglas de negocio." "ASP.NET Core, C#" {
-
-                api = component "API REST" "Recibe solicitudes HTTP, valida el acceso y delega los casos de uso." "ASP.NET Core"
-
-                auth = component "Identidad y sesión" "Gestiona la cuenta administradora, inicio de sesión, cierre de sesión, renovación rotativa, historial de refresh tokens, revocación y recuperación de contraseña." "ASP.NET Core, C#"
-
-                catalogo = component "Catálogo de productos" "Gestiona productos, categorías, materiales, precios y activación de productos." "C#"
-
-                inventario = component "Inventario" "Gestiona stock, ingresos, ajustes, movimientos y validación de stock no negativo." "C#"
-
-                cotizaciones = component "Cotizaciones" "Calcula cotizaciones temporales con múltiples productos sin guardarlas ni modificar el stock." "C#"
-
-                ventas = component "Ventas" "Registra ventas confirmadas y actualiza transaccionalmente el inventario." "C#"
-
-                reglas = component "Reglas comerciales" "Calcula precios minoristas, mayoristas, serigrafía, descuentos, IGV y totales." "C#"
-
-                configuracion = component "Configuración" "Gestiona IGV, tarifas de serigrafía, tema visual y tamaño de fuente." "C#"
-
-                dashboard = component "Dashboard" "Obtiene indicadores de productos, stock, movimientos y ventas." "C#"
-
-                persistencia = component "Persistencia" "Implementa repositorios, transacciones, idempotencia y persistencia del historial de refresh tokens." "Entity Framework Core, C#"
-
-                shared = component "Shared" "Contiene validaciones, errores, identificadores y contratos comunes." "C#"
+            backend = container "Backend API" "Modular monolith que expone la API, ejecuta casos de uso y publica eventos después del commit." "ASP.NET Core, C#, .NET 10" {
+                interfaces = component "Interfaces HTTP y tiempo real" "Expone endpoints REST, SignalR, ProblemDetails, autenticación técnica, versionado y límites de solicitudes." "ASP.NET Core"
+                identity = component "Identity and Access" "Gestiona credenciales, sesiones, recuperación de contraseña, membresías, preferencias visuales y autorización por tenant y rol." "C#"
+                tenant = component "Tenant and Business" "Resuelve el negocio de la sesión y protege el contexto multiempresa." "C#"
+                catalog = component "Catalog and Pricing" "Gestiona grupos, atributos personalizados, productos y reglas de precio." "C#"
+                inventory = component "Inventory and Supply" "Gestiona stock, ingresos, abastecimientos, ajustes y movimientos inmutables." "C#"
+                commercial = component "Commercial Operations" "Calcula vistas previas, descuentos, costos adicionales, IGV y ventas confirmadas o canceladas." "C#"
+                reporting = component "Reporting" "Genera reportes administrativos por período de ventas, inventario, productos y abastecimientos." "C#"
+                dashboard = component "Dashboard" "Compone indicadores y resúmenes para el administrador." "C#"
+                settings = component "Business Settings" "Gestiona datos del negocio, IGV y reglas comerciales." "C#"
+                audit = component "Audit" "Registra eventos relevantes, actor, tenant, resultado y trace ID sin exponer secretos." "C#"
+                realtime = component "Outbox and Realtime" "Persiste eventos en outbox y los publica después del commit para sincronizar sesiones." "C#, SignalR"
+                persistence = component "Persistence adapters" "Implementa repositorios, transacciones, concurrencia optimista e idempotencia." "Entity Framework Core, Npgsql"
+                shared = component "Shared" "Contiene tipos comunes, errores, validaciones técnicas, paginación, trazabilidad y contratos compartidos." "C#"
             }
 
-            database = container "Base de datos" "Almacena cuentas, sesiones, refresh tokens, productos, precios, ventas, movimientos y configuraciones." "PostgreSQL" {
+            database = container "Base de datos transaccional" "Almacena el estado persistente del negocio." "PostgreSQL 18.x" {
                 tags "Database"
+            }
+
+            redis = container "Cache y coordinación" "Soporta rate limiting distribuido y el backplane de SignalR." "Redis 8" {
+                tags "Cache"
             }
         }
 
-        monitoreo = softwareSystem "Servicio de monitoreo externo" "Verifica la disponibilidad de PackFlow."
+        correo = softwareSystem "Servicio de correo transaccional" "Envía invitaciones y enlaces de recuperación de contraseña."
+        monitoreo = softwareSystem "Servicio de monitoreo externo" "Comprueba disponibilidad y salud de los servicios."
 
-        correo = softwareSystem "Servicio de correo transaccional" "Envía enlaces de recuperación de contraseña."
+        administrador -> agilora.frontend "Utiliza Agilora." "HTTPS"
+        operador -> agilora.frontend "Utiliza Agilora." "HTTPS"
+        agilora.frontend -> agilora.backend.interfaces "Consume REST y recibe eventos SignalR." "HTTPS/JSON"
+        monitoreo -> agilora.frontend "Comprueba disponibilidad del frontend." "HTTPS"
+        monitoreo -> agilora.backend.interfaces "Consulta los endpoints de salud." "HTTPS"
 
-        administrador -> packflow.frontend "Utiliza PackFlow" "HTTPS"
+        agilora.backend.interfaces -> agilora.backend.identity "Delega autenticación y sesiones." "C#"
+        agilora.backend.interfaces -> agilora.backend.tenant "Resuelve el contexto del negocio." "C#"
+        agilora.backend.interfaces -> agilora.backend.catalog "Delega operaciones de catálogo." "C#"
+        agilora.backend.interfaces -> agilora.backend.inventory "Delega operaciones de inventario y abastecimiento." "C#"
+        agilora.backend.interfaces -> agilora.backend.commercial "Delega operaciones comerciales." "C#"
+        agilora.backend.interfaces -> agilora.backend.reporting "Delega reportes administrativos." "C#"
+        agilora.backend.interfaces -> agilora.backend.dashboard "Delega el resumen del dashboard." "C#"
+        agilora.backend.interfaces -> agilora.backend.settings "Delega configuración administrativa." "C#"
 
-        packflow.frontend -> packflow.backend "Consume la API REST" "HTTPS/JSON"
+        agilora.backend.identity -> agilora.backend.tenant "Valida membresía, negocio y rol." "C#"
+        agilora.backend.identity -> agilora.backend.persistence "Persiste credenciales, sesiones e invitaciones." "C#"
+        agilora.backend.identity -> correo "Solicita invitaciones y recuperación." "HTTPS/API"
+        agilora.backend.tenant -> agilora.backend.persistence "Consulta negocio y membresías." "C#"
+        agilora.backend.catalog -> agilora.backend.tenant "Valida el tenant de la operación." "C#"
+        agilora.backend.catalog -> agilora.backend.persistence "Persiste grupos, atributos, productos y precios." "C#"
+        agilora.backend.inventory -> agilora.backend.tenant "Valida el tenant y permisos operativos." "C#"
+        agilora.backend.inventory -> agilora.backend.catalog "Obtiene productos activos." "C#"
+        agilora.backend.inventory -> agilora.backend.persistence "Actualiza stock y movimientos en transacciones." "C#"
+        agilora.backend.commercial -> agilora.backend.tenant "Valida el tenant y permisos operativos." "C#"
+        agilora.backend.commercial -> agilora.backend.catalog "Obtiene catálogo y precios vigentes." "C#"
+        agilora.backend.commercial -> agilora.backend.settings "Obtiene IGV y costos adicionales." "C#"
+        agilora.backend.commercial -> agilora.backend.inventory "Valida y actualiza stock al confirmar venta." "C#"
+        agilora.backend.commercial -> agilora.backend.persistence "Persiste ventas, detalles e instantáneas históricas." "C#"
+        agilora.backend.reporting -> agilora.backend.tenant "Valida rol ADMIN y tenant." "C#"
+        agilora.backend.reporting -> agilora.backend.persistence "Consulta datos agregables sin alterar el historial." "C#"
+        agilora.backend.dashboard -> agilora.backend.tenant "Valida rol ADMIN y tenant." "C#"
+        agilora.backend.dashboard -> agilora.backend.persistence "Consulta indicadores y últimos eventos." "C#"
+        agilora.backend.settings -> agilora.backend.tenant "Valida rol ADMIN y tenant." "C#"
+        agilora.backend.settings -> agilora.backend.persistence "Persiste configuración con concurrencia optimista." "C#"
 
-        monitoreo -> packflow.frontend "Verifica la disponibilidad del frontend" "HTTPS"
+        agilora.backend.identity -> agilora.backend.audit "Registra accesos y cambios de sesión." "C#"
+        agilora.backend.catalog -> agilora.backend.audit "Registra cambios administrativos del catálogo." "C#"
+        agilora.backend.inventory -> agilora.backend.audit "Registra movimientos y ajustes." "C#"
+        agilora.backend.commercial -> agilora.backend.audit "Registra ventas y cancelaciones." "C#"
+        agilora.backend.settings -> agilora.backend.audit "Registra cambios de configuración." "C#"
+        agilora.backend.audit -> agilora.backend.persistence "Guarda eventos de auditoría." "C#"
+        agilora.backend.commercial -> agilora.backend.realtime "Publica cambios de stock después del commit." "C#"
+        agilora.backend.inventory -> agilora.backend.realtime "Publica ingresos y ajustes después del commit." "C#"
+        agilora.backend.realtime -> agilora.backend.persistence "Lee y marca eventos outbox." "C#"
+        agilora.backend.realtime -> agilora.redis "Coordina distribución entre instancias." "Redis protocol/TLS"
+        agilora.backend.persistence -> agilora.database "Lee y escribe información transaccional." "SQL/TLS"
 
-        monitoreo -> packflow.backend "Consulta los endpoints de salud" "HTTPS"
-
-        packflow.backend.api -> packflow.backend.auth "Delega solicitudes de autenticación" "C#"
-
-        packflow.backend.api -> packflow.backend.catalogo "Delega solicitudes del catálogo" "C#"
-
-        packflow.backend.api -> packflow.backend.inventario "Delega solicitudes de inventario" "C#"
-
-        packflow.backend.api -> packflow.backend.cotizaciones "Delega solicitudes de cotización" "C#"
-
-        packflow.backend.api -> packflow.backend.ventas "Delega solicitudes de venta" "C#"
-
-        packflow.backend.api -> packflow.backend.configuracion "Delega solicitudes de configuración" "C#"
-
-        packflow.backend.api -> packflow.backend.dashboard "Delega consultas del dashboard" "C#"
-
-        packflow.backend.configuracion -> packflow.backend.persistencia "Guarda y consulta la configuración del negocio" "C#"
-
-        packflow.backend.auth -> packflow.backend.persistencia "Guarda y consulta cuentas, sesiones y tokens de recuperación" "C#"
-
-        packflow.backend.auth -> correo "Solicita enlaces de recuperación de contraseña" "HTTPS/API"
-
-        packflow.backend.catalogo -> packflow.backend.persistencia "Guarda y consulta productos, categorías, materiales y precios" "C#"
-
-        packflow.backend.inventario -> packflow.backend.persistencia "Guarda movimientos y actualiza el stock mediante transacciones" "C#"
-
-        packflow.backend.cotizaciones -> packflow.backend.catalogo "Obtiene productos y precios activos" "C#"
-
-        packflow.backend.cotizaciones -> packflow.backend.reglas "Calcula importes de línea, subtotal único, serigrafía, descuento, IGV y total" "C#"
-
-        packflow.backend.cotizaciones -> packflow.backend.configuracion "Obtiene tarifas e IGV configurados" "C#"
-
-        packflow.backend.ventas -> packflow.backend.catalogo "Obtiene productos y precios activos" "C#"
-
-        packflow.backend.ventas -> packflow.backend.reglas "Calcula importes comerciales" "C#"
-
-        packflow.backend.ventas -> packflow.backend.inventario "Solicita validación y disminución transaccional del stock" "C#"
-
-        packflow.backend.ventas -> packflow.backend.persistencia "Guarda ventas y detalles históricos" "C#"
-
-        packflow.backend.ventas -> packflow.backend.configuracion "Obtiene tarifas e IGV configurados" "C#"
-
-        packflow.backend.dashboard -> packflow.backend.persistencia "Consulta productos, stock, movimientos y ventas" "C#"
-
-        packflow.backend.auth -> packflow.backend.shared "Utiliza validaciones y errores comunes" "C#"
-
-        packflow.backend.catalogo -> packflow.backend.shared "Utiliza contratos comunes" "C#"
-
-        packflow.backend.inventario -> packflow.backend.shared "Utiliza errores e idempotencia" "C#"
-
-        packflow.backend.cotizaciones -> packflow.backend.shared "Utiliza DTOs y validaciones comunes" "C#"
-
-        packflow.backend.ventas -> packflow.backend.shared "Utiliza transacciones e idempotencia" "C#"
-
-        packflow.backend.persistencia -> packflow.database "Lee y escribe información" "SQL"
+        agilora.backend.interfaces -> agilora.backend.shared "Utiliza contratos y errores comunes." "C#"
+        agilora.backend.identity -> agilora.backend.shared "Utiliza validaciones y tipos comunes." "C#"
+        agilora.backend.catalog -> agilora.backend.shared "Utiliza paginación, validaciones y errores." "C#"
+        agilora.backend.inventory -> agilora.backend.shared "Utiliza idempotencia y contratos comunes." "C#"
+        agilora.backend.commercial -> agilora.backend.shared "Utiliza importes, validaciones y ProblemDetails." "C#"
     }
 
     views {
-        component packflow.backend "PackFlow-Backend-Components" "Componentes internos del Backend API de PackFlow." {
+        component agilora.backend "Agilora-Backend-Components" "Componentes internos del Backend API de Agilora." {
             include *
             autolayout lr
         }
 
         styles {
             element "Person" {
-                background #084B83
+                background #315C55
                 color #FFFFFF
                 shape person
             }
 
             element "Software System" {
-                background #1168BD
+                background #1F6F66
                 color #FFFFFF
             }
 
             element "Container" {
-                background #438DD5
+                background #6D9F97
                 color #FFFFFF
             }
 
             element "Component" {
-                background #85BBF0
-                color #000000
+                background #B7D1CB
+                color #0F172A
             }
 
             element "Database" {
-                background #438DD5
+                background #567C76
                 color #FFFFFF
                 shape cylinder
+            }
+
+            element "Cache" {
+                background #8D7664
+                color #FFFFFF
+                shape hexagon
             }
         }
     }
 }
-```

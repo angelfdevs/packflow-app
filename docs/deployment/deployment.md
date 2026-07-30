@@ -1,21 +1,38 @@
-# Despliegue de PackFlow
+# Despliegue de Agilora
 
-## Perfil inicial
+## 1. Ambientes
 
-El primer despliegue podrá utilizar una configuración reducida para iniciar operaciones con pocos negocios:
+Agilora utilizará ambientes separados para evitar que pruebas o cambios incompletos afecten a los negocios reales.
 
-- Vue.js como sitio estático en Cloudflare Pages.
-- Una instancia stateless del backend ASP.NET Core en Render.
-- PostgreSQL 18.x administrado sin nodo standby.
-- Rate limiting por cuenta e IP en el backend, reforzado por la protección perimetral disponible.
-- Health checks, backups, monitoreo y migraciones controladas.
+| Ambiente | Uso | Datos |
+|---|---|---|
+| Development | Desarrollo local y mock | Ficticios |
+| QA | Pruebas automáticas y manuales | Ficticios controlados |
+| Staging | Validación similar a producción y UAT | Ficticios anonimizados |
+| Production | Uso real de los negocios | Reales y protegidos |
 
-Este perfil no contiene redundancia completa ni representa una garantía formal de 99.9 % de disponibilidad. Su objetivo es poner en operación la aplicación y medir el uso real antes de habilitar la infraestructura objetivo.
+Cada ambiente tendrá sus propias variables, base de datos, cookies, credenciales de servicio y reglas de acceso.
 
-## Arquitectura objetivo de alta disponibilidad
+## 2. Perfil inicial
+
+El primer despliegue podrá utilizar:
+
+- Vue como sitio estático en Cloudflare Pages.
+- Una instancia stateless del backend ASP.NET Core en Render o proveedor equivalente.
+- PostgreSQL administrado.
+- Servicio de correo transaccional para invitaciones y recuperación de contraseña.
+- Rate limiting en backend y protección perimetral disponible.
+- Health checks y monitoreo externo.
+- Backups y migraciones controladas.
+
+Una instancia backend puede atender múltiples negocios y usuarios. No significa que solo exista una cuenta. Sí significa que no existe redundancia completa si la instancia falla.
+
+El perfil inicial es `best effort`; no representa una garantía formal de 99.9 %.
+
+## 3. Perfil objetivo
 
 ```text
-Administrador
+Usuario
     |
     | HTTPS
     v
@@ -23,53 +40,72 @@ Cloudflare Pages + CDN + WAF/DDoS
     |
     | HTTPS
     v
-Render Load Balancer
+Balanceador del proveedor
     |-----------------------------|
     v                             v
-Backend ASP.NET Core          Backend ASP.NET Core
-Instancia stateless 1         Instancia stateless 2
+Backend stateless 1          Backend stateless 2
     |                             |
     |------------- TLS ------------|
                   v
-        Render PostgreSQL HA
-          Principal + standby
+        PostgreSQL administrado HA
+                  |
+                  v
+       Redis/servicio distribuido
 ```
 
-## Componentes
+El almacén distribuido se utilizará para rate limiting y backplane de SignalR cuando existan varias instancias. No almacenará la información principal del negocio.
 
-- Vue.js desplegado como sitio estático en Cloudflare Pages.
-- Backend ASP.NET Core desplegado como contenedor Docker stateless.
-- Mínimo dos instancias stateless del backend en el perfil objetivo.
-- PostgreSQL 18.x administrado con alta disponibilidad, PITR y respaldos lógicos independientes.
-- Servicio de correo transaccional para la recuperación de contraseña; no se utilizará para notificaciones comerciales.
-- Rate limiting perimetral mediante Cloudflare y un almacén distribuido administrado compatible con Redis para mantener límites por cuenta entre las dos instancias del backend. Este almacén no contendrá datos de negocio.
-- Variables de entorno y secretos administrados por el proveedor de despliegue.
-- Monitoreo externo de frontend, backend y base de datos.
+## 4. Despliegue continuo
 
-## Reglas operativas
+El pipeline deberá ejecutar:
 
-- El backend no utilizará discos persistentes ni estado local de sesión.
-- Las migraciones se ejecutarán de forma controlada antes de habilitar la nueva versión.
-- Los despliegues utilizarán health checks, apagado controlado y rollback.
-- `/health/live` comprobará que el proceso esté activo.
-- `/health/ready` comprobará que el backend y PostgreSQL estén disponibles.
-- Swagger/OpenAPI permanecerá protegido o deshabilitado en producción.
-- La base de datos no estará expuesta públicamente.
-- Los contadores de rate limiting no dependerán únicamente de la memoria local del backend cuando existan varias instancias.
+1. Validación de formato.
+2. Lint.
+3. Pruebas unitarias.
+4. Pruebas de integración.
+5. Validación de OpenAPI.
+6. Análisis de dependencias y secretos.
+7. Build frontend y backend.
+8. Construcción y escaneo de imagen Docker.
+9. Migraciones controladas.
+10. Despliegue a staging.
+11. Smoke tests y health checks.
+12. Aprobación UAT.
+13. Despliegue a producción.
+14. Verificación posterior y rollback si corresponde.
 
-## Disponibilidad y recuperación
+## 5. Migraciones y datos
 
-- Objetivo de disponibilidad: 99.9 % mensual en el perfil objetivo de alta disponibilidad.
-- RTO objetivo: máximo una hora.
-- RPO objetivo: máximo 15 minutos.
-- Estos valores son objetivos operativos y dependerán del plan contratado, el SLA del proveedor, el monitoreo y las pruebas de restauración. Durante el perfil inicial, la disponibilidad se considerará best effort y se medirá para decidir cuándo ampliar la infraestructura.
-- La alta disponibilidad de PostgreSQL debe utilizar replicación administrada y un procedimiento documentado de recuperación.
+- Las migraciones se versionan junto con el backend.
+- No se ejecutan cambios manuales en producción.
+- Las migraciones destructivas requieren un plan de compatibilidad y recuperación.
+- Production nunca utiliza la base de datos de development, QA o staging.
+- Los datos de prueba son ficticios o anonimizados.
 
-## Seguridad del despliegue
+## 6. Salud y observabilidad
 
-- HTTPS obligatorio en todos los componentes públicos.
-- CORS limitado al origen configurado del frontend.
-- Secretos fuera del repositorio.
-- Escaneo de dependencias, análisis estático y análisis de imágenes Docker en CI/CD.
-- Publicación únicamente desde ramas autorizadas.
-- Registro de auditoría sin contraseñas, tokens ni secretos.
+- `/health/live` comprueba que el proceso esté activo.
+- `/health/ready` comprueba que las dependencias necesarias estén disponibles.
+- Un monitor externo verifica frontend y backend.
+- Las alertas se activan ante errores críticos, saturación, fallas de health check o aumento anormal de latencia.
+- Los logs no contienen contraseñas, tokens, secretos ni datos innecesarios de clientes.
+
+## 7. Disponibilidad y recuperación
+
+- Objetivo operativo del perfil de alta disponibilidad: 99.9 % mensual.
+- RTO objetivo: una hora.
+- RPO objetivo: 15 minutos.
+- El objetivo depende del proveedor, plan contratado, configuración, monitoreo y pruebas de restauración.
+- Deben existir backups administrados, respaldo lógico independiente y restauraciones verificadas.
+- Durante el perfil inicial se medirá disponibilidad real antes de prometer un SLA.
+
+## 8. Seguridad del despliegue
+
+- HTTPS obligatorio.
+- CORS limitado al frontend configurado.
+- Secretos administrados fuera del repositorio.
+- Variables `VITE_*` nunca contienen secretos.
+- Base de datos no expuesta públicamente salvo necesidad controlada.
+- Swagger protegido o deshabilitado en producción.
+- Publicación únicamente desde ramas autorizadas y pipelines validados.
+- Acceso de producción limitado y auditado.

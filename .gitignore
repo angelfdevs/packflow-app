@@ -429,7 +429,7 @@ FodyWeavers.xsd
 *.msp
 
 
-# PackFlow local secrets and credentials
+# Agilora local secrets and credentials
 .env
 .env.*
 !.env.example
@@ -441,9 +441,13 @@ appsettings.*.json
 *.pem
 *.key
 
-# PackFlow frontend local mock data
+# Agilora frontend local mock data
 frontend/mock/db.local.json
 frontend/coverage/
 frontend/dist/
 frontend/playwright-report/
 frontend/test-results/
+
+secrets/
+**/db.local.json
+coverage/

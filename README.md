@@ -1,102 +1,100 @@
-# Aplicación Web PackFlow
+# Agilora
 
-PackFlow es una aplicación web para microempresas y pequeñas empresas dedicadas a la venta y distribución de empaques, como cajas y bolsas de diferentes categorías, medidas y materiales.
+Agilora es una plataforma SaaS para microempresas y pequeñas empresas que necesitan organizar sus productos, controlar inventario y registrar sus operaciones comerciales desde un solo lugar.
 
-La aplicación permitirá administrar productos, consultar el stock disponible, simular cotizaciones y registrar ventas que actualicen automáticamente el inventario.
+La plataforma no impone una estructura exclusiva para un tipo de negocio. Cada negocio puede crear sus grupos, atributos, productos, precios y costos adicionales según su forma de trabajo.
 
-## Tecnologías
+## Product Goal
 
-- Vue.js 3 y JavaScript ES2023+.
-- .NET 10 LTS, ASP.NET Core 10, Entity Framework Core 10 y C# 14.
-- PostgreSQL 18.x.
-- Docker.
+Ayudar a los negocios pequeños a dejar de depender de registros dispersos y contar con información operativa clara, segura y disponible para las personas autorizadas del negocio.
 
-## Problem Statement
+## Problema
 
-El administrador de una microempresa o pequeña empresa dedicada a la venta y distribución de empaques necesita consultar rápidamente el stock disponible y elaborar cotizaciones para sus clientes.
+Muchos negocios todavía consultan existencias en almacenes, anotan ingresos y ventas manualmente y calculan precios con hojas de cálculo o papel. Esto provoca pérdida de tiempo, errores, duplicidad de trabajo y poca visibilidad sobre lo que realmente ocurre en el negocio.
 
-Actualmente debe acudir al almacén para verificar las existencias y utilizar cálculos manuales para obtener el subtotal, IGV y total de una cotización. Esta situación genera pérdida de tiempo, desplazamientos innecesarios, errores en las cantidades disponibles y posibles errores de cálculo.
+## Hipótesis
 
-Por ello, el administrador necesita un sistema centralizado, escalable, robusto y seguro que simplifique la consulta de stock y optimice el proceso de cotización.
+Creemos que permitir a los negocios administrar productos, inventario y operaciones desde una plataforma centralizada reducirá el tiempo empleado en consultas y registros manuales.
 
-## Hypothesis
-
-Creemos que permitir al administrador consultar el inventario en tiempo real reducirá el tiempo empleado en las consultas de stock y los desplazamientos innecesarios al almacén.
-
-Sabremos que esta hipótesis es válida cuando, durante el periodo de prueba, el tiempo de consulta de stock se reduzca en un 80 % y los desplazamientos innecesarios al almacén disminuyan en un 95 %.
-
-Creemos que permitir al administrador simular cotizaciones mediante un formulario que calcule automáticamente el subtotal, IGV y total reducirá el tiempo empleado en la elaboración de cotizaciones y disminuirá los errores de cálculo.
-
-Sabremos que esta hipótesis es válida cuando, durante el periodo de prueba, el tiempo de elaboración de una cotización se reduzca en un 80 % y no se presenten errores en los cálculos generados por el sistema.
+Validaremos esta hipótesis observando el tiempo necesario para consultar stock, preparar una operación y registrar una venta, además de los errores reportados por los usuarios durante la prueba con negocios reales.
 
 ## Módulos principales
 
-### Dashboard
+- **Dashboard:** indicadores y gráficos resumidos para administradores.
+- **Usuarios:** invitación, bloqueo y reactivación de operadores.
+- **Catálogo:** grupos, atributos, productos y activación o desactivación.
+- **Precios y costos:** reglas por cantidad y cargos adicionales configurables.
+- **Inventario:** stock, ingresos, ajustes y movimientos históricos.
+- **Abastecimientos:** proveedores opcionales y entradas de mercadería.
+- **Operaciones:** vista previa de una operación y confirmación de venta en el mismo flujo.
+- **Reportes:** ventas, inventario, productos y abastecimientos.
+- **Configuración:** datos del negocio, IGV y reglas comerciales; cada usuario también puede guardar sus preferencias visuales.
 
-Muestra productos activos, productos con stock bajo, ventas recientes y movimientos recientes.
-Un producto se considera con bajo stock cuando tiene 15 unidades o menos.
+## Roles
 
-### Productos
+- **Administrador:** realiza todas las operaciones y administra usuarios, configuración, dashboard y reportes.
+- **Operador:** realiza las tareas operativas autorizadas, pero no gestiona funciones administrativas.
 
-Permite registrar, editar, activar y desactivar productos. Cada producto puede incluir categoría, nombre, medidas, material, precio minorista y precio mayorista.
+## Reglas importantes
 
-### Inventario
+- Cada negocio está aislado de los demás.
+- Una operación admite como máximo 20 productos diferentes.
+- El stock nunca puede ser negativo.
+- Las cotizaciones preliminares no se guardan ni modifican stock.
+- Las ventas, abastecimientos, ajustes y cancelaciones confirmadas sí se persisten.
+- Toda venta confirmada actualiza el inventario dentro de una transacción.
+- Una venta cancelada conserva su historial y registra una reversión de stock.
+- El backend recalcula precios, descuentos, costos adicionales, IGV y totales.
+- Las operaciones confirmadas utilizan idempotencia y auditoría.
 
-Permite consultar el stock, registrar ingresos de mercadería, registrar ajustes por pérdida, daño o corrección y consultar los movimientos históricos.
+## Tecnologías
 
-### Cotizador
+- Vue 3, JavaScript moderno, Vite, Pinia y Vue Router.
+- ASP.NET Core 10, .NET 10 LTS, C# 14 y Entity Framework Core 10.
+- PostgreSQL administrado.
+- Docker.
+- OpenAPI/Swagger.
+- SignalR para actualizaciones en tiempo real cuando el despliegue lo habilite.
 
-Permite agregar uno o varios productos, ingresar cantidades, aplicar serigrafía opcional y registrar un descuento porcentual o fijo.
+## Arquitectura
 
-La cotización calcula los importes de productos y serigrafía, aplica opcionalmente un descuento y muestra un único subtotal, IGV y total. Si existe descuento, también muestra su tipo, valor y monto aplicado. Las cotizaciones son simulaciones temporales: no se guardan ni modifican el stock.
+Agilora utilizará un monolito modular con DDD, Clean Architecture, Layered Architecture, Ports and Adapters y CQRS lógico.
 
-### Ventas
+Bounded contexts principales:
 
-Permite registrar una operación con uno o varios productos utilizando las mismas reglas del cotizador. Al confirmar una venta, la operación se guarda y el stock disminuye automáticamente dentro de una transacción.
+```text
+Identity & Access
+Tenant & Business
+Catalog & Pricing
+Inventory & Supply
+Commercial Operations
+Reporting
+Dashboard
+Shared
+```
 
-### Configuración
+## Documentación
 
-Permite configurar los datos del negocio, la tasa del IGV, las tarifas de serigrafía, el tema visual, el tamaño de fuente y la contraseña de la cuenta.
+- [Requisitos funcionales](./docs/requirements/functional-requirements.md)
+- [Requisitos no funcionales](./docs/requirements/non-functional-requirements.md)
+- [Contexto del producto](./docs/project-context.md)
+- [User flows](./docs/user-flows.md)
+- [Goal flows](./docs/goal-flows.md)
+- [Arquitectura](./docs/architecture/architecture.md)
+- [Contrato API](./docs/api/api.md)
+- [OpenAPI](./docs/api/openapi.yaml)
+- [Despliegue](./docs/deployment/deployment.md)
+- [Matriz de trazabilidad](./docs/traceability.md)
+- [Modelo de amenazas](./docs/security/threat-model.md)
+- [Aspectos técnico-legales](./docs/legal/README.md)
+- [Proceso Agile](./docs/agile/product-backlog.md)
 
-## Reglas de negocio principales
+## Fuera del alcance inicial
 
-1. Cada cuenta administradora será dueña de un único negocio y tendrá información independiente.
-2. El administrador tendrá acceso completo a la aplicación.
-3. Las cuentas serán provisionadas mediante un procedimiento administrativo controlado; no habrá registro público.
-4. El administrador registrará y mantendrá sus propios productos, categorías y materiales. No podrán existir dos productos activos con la misma categoría, material, nombre y medidas dentro del mismo negocio. Los nombres se compararán sin distinguir mayúsculas de minúsculas y sin espacios externos.
-5. Los productos podrán desactivarse mediante borrado lógico.
-6. El stock nunca podrá ser negativo.
-7. Si se registra un stock inicial mayor que cero, se creará un movimiento de ingreso inicial; si el stock inicial es cero, no se creará ningún movimiento.
-8. Los ingresos aumentarán el stock.
-9. Las ventas confirmadas disminuirán el stock.
-10. Las cotizaciones no modificarán el stock ni se guardarán.
-11. Las ventas confirmadas sí se guardarán.
-12. De 1 a 100 unidades se aplicará el precio minorista.
-13. Desde 101 unidades se aplicará el precio mayorista.
-14. La serigrafía será opcional y solo podrá aplicarse desde 20 unidades por línea de producto.
-15. La serigrafía se calculará por lotes de 100 unidades, incluyendo el lote parcial.
-16. De 20 a 300 unidades se cobrará S/45 por color y lote.
-17. De 301 a 500 unidades se cobrará S/40 por color y lote.
-18. Desde 501 unidades se cobrará S/30 por color y lote.
-19. El descuento será opcional, único por operación y podrá ser porcentual o fijo.
-20. El descuento se aplicará antes del IGV.
-21. El IGV tendrá un valor inicial de 18 % y podrá configurarse.
-22. Una operación podrá contener como máximo 20 productos diferentes.
-23. Cada línea podrá contener como máximo 10 colores y 1 000 000 unidades.
-24. Cada dimensión del producto tendrá un máximo de 1 000 cm.
-25. Un producto se considerará con bajo stock cuando su stock actual sea menor o igual a 15 unidades.
-
-## Fuera de alcance
-
-- Facturación electrónica.
-- Integración con SUNAT.
-- Pagos en línea.
-- Notificaciones por correo o WhatsApp, excepto el correo técnico necesario para recuperar la contraseña.
+- Facturación electrónica e integración con SUNAT.
+- Pagos en línea y pasarelas de pago.
+- Contabilidad completa.
 - Predicción de demanda.
-- Integración con tiendas virtuales.
-- Gestión de múltiples usuarios por negocio.
-- Gestión de roles avanzados.
-- Historial de cotizaciones.
-- Gestión contable.
-- Reportes financieros avanzados.
-- Control de insumos de serigrafía.
+- Integraciones con tiendas virtuales.
+- MFA, mientras no se priorice para un release posterior.
+- Registro público de negocios; el primer release utilizará provisionamiento controlado.

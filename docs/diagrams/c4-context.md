@@ -1,43 +1,39 @@
-Diagrama C4 Context
-```dsl
-workspace "PackFlow - C4 Context" "Diagrama de contexto del sistema PackFlow." {
+workspace "Agilora - C4 Context" "Contexto del SaaS multiempresa Agilora." {
 
     !identifiers hierarchical
 
     model {
-        administrador = person "Administrador" "Persona responsable de administrar la cuenta y las operaciones del negocio."
+        administrador = person "Administrador" "Administra el negocio, usuarios, reglas comerciales, reportes y también las operaciones diarias."
+        operador = person "Operador" "Realiza las operaciones autorizadas de catálogo, inventario, abastecimiento y ventas."
 
-        packflow = softwareSystem "PackFlow" "Aplicación web para administrar productos, consultar stock, simular cotizaciones y registrar ventas."
+        agilora = softwareSystem "Agilora" "SaaS multiempresa para gestionar catálogo, inventario, abastecimientos y operaciones comerciales de microempresas y pequeñas empresas."
 
-        monitoreo = softwareSystem "Servicio de monitoreo externo" "Verifica la disponibilidad del frontend y del Backend API."
+        correo = softwareSystem "Servicio de correo transaccional" "Envía invitaciones y enlaces de recuperación de contraseña."
+        monitoreo = softwareSystem "Servicio de monitoreo externo" "Comprueba la disponibilidad y el estado de los servicios publicados."
 
-        correo = softwareSystem "Servicio de correo transaccional" "Envía enlaces para recuperar la contraseña de la cuenta administradora."
-
-        administrador -> packflow "Administra productos, inventario, cotizaciones, ventas y configuración." "HTTPS"
-
-        monitoreo -> packflow "Verifica la disponibilidad de la aplicación." "HTTPS"
-
-        packflow -> correo "Solicita el envío de enlaces de recuperación de contraseña." "HTTPS/API"
+        administrador -> agilora "Administra el negocio y realiza operaciones diarias." "HTTPS"
+        operador -> agilora "Consulta y actualiza las operaciones permitidas de su negocio." "HTTPS"
+        agilora -> correo "Solicita el envío de invitaciones y enlaces de recuperación." "HTTPS/API"
+        monitoreo -> agilora "Comprueba disponibilidad y endpoints de salud." "HTTPS"
     }
 
     views {
-        systemContext packflow "PackFlow-System-Context" "Contexto del sistema PackFlow." {
+        systemContext agilora "Agilora-System-Context" "Actores y sistemas externos que interactúan con Agilora." {
             include *
             autolayout lr
         }
 
         styles {
             element "Person" {
-                background #084B83
+                background #315C55
                 color #FFFFFF
                 shape person
             }
 
             element "Software System" {
-                background #1168BD
+                background #1F6F66
                 color #FFFFFF
             }
         }
     }
 }
-```

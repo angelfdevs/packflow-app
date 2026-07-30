@@ -1,69 +1,69 @@
-Diagrama C4 Container
-```dsl
-workspace "PackFlow - C4 Container" "Diagrama de contenedores del sistema PackFlow." {
+workspace "Agilora - C4 Container" "Contenedores principales del SaaS multiempresa Agilora." {
 
     !identifiers hierarchical
 
     model {
-        administrador = person "Administrador" "Administra productos, inventario, cotizaciones, ventas y configuración."
+        administrador = person "Administrador" "Administra el negocio, usuarios, reglas comerciales, reportes y operaciones."
+        operador = person "Operador" "Realiza las operaciones autorizadas del negocio."
 
-        packflow = softwareSystem "PackFlow" "Aplicación web para administrar productos, consultar stock, simular cotizaciones y registrar ventas." {
-
-            frontend = container "Aplicación web" "Interfaz para productos, inventario, cotizaciones, ventas, dashboard y configuración." "Vue.js, JavaScript"
-
-            backend = container "Backend API" "Expone la API REST, autentica al administrador y aplica las reglas de negocio." "ASP.NET Core, C#"
-
-            database = container "Base de datos" "Almacena cuentas, sesiones, refresh tokens, productos, precios, ventas, movimientos y configuraciones." "PostgreSQL" {
+        agilora = softwareSystem "Agilora" "SaaS multiempresa para gestionar catálogo, inventario, abastecimientos y operaciones comerciales." {
+            frontend = container "Aplicación web" "Interfaz responsive para la operación diaria y la administración." "Vue 3, JavaScript, Vite, CoreUI"
+            backend = container "Backend API" "Expone REST y SignalR, aplica autenticación, autorización, reglas de negocio y transacciones." "ASP.NET Core, C#, .NET 10"
+            database = container "Base de datos transaccional" "Almacena negocios, membresías, catálogo, stock, abastecimientos, ventas, auditoría y outbox." "PostgreSQL 18.x" {
                 tags "Database"
+            }
+            redis = container "Cache y coordinación" "Centraliza rate limiting, datos efímeros y backplane de SignalR cuando hay varias instancias." "Redis 8" {
+                tags "Cache"
             }
         }
 
-        monitoreo = softwareSystem "Servicio de monitoreo externo" "Verifica la disponibilidad del frontend y del Backend API."
+        correo = softwareSystem "Servicio de correo transaccional" "Envía invitaciones y enlaces de recuperación de contraseña."
+        monitoreo = softwareSystem "Servicio de monitoreo externo" "Comprueba disponibilidad y endpoints de salud."
 
-        correo = softwareSystem "Servicio de correo transaccional" "Envía enlaces para recuperar la contraseña."
-
-        administrador -> packflow.frontend "Utiliza PackFlow" "HTTPS"
-
-        packflow.frontend -> packflow.backend "Consume la API REST" "HTTPS/JSON"
-
-        packflow.backend -> packflow.database "Lee y escribe información transaccional." "SQL/TLS"
-
-        packflow.backend -> correo "Solicita enlaces de recuperación de contraseña." "HTTPS/API"
-
-        monitoreo -> packflow.frontend "Verifica la disponibilidad del frontend." "HTTPS"
-
-        monitoreo -> packflow.backend "Consulta los endpoints de salud." "HTTPS"
+        administrador -> agilora.frontend "Utiliza el panel administrativo y operativo." "HTTPS"
+        operador -> agilora.frontend "Utiliza los módulos operativos autorizados." "HTTPS"
+        agilora.frontend -> agilora.backend "Consume la API REST y recibe eventos de actualización." "HTTPS, JSON, SignalR"
+        agilora.backend -> agilora.database "Lee y escribe información transaccional." "SQL/TLS"
+        agilora.backend -> agilora.redis "Coordina rate limiting, sesiones efímeras y eventos distribuidos." "Redis protocol/TLS"
+        agilora.backend -> correo "Solicita invitaciones y recuperación de contraseña." "HTTPS/API"
+        monitoreo -> agilora.frontend "Comprueba la aplicación web publicada." "HTTPS"
+        monitoreo -> agilora.backend "Consulta liveness y readiness." "HTTPS"
     }
 
     views {
-        container packflow "PackFlow-Containers" "Contenedores principales de PackFlow." {
+        container agilora "Agilora-Containers" "Contenedores de la solución Agilora." {
             include *
             autolayout lr
         }
 
         styles {
             element "Person" {
-                background #084B83
+                background #315C55
                 color #FFFFFF
                 shape person
             }
 
             element "Software System" {
-                background #1168BD
+                background #1F6F66
                 color #FFFFFF
             }
 
             element "Container" {
-                background #438DD5
+                background #6D9F97
                 color #FFFFFF
             }
 
             element "Database" {
-                background #438DD5
+                background #567C76
                 color #FFFFFF
                 shape cylinder
+            }
+
+            element "Cache" {
+                background #8D7664
+                color #FFFFFF
+                shape hexagon
             }
         }
     }
 }
-```
